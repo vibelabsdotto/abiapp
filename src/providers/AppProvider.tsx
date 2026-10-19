@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   Appearance,
   AppState,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
+import * as SystemUI from "expo-system-ui";
 
 import { initDatabase } from "@services/database/database";
 import { registerDevTools } from "@services/demo/devTools";
@@ -88,6 +90,18 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       cancelled = true;
     };
   }, [attempt]);
+
+  // Android paints the window background between the splash and the first
+  // React frame and while the in-app theme switches night mode. It comes from
+  // the system theme, so "Dunkel" on a light system flashed white at cold
+  // start. Keep it in the app's background color (theme hydrates before the
+  // splash hides).
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    void SystemUI.setBackgroundColorAsync(colors.background).catch(
+      () => undefined,
+    );
+  }, [colors.background]);
 
   // Follow system appearance and locale changes while in "system" mode.
   useEffect(() => {
