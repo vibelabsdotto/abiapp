@@ -108,6 +108,30 @@ const CatalogPicker = ({
 
   const stateName = ruleset?.stateName ?? "";
 
+  // The custom form replaces this view: add the catalog picks first instead
+  // of dropping them silently.
+  const openCustom = async () => {
+    if (saving) return;
+    if (selected.length === 0) {
+      onCustom();
+      return;
+    }
+    setSaving(true);
+    try {
+      const created = await addCatalogSubjects(selected);
+      Toast.show({
+        type: "success",
+        text1: t("subjects.subjectEditor.added", { count: created.length }),
+      });
+      setSelected([]);
+      setSaving(false);
+      onCustom();
+    } catch (error) {
+      setSaving(false);
+      showError(error);
+    }
+  };
+
   return (
     <>
       <ModalHeader
@@ -139,7 +163,7 @@ const CatalogPicker = ({
               </View>
             }
             chevron
-            onPress={onCustom}
+            onPress={() => void openCustom()}
           />
         </Section>
 

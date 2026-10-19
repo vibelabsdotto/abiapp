@@ -162,6 +162,9 @@ export const ListRow = ({
           <Text
             // Long German titles ("Abiturjahrgang") break mid-word beyond.
             maxFontSizeMultiplier={FontScale.heading}
+            // Android otherwise splits hyphenated compounds at the last
+            // letter ("…-technisc / h") instead of after a hyphen.
+            android_hyphenationFrequency="normal"
             style={[
               Type.body,
               styles.title,
