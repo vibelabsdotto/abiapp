@@ -38,10 +38,12 @@ const capitalize = (text: string) =>
   text.length > 0 ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 
 /** Short display name for narrow trailing values. */
-export const compactName = (subject: SubjectRecord): string =>
-  subject.name.length > 18 && subject.shortName
-    ? subject.shortName
-    : subject.name;
+export const compactName = (subject: SubjectRecord): string => {
+  // "Französisch (fortgeführt)" reads as "Französisch" in lists; codes like
+  // "Fr" only for names that stay long ("Politik und Gesellschaft" → "PuG").
+  const base = subject.name.replace(/\s*\([^)]*\)$/, "");
+  return base.length > 18 && subject.shortName ? subject.shortName : base;
+};
 
 interface ExamPickerProps {
   ruleset: RulesetSummary;
