@@ -155,18 +155,26 @@ const hasEnteredData = (subjectId: string): boolean => {
  * Onboarding step "Fächer": makes the catalog subjects match `keys`.
  * Missing keys are created, deselected catalog subjects are removed unless
  * they already hold grades or results (then they stay and an issue says so).
- * Custom subjects (no catalog key) are left alone.
+ * Only subjects whose key is in the current ruleset's catalog take part:
+ * custom subjects (no key) and subjects from another catalog (e.g. kept
+ * after a state change) stay as they are; the user removes them explicitly.
  */
 export async function syncCatalogSubjects(
   keys: readonly string[],
   options?: { elevatedKeys?: readonly string[] },
 ): Promise<Issue[]> {
+  const profile = useProfileStore.getState().profile;
+  if (!profile) throw new Error("Create the profile before adding subjects");
+  const catalogKeys = new Set(
+    requireRuleset(profile.rulesetId).catalog.map((entry) => entry.key),
+  );
   const courseStore = useCourseStore.getState();
   const wanted = new Set(keys);
   const issues: Issue[] = [];
   const toRemove: SubjectRecord[] = [];
   for (const subject of courseStore.subjects) {
-    if (!subject.catalogKey || wanted.has(subject.catalogKey)) continue;
+    if (!subject.catalogKey || !catalogKeys.has(subject.catalogKey)) continue;
+    if (wanted.has(subject.catalogKey)) continue;
     if (hasEnteredData(subject.id)) {
       issues.push({
         code: "setup.subject.keptWithData",

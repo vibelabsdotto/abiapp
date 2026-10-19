@@ -228,17 +228,10 @@ export function useSubjectsDraft(options?: { preselect?: readonly string[] }) {
         ? !wanted.has(subject.catalogKey as string)
         : !keptCustom.has(subject.id);
       // Catalog subjects without entries go through syncCatalogSubjects.
+      // Kept subjects from another state's catalog keep their key; the
+      // catalog sync only touches keys of the current catalog.
       if (removed && (!isCatalog || withData.has(subject.id))) {
         await useCourseStore.getState().removeSubject(subject.id);
-      }
-    }
-    // Kept subjects from another state's catalog become own subjects, so
-    // the catalog sync does not drop them.
-    for (const item of custom) {
-      if (item.orphan && item.selected && item.subjectId) {
-        await useCourseStore
-          .getState()
-          .updateSubject(item.subjectId, { catalogKey: null });
       }
     }
     const ordered = [...keys].sort(
