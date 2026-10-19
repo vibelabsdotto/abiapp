@@ -4,6 +4,18 @@ const COUNT_PREFIX =
   /^(je\s+)?(mindestens\s+)?\d+\s+(aufeinanderfolgende\s+)?(Kurshalbjahre|Halbjahresleistungen|Semesterergebnisse|Halbjahre|Halbjahr|Kurse|Kurs|Ergebnisse|Ergebnis)\s+/i;
 const ROLE =
   /^(Prüfungsfach|Leistungskurs|Leistungsfach|eA-Fach|Profilfach|Kernfach)\s/;
+const LEADING_LOWER =
+  /^(Je|Mindestens|Höchstens|Fortgeführte[snr]?|Eine[rs]?|Ein)\s/;
+
+/**
+ * Requirement label inside a running list (after "Offen:" or between
+ * other items): "Je 4 Kurse …" -> "je 4 Kurse …". Nouns keep their case.
+ */
+export function inlineRuleLabel(label: string): string {
+  return LEADING_LOWER.test(label)
+    ? label.charAt(0).toLowerCase() + label.slice(1)
+    : label;
+}
 
 /**
  * Derives a short reason from a requirement label, e.g.

@@ -37,8 +37,9 @@ import type {
   RuleContext,
   WeightingOption,
 } from "../rulesets/types";
+import { listDe } from "../rulesets/helpers";
 import { courseKey } from "./context";
-import { shortRuleLabel } from "./labels";
+import { inlineRuleLabel, shortRuleLabel } from "./labels";
 import { roundHalfUpFrac } from "./math";
 
 const MAX_CONFIGS = 20000;
@@ -289,7 +290,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   for (const def of rules.extras ?? []) {
     const val = def.value(ctx);
     if (!val) {
-      if (def.required) open.push(`${def.label} fehlt noch`);
+      if (def.required) open.push(def.label);
       continue;
     }
     const vars: (ExtraVariant | null)[] = def.variants(val.points, ctx);
@@ -1058,12 +1059,13 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   );
   checks.push({
     id: "block1.mandatory",
-    label: "Pflichteinbringungen und Anzahl erfüllt",
+    // A condition like the other checks, so "Offen" next to it reads right.
+    label: "Alle Pflichteinbringungen, richtige Anzahl",
     passed: structural.length > 0 ? false : open.length > 0 ? null : true,
     detail: structural.length
       ? structural.join("; ")
       : open.length
-        ? `Offen: ${open.join("; ")}`
+        ? `Offen: ${listDe([...new Set(open)].map(inlineRuleLabel))}`
         : `${b.N} eingebracht (${countLabel} nötig)`,
     predicted,
   });
