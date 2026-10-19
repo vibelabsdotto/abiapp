@@ -1,8 +1,13 @@
 // Subject identity: colour palette and default symbol per catalog key.
 // The stored subject colour is one of `SubjectColorKey` (or any hex for
-// custom values); the symbol follows the catalog key.
+// custom values); the symbol follows the catalog key. Keys this table does
+// not know (state-specific catalog entries, custom subjects) fall back to
+// the catalog's SF Symbol, then a symbol by tag, and a stable colour hashed
+// from the key or name, so no screen needs its own workaround.
 
 import type { SFSymbol } from "sf-symbols-typescript";
+
+import type { SubjectTag } from "@domain/model";
 import {
   Atom,
   BookOpen,
@@ -111,11 +116,67 @@ const DEFAULT_VISUAL: SubjectVisual = {
   color: "slate",
 };
 
-/** Default symbol and colour for a catalog key (custom subjects: book). */
+/** Symbol by subject tag for keys outside VISUALS (first match wins). */
+const BY_TAG: { tag: SubjectTag; sf: SFSymbol; icon: LucideIcon }[] = [
+  { tag: "foreign_language", sf: "character.bubble", icon: Languages },
+  { tag: "natural_science", sf: "atom", icon: Atom },
+  {
+    tag: "informatics",
+    sf: "chevron.left.forwardslash.chevron.right",
+    icon: CodeXml,
+  },
+  { tag: "history", sf: "hourglass", icon: Hourglass },
+  { tag: "geography", sf: "globe.europe.africa", icon: Globe },
+  { tag: "economics", sf: "chart.line.uptrend.xyaxis", icon: TrendingUp },
+  { tag: "arts", sf: "paintpalette", icon: Palette },
+  { tag: "religion_ethics", sf: "sparkles", icon: Sparkles },
+  { tag: "politics", sf: "building.columns", icon: Landmark },
+  { tag: "social_science", sf: "brain.head.profile", icon: Brain },
+  { tag: "sport", sf: "figure.run", icon: PersonStanding },
+  { tag: "seminar", sf: "doc.text.magnifyingglass", icon: FileSearch },
+];
+
+/** Stable palette colour for a seed (catalog key or subject name). */
+export const hashSubjectColor = (seed: string): SubjectColorKey => {
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
+  }
+  return SUBJECT_COLOR_KEYS[hash % SUBJECT_COLOR_KEYS.length] ?? "slate";
+};
+
+export interface SubjectVisualHints {
+  /** SF Symbol of the ruleset catalog entry (CatalogSubject.sfSymbol). */
+  catalogSymbol?: string | null;
+  /** Tags of the subject or its catalog entry. */
+  tags?: readonly string[];
+  /** Subject name; seeds the colour of custom subjects. */
+  name?: string | null;
+}
+
+/**
+ * Symbol and automatic colour of a subject. Known catalog keys use the
+ * table above; everything else the catalog symbol, a symbol by tag and a
+ * stable hashed colour (the same subject always gets the same colour).
+ */
 export const subjectVisual = (
   catalogKey: string | null | undefined,
-): SubjectVisual =>
-  (catalogKey ? VISUALS[catalogKey] : undefined) ?? DEFAULT_VISUAL;
+  hints: SubjectVisualHints = {},
+): SubjectVisual => {
+  const known = catalogKey ? VISUALS[catalogKey] : undefined;
+  if (known) return known;
+  const byTag = BY_TAG.find((item) => hints.tags?.includes(item.tag));
+  const seed = catalogKey ?? hints.name?.trim().toLowerCase() ?? "";
+  const catalogSymbol =
+    hints.catalogSymbol && hints.catalogSymbol !== DEFAULT_VISUAL.sf
+      ? (hints.catalogSymbol as SFSymbol)
+      : undefined;
+  return {
+    sf: catalogSymbol ?? byTag?.sf ?? DEFAULT_VISUAL.sf,
+    icon: byTag?.icon ?? DEFAULT_VISUAL.icon,
+    color: seed ? hashSubjectColor(seed) : DEFAULT_VISUAL.color,
+  };
+};
 
 /** Building icon for school-wide items (e.g. Seminararbeit). */
 export const SchoolIcon = Building2;

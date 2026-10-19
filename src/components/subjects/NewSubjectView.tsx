@@ -7,7 +7,13 @@ import { StyleSheet, Text, View } from "react-native";
 import { Check, CirclePlus } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 
-import { Icon, ListRow, Section, SegmentedControl } from "@components/ui";
+import {
+  Icon,
+  ListRow,
+  Section,
+  SegmentedControl,
+  SubjectAvatar,
+} from "@components/ui";
 import type {
   CourseLevel,
   RulesetSummary,
@@ -22,7 +28,6 @@ import { Type } from "@constants/typography";
 import { savedFeedback, showError } from "./actions";
 import { ChoiceChips, EditorScroll, FormTextInput } from "./form";
 import { ModalHeader } from "./headers";
-import { SubjectBadge } from "./SubjectBadge";
 import { FIELD_ORDER, TAGS_BY_FIELD, suggestFromName } from "./subjectSuggest";
 import { useEditorClose } from "./useEditorClose";
 
@@ -163,7 +168,7 @@ const CatalogPicker = ({
                     key={entry.key}
                     title={entry.name}
                     leading={
-                      <SubjectBadge
+                      <SubjectAvatar
                         catalogKey={entry.key}
                         name={entry.name}
                         size={32}

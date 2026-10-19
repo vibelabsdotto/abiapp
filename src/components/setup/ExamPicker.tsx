@@ -15,7 +15,7 @@ import {
   IssueBanner,
   ListRow,
   Section,
-  subjectVisual,
+  useSubjectVisualResolver,
 } from "@components/ui";
 import { Type } from "@constants/typography";
 import type {
@@ -30,7 +30,7 @@ import type { SubjectRecord } from "@services/database";
 import { componentNeedsSubject } from "@stores/domainAccess";
 import { useThemeStore } from "@stores/themeStore";
 
-import { CodeBadge, SelectionMark } from "./SetupParts";
+import { CodeBadge } from "./SetupParts";
 
 const CLEAR = "__clear";
 
@@ -69,6 +69,7 @@ export const ExamPicker = ({
   requiredCount,
 }: ExamPickerProps) => {
   const { t } = useTranslation();
+  const visualFor = useSubjectVisualResolver();
   const catalog = useMemo(
     () => new Map(ruleset.catalog.map((entry) => [entry.key, entry])),
     [ruleset],
@@ -110,7 +111,7 @@ export const ExamPicker = ({
       const action: NativeMenuAction = {
         id: subject.id,
         title: subject.name,
-        image: subjectVisual(subject.catalogKey).sf,
+        image: visualFor(subject).sf,
         state: current === subject.id ? "on" : "off",
         disabled: reason !== undefined,
         subtitle:
@@ -154,7 +155,7 @@ export const ExamPicker = ({
             <ListRow
               key={variant.id}
               title={variant.label}
-              trailing={<SelectionMark selected={variant.id === variantId} />}
+              selected={variant.id === variantId}
               onPress={() => onVariant(variant.id)}
             />
           ))}

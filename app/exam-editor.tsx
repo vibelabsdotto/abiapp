@@ -269,6 +269,8 @@ export default function ExamEditorScreen() {
                 <SubjectAvatar
                   catalogKey={subject.catalogKey}
                   color={subject.color}
+                  name={subject.name}
+                  tags={subject.tags}
                   size={44}
                 />
               ) : null}

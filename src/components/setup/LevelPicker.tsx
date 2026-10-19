@@ -18,8 +18,6 @@ import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
 
-import { SelectionMark } from "./SetupParts";
-
 interface LevelPickerProps {
   ruleset: RulesetSummary;
   subjects: SubjectRecord[];
@@ -109,17 +107,15 @@ export const LevelPicker = ({
                 <SubjectAvatar
                   catalogKey={subject.catalogKey}
                   color={subject.color}
+                  name={subject.name}
+                  tags={subject.tags}
                   size={32}
                 />
               }
-              trailing={<SelectionMark selected={isSelected} multi />}
+              selected={isSelected}
+              selectionStyle="circle"
               onPress={() => onToggle(subject.id)}
               disabled={!allowed && !isSelected}
-              accessibilityLabel={
-                isSelected
-                  ? `${subject.name}, ${t("setup.selected")}`
-                  : subject.name
-              }
             />
           );
         })}

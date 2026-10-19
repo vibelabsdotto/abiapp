@@ -1,5 +1,6 @@
 // ListRow - the standard row inside a Section: leading avatar/icon/colour
-// dot, title with badges, subtitle, trailing value or element, chevron.
+// dot, title with badges, subtitle (text or element), trailing value or
+// element, selection mark, chevron.
 // With `menu`, a long-press opens the native context menu (icons required)
 // through ContextMenuRow; a tap still runs `onPress`.
 
@@ -10,10 +11,11 @@ import {
   Text,
   View,
   useWindowDimensions,
+  type DimensionValue,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { Check, ChevronRight, Circle, CircleCheck } from "lucide-react-native";
 
 import {
   ContextMenuRow,
@@ -33,7 +35,10 @@ export interface ListRowMenu {
 
 export interface ListRowProps {
   title: string;
-  subtitle?: string;
+  /** Text line under the title, or an element (e.g. a HalfYearStrip). */
+  subtitle?: React.ReactNode;
+  /** Spoken subtitle when `subtitle` is an element. */
+  subtitleLabel?: string;
   /** Leading element, e.g. <SubjectAvatar />. */
   leading?: React.ReactNode;
   /** Small colour dot instead of a leading element. */
@@ -42,8 +47,20 @@ export interface ListRowProps {
   badges?: React.ReactNode;
   /** Trailing text value. */
   value?: string;
+  /** Max width of `value` (default 45 %); long values wrap, never clip. */
+  valueMaxWidth?: DimensionValue;
+  /** Lines for `value` before it truncates (default 2). */
+  valueLines?: number;
   /** Trailing element (PointsBadge, HalfYearStrip); replaces `value`. */
   trailing?: React.ReactNode;
+  /**
+   * Selection state of a picker row: sets accessibilityState.selected and
+   * shows a checkmark (single choice) or a filled circle (multiple choice).
+   * Leave undefined for rows that are not selectable.
+   */
+  selected?: boolean;
+  /** "checkmark" (single choice, default) or "circle" (multiple choice). */
+  selectionStyle?: "checkmark" | "circle";
   chevron?: boolean;
   onPress?: () => void;
   menu?: ListRowMenu;
@@ -58,11 +75,16 @@ export interface ListRowProps {
 export const ListRow = ({
   title,
   subtitle,
+  subtitleLabel,
   leading,
   dotColor,
   badges,
   value,
+  valueMaxWidth = "45%",
+  valueLines = 2,
   trailing,
+  selected,
+  selectionStyle = "checkmark",
   chevron = false,
   onPress,
   menu,
@@ -82,12 +104,43 @@ export const ListRow = ({
     trailing ??
     (value !== undefined ? (
       <Text
-        style={[Type.body, styles.value, { color: colors.textSecondary }]}
-        numberOfLines={1}
+        style={[
+          Type.body,
+          styles.value,
+          {
+            color: colors.textSecondary,
+            maxWidth: stacked ? "100%" : valueMaxWidth,
+          },
+          stacked && styles.valueStacked,
+        ]}
+        numberOfLines={valueLines}
       >
         {value}
       </Text>
     ) : null);
+
+  const selectionNode =
+    selected === undefined ? null : selectionStyle === "circle" ? (
+      <Icon
+        sf={selected ? "checkmark.circle.fill" : "circle"}
+        fallback={selected ? CircleCheck : Circle}
+        size={24}
+        color={selected ? colors.accent : colors.textTertiary}
+      />
+    ) : selected ? (
+      <Icon
+        sf="checkmark"
+        fallback={Check}
+        size={17}
+        weight="semibold"
+        color={colors.accent}
+      />
+    ) : (
+      <View style={styles.checkSpacer} />
+    );
+
+  const subtitleIsText =
+    typeof subtitle === "string" || typeof subtitle === "number";
 
   const body = (pressed: boolean) => (
     <View
@@ -116,19 +169,24 @@ export const ListRow = ({
           </Text>
           {badges ? <View style={styles.badges}>{badges}</View> : null}
         </View>
-        {subtitle ? (
-          <Text
-            style={[Type.footnote, { color: colors.textSecondary }]}
-            numberOfLines={2}
-          >
-            {subtitle}
-          </Text>
+        {subtitle !== undefined && subtitle !== null && subtitle !== "" ? (
+          subtitleIsText ? (
+            <Text
+              style={[Type.footnote, { color: colors.textSecondary }]}
+              numberOfLines={2}
+            >
+              {subtitle}
+            </Text>
+          ) : (
+            <View style={styles.subtitleNode}>{subtitle}</View>
+          )
         ) : null}
         {stacked && trailingNode ? (
           <View style={styles.stackedTrailing}>{trailingNode}</View>
         ) : null}
       </View>
       {stacked ? null : trailingNode}
+      {selectionNode}
       {chevron ? (
         <Icon
           sf="chevron.right"
@@ -141,12 +199,14 @@ export const ListRow = ({
     </View>
   );
 
+  const spokenSubtitle = subtitleIsText ? String(subtitle) : subtitleLabel;
   const a11y = {
     accessibilityRole: onPress ? ("button" as const) : undefined,
     accessibilityLabel:
-      accessibilityLabel ?? [title, subtitle, value].filter(Boolean).join(", "),
+      accessibilityLabel ??
+      [title, spokenSubtitle, value].filter(Boolean).join(", "),
     accessibilityHint,
-    accessibilityState: { disabled },
+    accessibilityState: { disabled, selected },
   };
 
   if (menu && !disabled) {
@@ -226,13 +286,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 4,
   },
+  subtitleNode: {
+    marginTop: 4,
+  },
   stackedTrailing: {
     alignSelf: "flex-start",
     marginTop: 4,
   },
   value: {
     fontVariant: ["tabular-nums"],
-    flexShrink: 0,
-    maxWidth: "45%",
+    flexShrink: 1,
+    textAlign: "right",
+  },
+  valueStacked: {
+    textAlign: "left",
+  },
+  checkSpacer: {
+    width: 17,
   },
 });

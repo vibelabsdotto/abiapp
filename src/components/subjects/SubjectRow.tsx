@@ -1,18 +1,20 @@
 // SubjectRow - one subject in the subjects tab: avatar, name with level and
 // exam chips, the half-year strip with the Block I status of the selected
 // half-year, and the selected half-year's value as a PointsBadge.
-// Long-press opens the native context menu (icons on iOS).
+// Built on ListRow (element subtitle); long-press opens the native context
+// menu (icons on iOS).
 
 import React from "react";
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { CircleCheck } from "lucide-react-native";
 
-import { ContextMenuRow } from "@components/common/ContextMenuRow";
 import {
   Chip,
   HalfYearStrip,
   Icon,
+  ListRow,
   PointsBadge,
+  SubjectAvatar,
   type ListRowMenu,
 } from "@components/ui";
 import { useTranslation } from "@locales/index";
@@ -21,7 +23,6 @@ import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
 
 import { formatExact } from "./format";
-import { SubjectBadge } from "./SubjectBadge";
 import type { CourseCell } from "./useSubjectData";
 
 interface SubjectRowProps {
@@ -49,8 +50,6 @@ export const SubjectRow = ({
 }: SubjectRowProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t, locale } = useTranslation();
-  const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= 1.6;
 
   const cell = cells[selectedHalfYear];
   const value = cell?.value;
@@ -90,122 +89,84 @@ export const SubjectRow = ({
     .filter(Boolean)
     .join(", ");
 
-  return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityActions={menu.actions.map((action) => ({
-        name: action.id,
-        label: action.title,
-      }))}
-      onAccessibilityAction={(event) => {
-        menu.actions
-          .find((action) => action.id === event.nativeEvent.actionName)
-          ?.onSelect();
-      }}
-    >
-      <ContextMenuRow
-        title={menu.title ?? subject.name}
-        actions={menu.actions}
-        onPress={onPress}
-      >
-        <View style={styles.row}>
-          <SubjectBadge
-            catalogKey={subject.catalogKey}
-            color={subject.color}
-            name={subject.name}
-            tags={subject.tags}
-            size={36}
-          />
-          <View style={styles.text}>
-            <View style={styles.titleRow}>
-              <Text
-                style={[Type.body, styles.title, { color: colors.text }]}
-                numberOfLines={2}
-              >
-                {subject.name}
-              </Text>
-              {subject.level === "elevated" ? (
-                <Chip
-                  label={elevatedShort}
-                  tone="accent"
-                  accessibilityLabel={elevatedName}
-                />
-              ) : null}
-              {subject.examSlot ? (
-                <Chip label={subject.examSlot} tone="outline" />
-              ) : null}
-            </View>
-            <View style={styles.meta}>
-              <HalfYearStrip
-                values={cells.map((item) => ({
-                  label: item.label,
-                  points: item.value.points,
-                  exact: item.value.exact,
-                  source: item.value.source,
-                  counted:
-                    item.taken && (!hasEvaluation || item.included !== null),
-                }))}
-                current={selectedHalfYear}
-              />
-              {status ? (
-                <View style={styles.status}>
-                  {status.tone === "in" ? (
-                    <Icon
-                      sf="checkmark.circle.fill"
-                      fallback={CircleCheck}
-                      size={13}
-                      color={colors.success}
-                    />
-                  ) : null}
-                  <Text
-                    style={[
-                      Type.caption1,
-                      styles.statusText,
-                      {
-                        color: colors.textSecondary,
-                      },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {status.text}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-            {stacked ? <View style={styles.stackedBadge}>{badge}</View> : null}
-          </View>
-          {stacked ? null : badge}
+  const meta = (
+    <View style={styles.meta}>
+      <HalfYearStrip
+        values={cells.map((item) => ({
+          label: item.label,
+          points: item.value.points,
+          exact: item.value.exact,
+          source: item.value.source,
+          counted: item.taken && (!hasEvaluation || item.included !== null),
+        }))}
+        current={selectedHalfYear}
+      />
+      {status ? (
+        <View style={styles.status}>
+          {status.tone === "in" ? (
+            <Icon
+              sf="checkmark.circle.fill"
+              fallback={CircleCheck}
+              size={13}
+              color={colors.success}
+            />
+          ) : null}
+          <Text
+            style={[
+              Type.caption1,
+              styles.statusText,
+              { color: colors.textSecondary },
+            ]}
+            numberOfLines={1}
+          >
+            {status.text}
+          </Text>
         </View>
-      </ContextMenuRow>
+      ) : null}
     </View>
+  );
+
+  return (
+    <ListRow
+      title={subject.name}
+      leading={
+        <SubjectAvatar
+          catalogKey={subject.catalogKey}
+          color={subject.color}
+          name={subject.name}
+          tags={subject.tags}
+          size={36}
+        />
+      }
+      badges={
+        subject.level === "elevated" || subject.examSlot ? (
+          <>
+            {subject.level === "elevated" ? (
+              <Chip
+                label={elevatedShort}
+                tone="accent"
+                accessibilityLabel={elevatedName}
+              />
+            ) : null}
+            {subject.examSlot ? (
+              <Chip label={subject.examSlot} tone="outline" />
+            ) : null}
+          </>
+        ) : undefined
+      }
+      subtitle={meta}
+      trailing={badge}
+      onPress={onPress}
+      menu={menu}
+      accessibilityLabel={label}
+      style={styles.row}
+    />
   );
 };
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
     minHeight: 64,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  text: {
-    flex: 1,
-    gap: 6,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    columnGap: 6,
-    rowGap: 4,
-  },
-  title: {
-    flexShrink: 1,
-    fontWeight: "500",
   },
   meta: {
     flexDirection: "row",
@@ -222,8 +183,5 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontWeight: "500",
-  },
-  stackedBadge: {
-    alignSelf: "flex-start",
   },
 });

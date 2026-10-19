@@ -16,6 +16,7 @@ import {
   SegmentedControl,
   SubjectColors,
   resolveSubjectColor,
+  subjectVisual,
   type SubjectColorKey,
 } from "@components/ui";
 import { validateSetup } from "@domain/index";
@@ -32,7 +33,6 @@ import { confirmRemoveSubject, savedFeedback, showError } from "./actions";
 import { EditorScroll, FormRow, FormSwitchRow, FormTextInput } from "./form";
 import { ModalHeader } from "./headers";
 import { levelLabel } from "./NewSubjectView";
-import { automaticColor } from "./SubjectBadge";
 import { useEditorClose } from "./useEditorClose";
 
 const EXAM_WEIGHT_PRESETS = [25, 33, 50, 67, 75];
@@ -158,7 +158,9 @@ export const EditSubjectView = ({
   const presets = EXAM_WEIGHT_PRESETS.includes(draft.examWeightPercent)
     ? EXAM_WEIGHT_PRESETS
     : [...EXAM_WEIGHT_PRESETS, draft.examWeightPercent].sort((a, b) => a - b);
-  const defaultColor = automaticColor(subject.catalogKey, subject.name);
+  const defaultColor = subjectVisual(subject.catalogKey, {
+    name: subject.name,
+  }).color;
   const stateName = ruleset?.stateName ?? "";
 
   return (

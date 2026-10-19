@@ -1,50 +1,16 @@
-// Small building blocks shared by the setup pickers: selection marks,
-// code badges (state code, exam slot) and the onboarding step scaffold
-// with a pinned footer button.
+// Small building blocks shared by the setup pickers: code badges (state
+// code, exam slot) and the onboarding step scaffold with a pinned footer
+// button. Selection marks live in ListRow (`selected`).
 
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Circle, CircleCheck } from "lucide-react-native";
 
 import { Button } from "@components/common/Button";
-import { Icon } from "@components/ui";
 import { FontScale, NumberType, Radius, Type } from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
-
-/** Trailing selection state: checkmark (single) or filled circle (multi). */
-export const SelectionMark = ({
-  selected,
-  multi = false,
-}: {
-  selected: boolean;
-  multi?: boolean;
-}) => {
-  const colors = useThemeStore((state) => state.colors);
-  if (multi) {
-    return (
-      <Icon
-        sf={selected ? "checkmark.circle.fill" : "circle"}
-        fallback={selected ? CircleCheck : Circle}
-        size={24}
-        color={selected ? colors.accent : colors.textTertiary}
-      />
-    );
-  }
-  return selected ? (
-    <Icon
-      sf="checkmark"
-      fallback={Check}
-      size={17}
-      weight="semibold"
-      color={colors.accent}
-    />
-  ) : (
-    <View style={styles.markSpacer} />
-  );
-};
 
 /** Rounded square with a short code ("SN", "P1"). */
 export const CodeBadge = ({
@@ -222,9 +188,6 @@ const styles = StyleSheet.create({
   note: {
     textAlign: "center",
     marginBottom: 6,
-  },
-  markSpacer: {
-    width: 17,
   },
   badge: {
     width: 32,

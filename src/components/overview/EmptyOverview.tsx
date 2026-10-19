@@ -7,7 +7,7 @@ import { router, type Href } from "expo-router";
 import { BookOpen, Plus } from "lucide-react-native";
 
 import { NativeMenu } from "@components/common";
-import { EmptyState, Icon, subjectVisual } from "@components/ui";
+import { EmptyState, Icon, useSubjectVisualResolver } from "@components/ui";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
@@ -26,6 +26,7 @@ export const EmptyOverview = ({
 }: EmptyOverviewProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
+  const visualFor = useSubjectVisualResolver();
 
   if (subjects.length === 0) {
     return (
@@ -60,7 +61,7 @@ export const EmptyOverview = ({
         actions={subjects.map((subject) => ({
           id: subject.id,
           title: subject.name,
-          image: subjectVisual(subject.catalogKey).sf,
+          image: visualFor(subject).sf,
         }))}
         onSelect={openEditor}
         style={styles.menu}

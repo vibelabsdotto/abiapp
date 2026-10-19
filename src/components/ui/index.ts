@@ -41,8 +41,11 @@ export {
 export {
   SUBJECT_COLOR_KEYS,
   SubjectColors,
+  hashSubjectColor,
   resolveSubjectColor,
   subjectVisual,
   type SubjectColorKey,
   type SubjectVisual,
+  type SubjectVisualHints,
 } from "./subjects";
+export { useSubjectVisualResolver, type SubjectLike } from "./useSubjectVisual";

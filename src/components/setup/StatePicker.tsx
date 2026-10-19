@@ -5,9 +5,8 @@ import React, { useMemo } from "react";
 import { listStates } from "@domain/index";
 import type { StateCode } from "@domain/model";
 import { ListRow, Section } from "@components/ui";
-import { useTranslation } from "@locales/index";
 
-import { CodeBadge, SelectionMark } from "./SetupParts";
+import { CodeBadge } from "./SetupParts";
 
 interface StatePickerProps {
   value: StateCode | null;
@@ -16,7 +15,6 @@ interface StatePickerProps {
 }
 
 export const StatePicker = ({ value, onChange, title }: StatePickerProps) => {
-  const { t } = useTranslation();
   const states = useMemo(() => listStates(), []);
   return (
     <Section title={title} separatorInset={60}>
@@ -27,11 +25,8 @@ export const StatePicker = ({ value, onChange, title }: StatePickerProps) => {
             key={state.code}
             title={state.name}
             leading={<CodeBadge label={state.code} />}
-            trailing={<SelectionMark selected={selected} />}
+            selected={selected}
             onPress={() => onChange(state.code)}
-            accessibilityLabel={
-              selected ? `${state.name}, ${t("setup.selected")}` : state.name
-            }
           />
         );
       })}

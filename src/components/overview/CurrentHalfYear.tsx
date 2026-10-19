@@ -72,6 +72,8 @@ export const CurrentHalfYear = ({
               <SubjectAvatar
                 catalogKey={subject.catalogKey}
                 color={subject.color}
+                name={subject.name}
+                tags={subject.tags}
               />
             }
             badges={

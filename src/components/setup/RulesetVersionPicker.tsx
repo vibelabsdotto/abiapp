@@ -10,7 +10,6 @@ import { useTranslation } from "@locales/index";
 import { tryDomain } from "@stores/domainAccess";
 
 import { isProvisional } from "./RulesetCard";
-import { SelectionMark } from "./SetupParts";
 
 interface RulesetVersionPickerProps {
   state: StateCode | null;
@@ -49,7 +48,7 @@ export const RulesetVersionPicker = ({
             ? t("setup.versionAutoHint", { label: automatic.label })
             : undefined
         }
-        trailing={<SelectionMark selected={value === null} />}
+        selected={value === null}
         onPress={() => onChange(null)}
       />
       {versions.map((ruleset) => (
@@ -61,7 +60,7 @@ export const RulesetVersionPicker = ({
               <Chip label={t("settings.draft")} tone="warning" />
             ) : undefined
           }
-          trailing={<SelectionMark selected={value === ruleset.id} />}
+          selected={value === ruleset.id}
           onPress={() => onChange(ruleset.id)}
         />
       ))}

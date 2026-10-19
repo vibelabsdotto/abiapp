@@ -17,21 +17,13 @@ import {
   NativeMenu,
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
-import {
-  Icon,
-  ListRow,
-  Section,
-  SubjectAvatar,
-  subjectVisual,
-} from "@components/ui";
+import { Icon, ListRow, Section, SubjectAvatar } from "@components/ui";
 import { Type } from "@constants/typography";
 import type { RulesetSummary, SubjectField } from "@domain/model";
 import { FIELD_ORDER, type CustomSubjectDraft } from "@hooks/useSetupFlows";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
-
-import { SelectionMark } from "./SetupParts";
 
 export const FIELD_SYMBOLS: Record<SubjectField, string> = {
   language: "character.book.closed",
@@ -82,7 +74,6 @@ export const SubjectPicker = ({
     entries: ruleset.catalog.filter((entry) => entry.field === field),
   })).filter((group) => group.entries.length > 0);
   const hasOrphans = custom.some((item) => item.orphan);
-  const selectedText = t("setup.selected");
 
   return (
     <>
@@ -101,11 +92,9 @@ export const SubjectPicker = ({
                 title={entry.name}
                 subtitle={hasData ? t("setup.subjects.hasData") : undefined}
                 leading={<SubjectAvatar catalogKey={entry.key} size={32} />}
-                trailing={<SelectionMark selected={isSelected} multi />}
+                selected={isSelected}
+                selectionStyle="circle"
                 onPress={() => onToggleKey(entry.key)}
-                accessibilityLabel={
-                  isSelected ? `${entry.name}, ${selectedText}` : entry.name
-                }
               />
             );
           })}
@@ -139,17 +128,11 @@ export const SubjectPicker = ({
               title={item.name}
               subtitle={subtitle}
               leading={
-                <SubjectAvatar
-                  catalogKey={null}
-                  sf={subjectVisual(null).sf}
-                  size={32}
-                />
+                <SubjectAvatar catalogKey={null} name={item.name} size={32} />
               }
-              trailing={<SelectionMark selected={item.selected} multi />}
+              selected={item.selected}
+              selectionStyle="circle"
               onPress={() => onToggleCustom(item.key)}
-              accessibilityLabel={
-                item.selected ? `${item.name}, ${selectedText}` : item.name
-              }
               menu={
                 item.subjectId === null
                   ? {

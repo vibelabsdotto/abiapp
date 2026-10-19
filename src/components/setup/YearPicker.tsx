@@ -6,8 +6,6 @@ import { ListRow, Section } from "@components/ui";
 import { ABITUR_YEARS, LATEST_ABITUR_YEAR } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
 
-import { SelectionMark } from "./SetupParts";
-
 interface YearPickerProps {
   value: number | null;
   onChange: (year: number) => void;
@@ -37,11 +35,8 @@ export const YearPicker = ({
           <ListRow
             key={year}
             title={label}
-            trailing={<SelectionMark selected={selected} />}
+            selected={selected}
             onPress={() => onChange(year)}
-            accessibilityLabel={
-              selected ? `${label}, ${t("setup.selected")}` : label
-            }
           />
         );
       })}
