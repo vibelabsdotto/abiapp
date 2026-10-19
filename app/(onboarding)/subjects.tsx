@@ -44,6 +44,7 @@ export default function OnboardingSubjectsScreen() {
       step={ONBOARDING_STEPS.subjects}
       totalSteps={ONBOARDING_TOTAL_STEPS}
       intro={t("onboarding.subjects.intro")}
+      keyboardAware
       footerNote={
         draft.canSave
           ? t("setup.subjects.selected", { count: draft.selectedCount })

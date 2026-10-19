@@ -69,6 +69,12 @@ interface OnboardingStepProps {
   secondary?: FooterAction;
   /** Extra line above the buttons (e.g. "Wähle mindestens 5 Fächer."). */
   footerNote?: string;
+  /**
+   * iOS: lift a focused text field above the keyboard. Only for steps with
+   * a text field; on other steps the inset adjustment collapses the large
+   * title when the screen is pushed.
+   */
+  keyboardAware?: boolean;
   children: React.ReactNode;
 }
 
@@ -84,6 +90,7 @@ export const OnboardingStep = ({
   primary,
   secondary,
   footerNote,
+  keyboardAware = false,
   children,
 }: OnboardingStepProps) => {
   const colors = useThemeStore((state) => state.colors);
@@ -101,6 +108,7 @@ export const OnboardingStep = ({
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={keyboardAware}
         contentContainerStyle={styles.content}
       >
         {step !== undefined || intro ? (

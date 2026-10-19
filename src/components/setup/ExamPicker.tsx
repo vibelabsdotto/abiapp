@@ -204,6 +204,15 @@ export const ExamPicker = ({
                 <ListRow
                   title={kindLabel(component)}
                   subtitle={levelHint}
+                  // VoiceOver: slot and chosen subject, not only the kind.
+                  accessibilityLabel={[
+                    component.slot,
+                    kindLabel(component),
+                    levelHint,
+                    subject ? subject.name : t("setup.exams.open"),
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                   leading={<CodeBadge label={component.slot} />}
                   trailing={
                     <SlotValue
