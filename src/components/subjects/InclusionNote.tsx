@@ -10,7 +10,7 @@ import type { CourseLevel, RulesetSummary } from "@domain/model";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
 
-import { formatFactor, mandatoryReason, type MandatoryReason } from "./format";
+import { formatFactor, mandatoryReason } from "./format";
 import type { CourseCell } from "./useSubjectData";
 
 interface InclusionNoteProps {
@@ -68,24 +68,27 @@ export const InclusionNote = ({
               halfYear: selectedCell.label,
             });
 
-  // Mandatory inclusions grouped by reason, most frequent first.
-  const reasons = new Map<MandatoryReason, number>();
+  // Mandatory inclusions grouped by reason, most frequent first. German
+  // uses the engine's label (IncludedCourse.mandatoryLabel); other
+  // languages and older results map the rule id to a translated reason.
+  const reasons = new Map<string, number>();
   included.forEach((cell) => {
     const ruleId = cell.included?.mandatoryRuleId;
     if (!ruleId) return;
+    const engineLabel =
+      locale === "de" ? (cell.included?.mandatoryLabel ?? null) : null;
     const reason = mandatoryReason(ruleId);
-    reasons.set(reason, (reasons.get(reason) ?? 0) + 1);
+    const text =
+      engineLabel ??
+      (reason === "elevated"
+        ? levelName
+        : t(`subjects.inclusion.reasons.${reason}`));
+    reasons.set(text, (reasons.get(text) ?? 0) + 1);
   });
   const mandatoryLines = [...reasons.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([reason, count]) =>
-      t("subjects.inclusion.mandatory", {
-        count,
-        reason:
-          reason === "elevated"
-            ? levelName
-            : t(`subjects.inclusion.reasons.${reason}`),
-      }),
+      t("subjects.inclusion.mandatory", { count, reason }),
     );
 
   const maxWeight = Math.max(
