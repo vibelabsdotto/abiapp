@@ -11,6 +11,11 @@ export default function SubjectsLayout() {
   return (
     <Stack screenOptions={screenOptions}>
       <Stack.Screen name="index" options={{ title: t("subjects.title") }} />
+      {/* Subject detail: compact native title, the result is the hero. */}
+      <Stack.Screen
+        name="[id]"
+        options={{ title: "", headerLargeTitleEnabled: false }}
+      />
     </Stack>
   );
 }

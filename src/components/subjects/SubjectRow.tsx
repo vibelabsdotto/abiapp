@@ -1,0 +1,219 @@
+// SubjectRow - one subject in the subjects tab: avatar, name with level and
+// exam chips, the half-year strip with the Block I status of the selected
+// half-year, and the selected half-year's value as a PointsBadge.
+// Long-press opens the native context menu (icons on iOS).
+
+import React from "react";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+
+import { ContextMenuRow } from "@components/common/ContextMenuRow";
+import {
+  Chip,
+  HalfYearStrip,
+  PointsBadge,
+  SubjectAvatar,
+  type ListRowMenu,
+} from "@components/ui";
+import { useTranslation } from "@locales/index";
+import type { SubjectRecord } from "@services/database";
+import { useThemeStore } from "@stores/themeStore";
+import { Type } from "@constants/typography";
+
+import { formatExact, formatFactor } from "./format";
+import type { CourseCell } from "./useSubjectData";
+
+interface SubjectRowProps {
+  subject: SubjectRecord;
+  cells: CourseCell[];
+  selectedHalfYear: number;
+  /** Short level name for elevated subjects ("LK", "eA"). */
+  elevatedShort: string;
+  elevatedName: string;
+  /** Block I inclusion is known (evaluation available). */
+  hasEvaluation: boolean;
+  onPress: () => void;
+  menu: ListRowMenu;
+}
+
+export const SubjectRow = ({
+  subject,
+  cells,
+  selectedHalfYear,
+  elevatedShort,
+  elevatedName,
+  hasEvaluation,
+  onPress,
+  menu,
+}: SubjectRowProps) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t, locale } = useTranslation();
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.6;
+
+  const cell = cells[selectedHalfYear];
+  const value = cell?.value;
+
+  let status: { text: string; color: string } | null = null;
+  if (cell && !cell.taken) {
+    status = { text: t("subjects.list.notTaken"), color: colors.textSecondary };
+  } else if (cell && hasEvaluation) {
+    if (cell.included) {
+      status = {
+        text:
+          cell.included.weight > 1
+            ? t("subjects.list.includedDouble", {
+                factor: formatFactor(cell.included.weight, locale),
+              })
+            : t("subjects.list.included"),
+        color: colors.success,
+      };
+    } else {
+      status = {
+        text: t("subjects.list.notIncluded"),
+        color: colors.textSecondary,
+      };
+    }
+  }
+
+  const badge = (
+    <PointsBadge
+      points={value?.points ?? null}
+      exact={value?.exact}
+      source={value?.source ?? "none"}
+      size="medium"
+    />
+  );
+
+  const spokenValue =
+    value && value.points !== null
+      ? `${value.source === "grades" && value.exact !== null ? formatExact(value.exact, locale) : value.points} ${t("ui.points")}, ${t(`ui.source.${value.source}`)}`
+      : t("ui.noValue");
+
+  const label = [
+    subject.name,
+    subject.level === "elevated" ? elevatedName : null,
+    subject.examSlot,
+    spokenValue,
+    status?.text,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityActions={menu.actions.map((action) => ({
+        name: action.id,
+        label: action.title,
+      }))}
+      onAccessibilityAction={(event) => {
+        menu.actions
+          .find((action) => action.id === event.nativeEvent.actionName)
+          ?.onSelect();
+      }}
+    >
+      <ContextMenuRow
+        title={menu.title ?? subject.name}
+        actions={menu.actions}
+        onPress={onPress}
+      >
+        <View style={styles.row}>
+          <SubjectAvatar
+            catalogKey={subject.catalogKey}
+            color={subject.color}
+            size={36}
+          />
+          <View style={styles.text}>
+            <View style={styles.titleRow}>
+              <Text
+                style={[Type.body, styles.title, { color: colors.text }]}
+                numberOfLines={2}
+              >
+                {subject.name}
+              </Text>
+              {subject.level === "elevated" ? (
+                <Chip
+                  label={elevatedShort}
+                  tone="accent"
+                  accessibilityLabel={elevatedName}
+                />
+              ) : null}
+              {subject.examSlot ? (
+                <Chip label={subject.examSlot} tone="outline" />
+              ) : null}
+            </View>
+            <View style={styles.meta}>
+              <HalfYearStrip
+                values={cells.map((item) => ({
+                  label: item.label,
+                  points: item.value.points,
+                  exact: item.value.exact,
+                  source: item.value.source,
+                  counted:
+                    item.taken && (!hasEvaluation || item.included !== null),
+                }))}
+                current={selectedHalfYear}
+              />
+              {status ? (
+                <Text
+                  style={[
+                    Type.caption1,
+                    styles.status,
+                    { color: status.color },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {status.text}
+                </Text>
+              ) : null}
+            </View>
+            {stacked ? <View style={styles.stackedBadge}>{badge}</View> : null}
+          </View>
+          {stacked ? null : badge}
+        </View>
+      </ContextMenuRow>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 64,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  text: {
+    flex: 1,
+    gap: 6,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    columnGap: 6,
+    rowGap: 4,
+  },
+  title: {
+    flexShrink: 1,
+    fontWeight: "500",
+  },
+  meta: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    columnGap: 10,
+    rowGap: 4,
+  },
+  status: {
+    marginTop: 3,
+    fontWeight: "500",
+  },
+  stackedBadge: {
+    alignSelf: "flex-start",
+  },
+});
