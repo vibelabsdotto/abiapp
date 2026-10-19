@@ -15,7 +15,7 @@ export function validateContext(ctx: RuleContext): Issue[] {
     issues.push({
       code: "setup.elevated.count",
       severity: elevated.length > max ? "error" : "warning",
-      message: `Du brauchst ${want} Fächer als ${el.name} (${el.short}), gewählt: ${elevated.length}.`,
+      message: `Du brauchst ${want} ${el.short}-Fächer (${el.name}), gewählt: ${elevated.length}.`,
     });
   }
   const catalog = new Map(r.catalog.map((c) => [c.key, c]));
@@ -59,7 +59,7 @@ export function validateContext(ctx: RuleContext): Issue[] {
       issues.push({
         code: "exam.slot.level",
         severity: "error",
-        message: `${comp.slot} muss ein Fach auf ${need.name}-Niveau (${need.short}) sein.`,
+        message: `${comp.slot} muss ein ${need.short}-Fach sein (${need.name}).`,
         subjectId: s.id,
         slot: comp.slot,
       });

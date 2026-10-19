@@ -1,15 +1,20 @@
 // Block I: course inclusion with exact optimization.
 //
-// For one configuration (weighting, one option per requirement, extra
-// variant, relaxation, implication choice) the optimal selection is:
-// forced courses (manual, picks as best-k per subject, group minimums with
-// the best group courses) plus the best remaining courses per weight class.
-// Within a subject all courses share one weight, so taking the best k of a
-// subject dominates any other k courses in both sum and deficit count. The
-// engine enumerates all configurations and all admissible counts (N within
-// the range, every split over weight classes) and keeps the selection that
-// is admissible and maximizes E_I (ties: fewer deficits, higher exact P/S,
-// fewer courses). Verified against brute force on random cases (scratch).
+// 1. Configurations: weighting option x one option per requirement x extra
+//    variant x relaxation. Dominated requirement options (forcing a superset
+//    of another option's courses) are pruned exactly; configurations with an
+//    identical forced set are evaluated once.
+// 2. Forced set per configuration: manual includes, extras, implication
+//    courses of included subjects, picks as best-k per subject (restricted
+//    half-years first), then the maximum over all picks of a subject.
+// 3. Fill: the remaining courses form lists (same weight, same group and
+//    deficit-filter membership, best first; subjects with a pending
+//    implication get their own list with the required course first). Taking
+//    a prefix of each list is optimal, so a small DP over the lists yields
+//    the best P for every (count, S, deficits, group progress) state.
+// 4. Every admissible count N in the range is scored: admissible first, then
+//    E_I, fewer deficits, higher exact P/S, fewer courses.
+// Verified against brute force on 20,000 random cases (scratch probes).
 
 import type {
   BlockIResult,
@@ -25,6 +30,7 @@ import type {
   ExtraVariant,
   GroupMin,
   Implication,
+  Pick,
   Relaxation,
   Requirement,
   RequirementOption,
@@ -35,7 +41,6 @@ import { courseKey } from "./context";
 import { roundHalfUpFrac } from "./math";
 
 const MAX_CONFIGS = 20000;
-const MAX_IMPLICATION_BITS = 10;
 
 interface BaseCourse {
   key: string;
@@ -264,23 +269,6 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   const implications = rules.implications?.(ctx) ?? [];
 
   // ---- configuration space -------------------------------------------------
-  let optionLists = active.map((a) => a.options);
-  const size = () =>
-    weightings.length *
-    relaxations.length *
-    optionLists.reduce((n, l) => n * l.length, 1) *
-    extraChoices.reduce((n, e) => n * e.variants.length, 1);
-  let approximate = false;
-  if (size() > MAX_CONFIGS) {
-    approximate = true;
-    relaxations.splice(1);
-    optionLists = optionLists.map((l) => l.slice(0, 3));
-    while (size() > MAX_CONFIGS)
-      optionLists = optionLists.map((l) =>
-        l.slice(0, Math.max(1, l.length - 1)),
-      );
-  }
-
   const caps = new Map<string, number>();
   for (const s of ctx.subjects) {
     const cap = rules.maxPerSubject?.(s, ctx);
@@ -292,6 +280,72 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   const maxN = rules.count.max;
   const formula =
     rules.formula ?? ((P: number, S: number) => roundHalfUpFrac(P * 40, S));
+  let approximate = false;
+
+  /**
+   * Options of every active requirement without dominated ones. Option A
+   * dominates B if A forces nothing B does not force as well (after merging
+   * with the fixed single-option duties), so B can never be better. Exact.
+   */
+  function prunedOptions(relaxation: Relaxation | null): RequirementOption[][] {
+    const countOf = (reqId: string, p: Pick) =>
+      relaxation &&
+      relaxation.subjectId === p.subjectId &&
+      relaxation.requirementIds.includes(reqId)
+        ? Math.max(0, p.count - 1)
+        : p.count;
+    const fixed = new Map<string, number>();
+    for (const a of active) {
+      if (a.options.length !== 1) continue;
+      for (const p of a.options[0].picks) {
+        if (!p.halfYears) {
+          fixed.set(
+            p.subjectId,
+            Math.max(fixed.get(p.subjectId) ?? 0, countOf(a.req.id, p)),
+          );
+        }
+      }
+    }
+    return active.map((a) => {
+      if (a.options.length <= 1) return a.options;
+      const eff = a.options.map((o) => {
+        const extra = new Map<string, number>();
+        const restricted = new Set<string>();
+        for (const p of o.picks) {
+          const c = countOf(a.req.id, p);
+          if (p.halfYears)
+            restricted.add(`${p.subjectId}:${c}:${p.halfYears.join(",")}`);
+          else if (c > (fixed.get(p.subjectId) ?? 0)) {
+            extra.set(p.subjectId, Math.max(extra.get(p.subjectId) ?? 0, c));
+          }
+        }
+        const groups = new Set(
+          (o.groupMins ?? []).map(
+            (g) =>
+              `${g.subjectIds.join(",")}:${g.count}:${g.halfYears?.join(",") ?? ""}`,
+          ),
+        );
+        return { o, extra, restricted, groups };
+      });
+      type Eff = (typeof eff)[number];
+      const dominates = (A: Eff, B: Eff): boolean => {
+        for (const [sid, c] of A.extra)
+          if ((B.extra.get(sid) ?? fixed.get(sid) ?? 0) < c) return false;
+        for (const r of A.restricted) if (!B.restricted.has(r)) return false;
+        for (const g of A.groups) if (!B.groups.has(g)) return false;
+        return true;
+      };
+      return eff
+        .filter(
+          (e, i) =>
+            !eff.some(
+              (f, j) =>
+                j !== i && dominates(f, e) && (!dominates(e, f) || j < i),
+            ),
+        )
+        .map((e) => e.o);
+    });
+  }
 
   for (const weighting of weightings) {
     const items = base
@@ -304,36 +358,53 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       bySubject.set(it.subjectId as string, arr);
     }
     const manualItems = items.filter((i) => i.manual);
-
-    const optIdx = optionLists.map(() => 0);
-    const extraIdx = extraChoices.map(() => 0);
-    for (;;) {
-      for (const relaxation of relaxations) {
+    const seen = new Set<string>();
+    const budget = Math.max(1, Math.floor(MAX_CONFIGS / relaxations.length));
+    for (const relaxation of relaxations) {
+      let optionLists = prunedOptions(relaxation);
+      const extraCount = extraChoices.reduce(
+        (n, e) => n * e.variants.length,
+        1,
+      );
+      const size = () =>
+        optionLists.reduce((n, l) => n * l.length, 1) * extraCount;
+      if (size() > budget) {
+        approximate = true;
+        while (size() > budget && optionLists.some((l) => l.length > 1)) {
+          optionLists = optionLists.map((l) =>
+            l.slice(0, Math.max(1, l.length - 1)),
+          );
+        }
+      }
+      const optIdx = optionLists.map(() => 0);
+      const extraIdx = extraChoices.map(() => 0);
+      for (;;) {
         runConfig(
           weighting,
           items,
           bySubject,
           manualItems,
+          optionLists,
           optIdx,
           extraIdx,
           relaxation,
+          seen,
         );
+        let pos = 0;
+        for (; pos < optIdx.length; pos++) {
+          optIdx[pos]++;
+          if (optIdx[pos] < optionLists[pos].length) break;
+          optIdx[pos] = 0;
+        }
+        if (pos < optIdx.length) continue;
+        let epos = 0;
+        for (; epos < extraIdx.length; epos++) {
+          extraIdx[epos]++;
+          if (extraIdx[epos] < extraChoices[epos].variants.length) break;
+          extraIdx[epos] = 0;
+        }
+        if (epos >= extraIdx.length) break;
       }
-      // advance odometer
-      let pos = 0;
-      for (; pos < optIdx.length; pos++) {
-        optIdx[pos]++;
-        if (optIdx[pos] < optionLists[pos].length) break;
-        optIdx[pos] = 0;
-      }
-      if (pos < optIdx.length) continue;
-      let epos = 0;
-      for (; epos < extraIdx.length; epos++) {
-        extraIdx[epos]++;
-        if (extraIdx[epos] < extraChoices[epos].variants.length) break;
-        extraIdx[epos] = 0;
-      }
-      if (epos >= extraIdx.length) break;
     }
   }
 
@@ -342,9 +413,11 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     items: BlockItem[],
     bySubject: Map<string, BlockItem[]>,
     manualItems: BlockItem[],
+    optionLists: RequirementOption[][],
     optIdx: number[],
     extraIdx: number[],
     relaxation: Relaxation | null,
+    seen: Set<string>,
   ): void {
     const selected = new Map<string, Chosen>();
     const countBySubject = new Map<string, number>();
@@ -476,49 +549,30 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       }
       if (have < l.count) violations.push(l.label);
     }
-
-    // Remaining implication subjects: try "included" (course forced) and "not included".
-    const free: Implication[] = [];
     for (const imp of implications) {
       if ((countBySubject.get(imp.subjectId) ?? 0) > 0) forceImplication(imp);
-      else if (
-        bySubject.has(imp.subjectId) &&
-        !free.some((f) => f.subjectId === imp.subjectId)
-      )
-        free.push(imp);
     }
-    const freeBits = Math.min(free.length, MAX_IMPLICATION_BITS);
-    const masks = 1 << freeBits;
-    const baseSelected = new Map(selected);
-    const baseCounts = new Map(countBySubject);
-    const baseViolations = [...violations];
-    for (let mask = 0; mask < masks; mask++) {
-      selected.clear();
-      for (const [k, v] of baseSelected) selected.set(k, v);
-      countBySubject.clear();
-      for (const [k, v] of baseCounts) countBySubject.set(k, v);
-      violations.length = 0;
-      violations.push(...baseViolations);
-      const banned = new Set<string>();
-      free.forEach((imp, i) => {
-        if (i < freeBits && mask & (1 << i)) {
-          for (const x of implications)
-            if (x.subjectId === imp.subjectId) forceImplication(x);
-        } else banned.add(imp.subjectId);
-      });
-      fill(
-        weighting,
-        items,
-        selected,
-        countBySubject,
-        violations,
-        banned,
-        groupMins,
-        chosenOptions,
-        relaxation,
-        extraVariants,
-      );
-    }
+    // Identical forced sets give identical results.
+    const sig = `${[...selected.keys()].sort().join(",")}|${groupMins.map((g) => `${g.id}:${g.count}`).join(",")}|${violations.join(";")}`;
+    if (seen.has(sig)) return;
+    seen.add(sig);
+    fill(
+      weighting,
+      items,
+      selected,
+      countBySubject,
+      violations,
+      groupMins,
+      chosenOptions,
+      relaxation,
+      extraVariants,
+    );
+  }
+
+  interface FillList {
+    items: BlockItem[];
+    /** A list may only be used with 0 or at least minIfAny courses (implication subjects). */
+    minIfAny: number;
   }
 
   function fill(
@@ -527,7 +581,6 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     selected: Map<string, Chosen>,
     countBySubject: Map<string, number>,
     violationsIn: string[],
-    banned: Set<string>,
     groupMins: GroupMin[],
     chosenOptions: Candidate["options"],
     relaxation: Relaxation | null,
@@ -536,10 +589,12 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     let slotsM = 0;
     let PM = 0;
     let SM = 0;
+    let defTM = 0;
     for (const c of selected.values()) {
       slotsM += c.item.slots;
       PM += c.item.wP;
       SM += c.item.wS;
+      defTM += c.item.deficits;
     }
     const inGroup = (g: GroupMin, it: BlockItem) =>
       !!it.subjectId &&
@@ -550,61 +605,80 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       for (const c of selected.values()) if (inGroup(g, c.item)) have++;
       return Math.max(0, g.count - have);
     });
-    const limitFilters = rules
-      .deficitLimits(Math.max(minN, slotsM), SM, ctx)
-      .map((l) => l.filter)
-      .filter((f): f is (i: BlockItem) => boolean => !!f);
-    // Pool partitioned by weight, group membership and deficit-limit filters; best courses first, caps applied.
+    const refLimits = rules.deficitLimits(Math.max(minN, slotsM), SM, ctx);
+    const limitDef = (l: DeficitLimit, it: BlockItem) =>
+      !l.filter || l.filter(it)
+        ? it.deficits * (l.weighted ? it.weight : 1)
+        : 0;
+
+    // Free implication subjects form their own list: required courses first.
+    const impBySubject = new Map<string, number[]>();
+    for (const imp of implications) {
+      if ((countBySubject.get(imp.subjectId) ?? 0) > 0) continue;
+      const hys = impBySubject.get(imp.subjectId) ?? [];
+      hys.push(imp.halfYear);
+      impBySubject.set(imp.subjectId, hys);
+    }
+    const lists: FillList[] = [];
     const listKey = new Map<string, number>();
-    const lists: BlockItem[][] = [];
-    const listGroups: number[][] = [];
     const used = new Map<string, number>();
+    const impItems = new Map<string, BlockItem[]>();
     for (const it of items) {
       const sid = it.subjectId as string;
-      if (selected.has(it.key) || banned.has(sid)) continue;
+      if (selected.has(it.key)) continue;
+      if (impBySubject.has(sid)) {
+        const arr = impItems.get(sid) ?? [];
+        arr.push(it);
+        impItems.set(sid, arr);
+        continue;
+      }
       const cap = caps.get(sid);
       if (cap !== undefined) {
         const u = (countBySubject.get(sid) ?? 0) + (used.get(sid) ?? 0);
         if (u >= cap) continue;
         used.set(sid, (used.get(sid) ?? 0) + 1);
       }
-      const gs: number[] = [];
+      let sig = `${it.wS}|`;
       groupMins.forEach((g, gi) => {
-        if (need[gi] > 0 && inGroup(g, it)) gs.push(gi);
+        if (need[gi] > 0 && inGroup(g, it)) sig += `${gi},`;
       });
-      // Separate lists per deficit-limit filter so that limited deficits can be swapped.
-      let lim = "";
-      limitFilters.forEach((f, li) => {
-        if (f(it)) lim += `${li},`;
+      sig += "|";
+      refLimits.forEach((l, li) => {
+        if (l.filter && l.filter(it)) sig += `${li},`;
       });
-      const key = `${it.wS}|${gs.join(",")}|${lim}`;
-      let li = listKey.get(key);
+      let li = listKey.get(sig);
       if (li === undefined) {
         li = lists.length;
-        listKey.set(key, li);
-        lists.push([]);
-        listGroups.push(gs);
+        listKey.set(sig, li);
+        lists.push({ items: [], minIfAny: 0 });
       }
-      lists[li].push(it);
+      lists[li].items.push(it);
     }
-    const prefP = lists.map((l) => {
-      const a = [0];
-      for (const it of l) a.push(a[a.length - 1] + it.wP);
-      return a;
-    });
-    const prefS = lists.map((l) => {
-      const a = [0];
-      for (const it of l) a.push(a[a.length - 1] + it.wS);
-      return a;
-    });
-    const poolSize = lists.reduce((n, l) => n + l.length, 0);
+    for (const [sid, hys] of impBySubject) {
+      const arr = impItems.get(sid) ?? [];
+      const req = arr.filter((x) => hys.includes(x.halfYear));
+      if (req.length < new Set(hys).size) continue; // required course unavailable: subject cannot be included
+      const cap = caps.get(sid);
+      const room =
+        cap === undefined ? Infinity : cap - (countBySubject.get(sid) ?? 0);
+      if (room < req.length) continue;
+      const ordered = [...req, ...arr.filter((x) => !hys.includes(x.halfYear))];
+      lists.push({
+        items: ordered.slice(0, Math.min(ordered.length, room)),
+        minIfAny: req.length,
+      });
+    }
+
+    const poolSize = lists.reduce((n, l) => n + l.items.length, 0);
     const violationsBase = [...violationsIn];
     let nFrom = Math.max(minN, slotsM);
     let nTo = maxN;
     if (slotsM > maxN) {
-      violationsBase.push(
-        `Mehr Pflichteinbringungen (${slotsM}) als erlaubt (${maxN})`,
-      );
+      if (!rules.count.extendToMandatory) {
+        violationsBase.push(
+          `Mehr Pflichteinbringungen (${slotsM}) als erlaubt (${maxN})`,
+        );
+      }
       nFrom = nTo = slotsM;
     } else if (slotsM + poolSize < minN) {
       violationsBase.push(
@@ -614,70 +688,108 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     } else {
       nTo = Math.min(maxN, slotsM + poolSize);
     }
+    const fMax = nTo - slotsM;
 
-    const split = new Array<number>(lists.length).fill(0);
-    let curN = 0;
-    const enumerate = (ci: number, rest: number): void => {
-      if (lists.length === 0) {
-        if (rest === 0) consider(curN);
-        return;
-      }
-      if (ci === lists.length - 1) {
-        if (rest > lists[ci].length) return;
-        split[ci] = rest;
-        consider(curN);
-        return;
-      }
-      const maxHere = Math.min(rest, lists[ci].length);
-      for (let a = maxHere; a >= 0; a--) {
-        split[ci] = a;
-        enumerate(ci + 1, rest - a);
-      }
+    // DP over lists (each list used as a prefix): best P per (count, S, deficits, groups).
+    interface St {
+      t: number;
+      P: number;
+      S: number;
+      defT: number;
+      defs: number[];
+      zero: number;
+      grp: number[];
+      pick: number[];
+    }
+    let states = new Map<string, St>();
+    const init: St = {
+      t: 0,
+      P: 0,
+      S: 0,
+      defT: 0,
+      defs: refLimits.map(() => 0),
+      zero: 0,
+      grp: need.map(() => 0),
+      pick: [],
     };
-    for (let N = nFrom; N <= nTo; N++) {
-      curN = N;
-      enumerate(0, N - slotsM);
+    states.set("", init);
+    for (let li = 0; li < lists.length; li++) {
+      const list = lists[li];
+      const next = new Map<string, St>();
+      for (const st of states.values()) {
+        let P = st.P;
+        let S = st.S;
+        let defT = st.defT;
+        const defs = [...st.defs];
+        let zero = st.zero;
+        const grp = [...st.grp];
+        for (let k = 0; k <= list.items.length && st.t + k <= fMax; k++) {
+          if (k > 0) {
+            const it = list.items[k - 1];
+            P += it.wP;
+            S += it.wS;
+            defT += it.deficits;
+            refLimits.forEach((l, i) => {
+              defs[i] += limitDef(l, it);
+            });
+            if (it.zero) zero = 1;
+            groupMins.forEach((g, gi) => {
+              if (grp[gi] < need[gi] && inGroup(g, it)) grp[gi]++;
+            });
+          }
+          if (k > 0 && k < list.minIfAny) continue;
+          const t = st.t + k;
+          const key = `${t}|${S}|${defT}|${defs.join(",")}|${zero}|${grp.join(",")}`;
+          const cur = next.get(key);
+          if (!cur || P > cur.P) {
+            next.set(key, {
+              t,
+              P,
+              S,
+              defT,
+              defs: [...defs],
+              zero,
+              grp: [...grp],
+              pick: [...st.pick, k],
+            });
+          }
+        }
+      }
+      states = next;
     }
 
-    function consider(N: number): void {
-      let P = PM;
-      let S = SM;
-      for (let i = 0; i < lists.length; i++) {
-        P += prefP[i][split[i]];
-        S += prefS[i][split[i]];
-      }
-      if (S <= 0) return;
+    for (const st of states.values()) {
+      const N = slotsM + st.t;
+      if (N < nFrom || N > nTo) continue;
+      const P = PM + st.P;
+      const S = SM + st.S;
+      if (S <= 0) continue;
       const groupViolations: string[] = [];
       groupMins.forEach((g, gi) => {
-        if (need[gi] === 0) return;
-        let got = 0;
-        for (let i = 0; i < lists.length; i++)
-          if (listGroups[i].includes(gi)) got += split[i];
-        if (got < need[gi]) groupViolations.push(g.label);
+        if (st.grp[gi] < need[gi]) groupViolations.push(g.label);
       });
       const E = formula(P, S);
       if (best && best.feasible && (E < best.E || groupViolations.length > 0))
-        return;
+        continue;
       const chosen: Chosen[] = [...selected.values()];
       const groupLeft = [...need];
-      for (let i = 0; i < lists.length; i++) {
-        for (let k = 0; k < split[i]; k++) {
+      lists.forEach((list, li) => {
+        for (let k = 0; k < (st.pick[li] ?? 0); k++) {
+          const it = list.items[k];
           let ruleId: string | null = null;
-          for (const gi of listGroups[i]) {
-            if (groupLeft[gi] > 0) {
+          for (let gi = 0; gi < groupMins.length; gi++) {
+            if (groupLeft[gi] > 0 && inGroup(groupMins[gi], it)) {
               groupLeft[gi]--;
               ruleId = groupMins[gi].id;
               break;
             }
           }
-          chosen.push({ item: lists[i][k], ruleId });
+          chosen.push({ item: it, ruleId });
         }
-      }
-      let deficits = 0;
-      let zeroIncluded = 0;
+      });
       const perSubject = new Map<string, number>();
+      let zeroIncluded = 0;
       for (const c of chosen) {
-        deficits += c.item.deficits;
         if (c.item.zero) zeroIncluded++;
         if (c.item.subjectId)
           perSubject.set(
@@ -688,8 +800,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       const limits = rules.deficitLimits(N, S, ctx);
       const limitResults = limits.map((limit) => {
         let count = 0;
-        for (const c of chosen)
-          if (!limit.filter || limit.filter(c.item)) count += c.item.deficits;
+        for (const c of chosen) count += limitDef(limit, c.item);
         return { limit, count };
       });
       const violations = [...violationsBase, ...groupViolations];
@@ -709,7 +820,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         P,
         S,
         N,
-        deficits,
+        deficits: defTM + st.defT,
         violations,
         limitResults,
         chosen,

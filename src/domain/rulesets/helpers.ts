@@ -348,7 +348,12 @@ export function checkMinComponents(
   const reqOk = opts.require ? ok.filter(opts.require).length : Infinity;
   const passedNow =
     ok.length >= opts.count && reqOk >= (opts.requireCount ?? 1);
-  const allKnown = known.length === c.components.length;
+  // Components without an assigned subject cannot satisfy `require` yet.
+  const unassigned = c.components.some(
+    (x) => !x.subject && (x.kind !== "bll" || x.subjectId !== null),
+  );
+  const allKnown =
+    known.length === c.components.length && !(opts.require && unassigned);
   return {
     id: opts.id,
     label: opts.label,

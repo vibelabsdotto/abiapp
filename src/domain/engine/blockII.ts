@@ -60,13 +60,16 @@ export function evaluateBlockII(ctx: RuleContext): BlockIIOutcome {
       });
     }
     const exam = ctx.input.exams.find((e) => e.slot === comp.slot);
-    let main: number | null = comp.extraId
-      ? ctx.extra(comp.extraId)
-      : (exam?.mainPoints ?? null);
+    const computed = comp.value?.(ctx) ?? null;
+    let main: number | null = computed
+      ? computed.points
+      : comp.extraId
+        ? ctx.extra(comp.extraId)
+        : (exam?.mainPoints ?? null);
     const twoParts = !!comp.partLabels?.oral && comp.kind === "bll";
     let oral: number | null =
       comp.supplementaryOral || twoParts ? (exam?.oralPoints ?? null) : null;
-    let isPredicted = false;
+    let isPredicted = computed?.predicted ?? false;
     if (main === null) {
       if (twoParts && oral !== null) main = oral;
       else {

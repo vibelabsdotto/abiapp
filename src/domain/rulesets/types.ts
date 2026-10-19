@@ -177,6 +177,8 @@ export interface DeficitLimit {
   max: number;
   /** Items counted by this limit (default: all). */
   filter?(item: BlockItem): boolean;
+  /** Count a deficit with the course weight (a doubled course counts twice, ST). */
+  weighted?: boolean;
 }
 
 export interface BlockISelection {
@@ -190,8 +192,12 @@ export interface BlockISelection {
 export interface BlockIRules {
   maxPoints: number;
   minPoints: number;
-  /** Number of Block I places (min = max for a fixed count). */
-  count: { min: number; max: number };
+  /**
+   * Number of Block I places (min = max for a fixed count). With
+   * extendToMandatory, more mandatory places than `max` raise N instead of
+   * failing (SH § 32 Abs. 3).
+   */
+  count: { min: number; max: number; extendToMandatory?: boolean };
   weightings(ctx: RuleContext): WeightingOption[];
   requirements(ctx: RuleContext): Requirement[];
   relaxations?(ctx: RuleContext): Relaxation[];
@@ -232,6 +238,11 @@ export interface BlockIRules {
 // ---------------------------------------------------------------------------
 
 export interface ExamComponentDef extends ExamComponentInfo {
+  /**
+   * Main value computed by the ruleset (e.g. TH Seminarfachleistung from
+   * three extras). Null falls back to the exam input, then to a prediction.
+   */
+  value?(ctx: RuleContext): { points: number; predicted: boolean } | null;
   /**
    * Combines main and (optional) supplementary result into weighted points.
    * Default: factor · main, or rounding(factor · (2·main + oral) / 3).
