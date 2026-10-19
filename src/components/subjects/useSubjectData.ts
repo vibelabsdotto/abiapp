@@ -16,6 +16,7 @@ import type {
   GradeRecord,
   SubjectRecord,
 } from "@services/database";
+import { useCurrentHalfYear } from "@hooks/useCurrentHalfYear";
 import { useEvaluation } from "@hooks/useEvaluation";
 import { useHalfYearLabels } from "@hooks/useRuleset";
 import { useCourseStore } from "@stores/courseStore";
@@ -24,27 +25,8 @@ import { usePreferencesStore } from "@stores/preferencesStore";
 
 const key = (subjectId: string, halfYear: number) => `${subjectId}:${halfYear}`;
 
-/**
- * Current half-year: the first one in which no taken course has an official
- * result yet. Falls back to the last half-year once everything is official.
- */
-export function useCurrentHalfYear(): number {
-  const labels = useHalfYearLabels();
-  const courses = useCourseStore((state) => state.courses);
-  return useMemo(() => {
-    const count = labels.length;
-    if (count === 0) return 0;
-    for (let halfYear = 0; halfYear < count; halfYear += 1) {
-      const taken = courses.filter(
-        (course) => course.halfYear === halfYear && course.taken,
-      );
-      if (!taken.some((course) => course.officialPoints !== null)) {
-        return halfYear;
-      }
-    }
-    return count - 1;
-  }, [labels, courses]);
-}
+/** Shared rule for overview and subjects tab (hooks/useCurrentHalfYear). */
+export { useCurrentHalfYear };
 
 /** Half-year shown in the subjects tab (persisted choice or current one). */
 export function useSelectedHalfYear(): [number, (halfYear: number) => void] {

@@ -4,24 +4,25 @@
 import { useMemo } from "react";
 
 import type { RulesetSummary } from "@domain/model";
+import { useCurrentHalfYear } from "@hooks/useCurrentHalfYear";
 import { useEvaluation } from "@hooks/useEvaluation";
 import { useRuleset } from "@hooks/useRuleset";
 import { useCourseStore } from "@stores/courseStore";
 import type { SubjectRecord } from "@services/database";
 
-import { currentHalfYear, hasAnyData } from "./data";
+import { hasAnyData } from "./data";
 
 export function useAbiturData() {
   const { evaluation, input, error, status } = useEvaluation();
   const { ruleset, error: rulesetError } = useRuleset();
   const subjects = useCourseStore((state) => state.subjects);
+  const current = useCurrentHalfYear();
 
   return useMemo(() => {
     const subjectsById = new Map<string, SubjectRecord>(
       subjects.map((subject) => [subject.id, subject]),
     );
     const halfYears = ruleset?.halfYears ?? [];
-    const current = input ? currentHalfYear(input, halfYears.length) : 0;
     return {
       evaluation,
       input,
@@ -34,7 +35,16 @@ export function useAbiturData() {
       error: error ?? rulesetError,
       status,
     };
-  }, [evaluation, input, ruleset, subjects, error, rulesetError, status]);
+  }, [
+    evaluation,
+    input,
+    ruleset,
+    subjects,
+    current,
+    error,
+    rulesetError,
+    status,
+  ]);
 }
 
 export type AbiturData = ReturnType<typeof useAbiturData>;

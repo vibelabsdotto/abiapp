@@ -1,5 +1,6 @@
-// Pure helpers shared by the overview and Abitur screens: current half-year,
-// "has data", status items and number formatting. No React imports.
+// Pure helpers shared by the overview and Abitur screens: "has data",
+// status items and number formatting. No React imports. The current
+// half-year lives in utils/currentHalfYear (shared with the subjects tab).
 
 import type {
   AbiturEvaluation,
@@ -7,26 +8,6 @@ import type {
   Issue,
   RuleCheck,
 } from "@domain/model";
-
-/**
- * The half-year the student is in: the first one in which a taken course
- * still lacks its official result. All complete: the last half-year.
- */
-export function currentHalfYear(
-  input: EngineInput,
-  halfYearCount: number,
-): number {
-  for (let halfYear = 0; halfYear < halfYearCount; halfYear += 1) {
-    const open = input.courses.some(
-      (course) =>
-        course.halfYear === halfYear &&
-        course.taken &&
-        course.officialPoints === null,
-    );
-    if (open) return halfYear;
-  }
-  return Math.max(0, halfYearCount - 1);
-}
 
 /** True once any grade, official result, exam or extra is entered. */
 export function hasAnyData(input: EngineInput): boolean {
