@@ -76,10 +76,10 @@ export default function HomeScreen() {
   }
 
   const failed = evaluation.total.passed === false;
-  // Without a pass there is no grade: the hero then shows the goal without
-  // claiming "Ziel erreicht".
+  // The hero marks the goal on the arch (hidden when not passed); the goal
+  // card below names it.
   const goalPoints =
-    targetTenths === null || failed
+    targetTenths === null
       ? null
       : (analysis?.requiredTotal ?? minPointsForGrade(targetTenths));
 

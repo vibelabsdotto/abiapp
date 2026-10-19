@@ -49,8 +49,7 @@ export const de = {
       passMarker: "Bestanden ab {{points}}",
       topMarker: "1,0 ab {{points}}",
       goal: "Ziel {{grade}}",
-      goalMissing: "noch {{points}} Punkte",
-      goalReached: "Ziel erreicht",
+      goalMarker: "Dein Ziel",
       gradeLabel: "Abiturschnitt {{grade}}",
     },
     check: {

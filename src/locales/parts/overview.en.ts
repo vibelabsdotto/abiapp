@@ -17,14 +17,17 @@ export const overviewEN = {
       setTitle: "Set a target grade",
       setMessage: "Then you can see how many points you still need.",
       title: "Goal {{grade}}",
+      titleMissing: "Goal {{grade}} · {{points}} points to go",
+      titleReached: "Goal {{grade}} reached",
+      titleUnreachable: "Goal {{grade}} out of reach",
       needAverage:
         "You need an average of {{points}} points in all open courses and exams.",
-      reached: "You are {{points}} points above your goal.",
+      reached: "{{points}} points to spare.",
       reachedExact: "You are exactly on your goal.",
       keepAverage:
         "An average of {{points}} points in the open courses and exams is enough.",
       unreachable:
-        "No longer reachable with the open courses, even with 15 points everywhere.",
+        "Even 15 points in every open course and exam are not enough any more.",
       noOpen: "Nothing is open any more. Your result is final.",
       failed:
         "You only get a grade once every condition is met. Check the open points.",

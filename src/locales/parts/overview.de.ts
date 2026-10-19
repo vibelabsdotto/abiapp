@@ -18,14 +18,17 @@ export const overviewDE = {
       setTitle: "Wunschschnitt festlegen",
       setMessage: "Dann siehst du, wie viele Punkte dir noch fehlen.",
       title: "Ziel {{grade}}",
+      titleMissing: "Ziel {{grade}} · noch {{points}} Punkte",
+      titleReached: "Ziel {{grade}} erreicht",
+      titleUnreachable: "Ziel {{grade}} nicht mehr erreichbar",
       needAverage:
         "Dafür brauchst du im Schnitt {{points}} Punkte in allen offenen Kursen und Prüfungen.",
-      reached: "Du liegst {{points}} Punkte über deinem Ziel.",
+      reached: "{{points}} Punkte Puffer.",
       reachedExact: "Du liegst genau auf deinem Ziel.",
       keepAverage:
         "Es reicht, wenn du in den offenen Kursen und Prüfungen im Schnitt {{points}} Punkte holst.",
       unreachable:
-        "Mit den offenen Kursen nicht mehr erreichbar, selbst mit 15 Punkten überall.",
+        "Selbst mit 15 Punkten in allen offenen Kursen und Prüfungen reicht es nicht mehr.",
       noOpen: "Es ist nichts mehr offen. Dein Ergebnis steht fest.",
       failed:
         "Eine Note gibt es erst, wenn alle Bedingungen erfüllt sind. Sieh dir die offenen Punkte an.",

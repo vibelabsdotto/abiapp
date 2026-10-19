@@ -19,7 +19,8 @@ export interface StatTileProps {
   value: string;
   /** Suffix in secondary colour ("/600", "Punkte"). */
   unit?: string;
-  caption?: string;
+  /** Caption under the figure; an array renders one line per entry. */
+  caption?: string | readonly string[];
   tone?: StatTone;
   icon?: { sf: SFSymbol; fallback: LucideIcon };
   /** Optional bar under the figure. */
@@ -48,9 +49,17 @@ export const StatTile = ({
     error: colors.error,
   };
   const valueColor = toneColor[tone];
+  const captionLines =
+    caption === undefined
+      ? []
+      : typeof caption === "string"
+        ? [caption]
+        : caption;
   const spoken =
     accessibilityLabel ??
-    [label, `${value}${unit ?? ""}`, caption].filter(Boolean).join(", ");
+    [label, `${value}${unit ?? ""}`, ...captionLines]
+      .filter(Boolean)
+      .join(", ");
 
   const content = (
     <>
@@ -100,10 +109,21 @@ export const StatTile = ({
           color={tone === "default" ? colors.accent : valueColor}
         />
       ) : null}
-      {caption ? (
-        <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-          {caption}
-        </Text>
+      {captionLines.length > 0 ? (
+        <View>
+          {captionLines.map((line) => (
+            <Text
+              key={line}
+              style={[
+                Type.footnote,
+                styles.caption,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {line}
+            </Text>
+          ))}
+        </View>
       ) : null}
     </>
   );
@@ -158,5 +178,8 @@ const styles = StyleSheet.create({
   },
   unit: {
     fontWeight: "600",
+  },
+  caption: {
+    fontVariant: ["tabular-nums"],
   },
 });

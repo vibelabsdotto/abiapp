@@ -47,8 +47,7 @@ export const en: Translations = {
       passMarker: "Pass from {{points}}",
       topMarker: "1.0 from {{points}}",
       goal: "Goal {{grade}}",
-      goalMissing: "{{points}} points to go",
-      goalReached: "Goal reached",
+      goalMarker: "Your goal",
       gradeLabel: "Abitur average {{grade}}",
     },
     check: {

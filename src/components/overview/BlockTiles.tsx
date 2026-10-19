@@ -44,10 +44,13 @@ export const BlockTiles = ({
           max: blockI.maxPoints,
           markers: [blockI.minPoints],
         }}
-        caption={`${t("home.blockI.included", {
-          count: blockI.countIncluded,
-          total: blockI.countLabel,
-        })}\n${deficits}`}
+        caption={[
+          t("home.blockI.included", {
+            count: blockI.countIncluded,
+            total: blockI.countLabel,
+          }),
+          deficits,
+        ]}
         onPress={openAbitur}
       />
       <StatTile

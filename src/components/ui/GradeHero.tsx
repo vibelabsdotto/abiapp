@@ -1,6 +1,9 @@
 // GradeHero - the Abitur average as the signature element of the overview:
 // big grade inside the AbiApp arch, total points, status label and the two
-// thresholds of the scale (pass at 300, 1,0 at 823) as notches.
+// thresholds of the scale (pass at 300, 1,0 at 823) as notches. A goal shows
+// only as a dot on the arch; the goal text belongs to the card below the
+// hero (one place for "Ziel 1,8 · noch 54 Punkte"). Without a pass there is
+// no grade, so the goal dot is hidden then.
 
 import React, { useState } from "react";
 import {
@@ -10,6 +13,8 @@ import {
   View,
   type LayoutChangeEvent,
 } from "react-native";
+
+import Svg, { Circle, Line, Path } from "react-native-svg";
 
 import { useThemeStore } from "@stores/themeStore";
 import { useTranslation } from "@locales/index";
@@ -32,7 +37,10 @@ export interface GradeHeroProps {
   predicted: boolean;
   /** false shows "Nicht bestanden" instead of a grade. */
   passed?: boolean | null;
-  /** Goal grade in tenths and the total it needs (engine: minPointsForGrade). */
+  /**
+   * Goal grade in tenths (spoken only) and the total it needs (engine:
+   * minPointsForGrade), drawn as a dot on the arch. Hidden when not passed.
+   */
   goalTenths?: number | null;
   goalPoints?: number | null;
   onPress?: () => void;
@@ -71,24 +79,16 @@ export const GradeHero = ({
       ? t("ui.hero.totalOf", { points: totalPoints, max: maxPoints })
       : null;
 
+  // No grade without a pass: no goal dot and no "Ziel erreicht".
+  const showGoal = goalPoints !== null && !failed;
   const goalGrade =
-    goalTenths !== null ? formatGrade(goalTenths, locale) : null;
-  const missing =
-    goalPoints !== null && totalPoints !== null
-      ? Math.max(0, goalPoints - totalPoints)
-      : null;
-  const goalDetail =
-    missing === null
-      ? null
-      : missing === 0
-        ? t("ui.hero.goalReached")
-        : t("ui.hero.goalMissing", { points: missing });
+    goalTenths !== null && !failed ? formatGrade(goalTenths, locale) : null;
 
   const markers: ArchMarker[] = [
     { at: passPoints / maxPoints, kind: "notch", color: colors.card },
     { at: topPoints / maxPoints, kind: "notch", color: colors.card },
   ];
-  if (goalPoints !== null) {
+  if (showGoal && goalPoints !== null) {
     markers.push({
       at: goalPoints / maxPoints,
       kind: "dot",
@@ -105,7 +105,6 @@ export const GradeHero = ({
     pointsLine,
     statusLabel,
     goalGrade ? t("ui.hero.goal", { grade: goalGrade }) : null,
-    goalDetail,
   ]
     .filter(Boolean)
     .join(", ");
@@ -120,27 +119,6 @@ export const GradeHero = ({
           tone={predicted ? "accent" : "success"}
           size="medium"
         />
-        {goalGrade ? (
-          <View style={styles.goal}>
-            <View style={styles.goalRow}>
-              {goalPoints !== null ? (
-                <View
-                  style={[styles.goalDot, { backgroundColor: colors.text }]}
-                />
-              ) : null}
-              <Text
-                style={[Type.subhead, styles.goalTitle, { color: colors.text }]}
-              >
-                {t("ui.hero.goal", { grade: goalGrade })}
-              </Text>
-            </View>
-            {goalDetail ? (
-              <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-                {goalDetail}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
       </View>
 
       <View style={styles.gaugeRow} onLayout={handleLayout}>
@@ -193,15 +171,29 @@ export const GradeHero = ({
 
       <View style={styles.legend}>
         <LegendItem
+          kind="notch"
           label={t("ui.hero.passMarker", { points: passPoints })}
           textColor={colors.textSecondary}
-          barColor={failed ? colors.error : colors.accent}
+          arcColor={failed ? colors.error : colors.accent}
+          markColor={colors.card}
         />
         <LegendItem
+          kind="notch"
           label={t("ui.hero.topMarker", { points: topPoints })}
           textColor={colors.textSecondary}
-          barColor={failed ? colors.error : colors.accent}
+          arcColor={failed ? colors.error : colors.accent}
+          markColor={colors.card}
         />
+        {showGoal ? (
+          <LegendItem
+            kind="dot"
+            label={t("ui.hero.goalMarker")}
+            textColor={colors.textSecondary}
+            arcColor={colors.gaugeTrack}
+            markColor={colors.text}
+            ringColor={colors.card}
+          />
+        ) : null}
       </View>
     </>
   );
@@ -228,21 +220,54 @@ export const GradeHero = ({
   );
 };
 
-/** Legend glyph: a short piece of the gauge with the notch in the middle. */
+/**
+ * Legend glyph: a short piece of the arch with the same mark as in the
+ * gauge, a cut (notch) or the goal dot, so the legend reads like the arch.
+ */
 const LegendItem = ({
+  kind,
   label,
   textColor,
-  barColor,
+  arcColor,
+  markColor,
+  ringColor,
 }: {
+  kind: "notch" | "dot";
   label: string;
   textColor: string;
-  barColor: string;
+  arcColor: string;
+  markColor: string;
+  ringColor?: string;
 }) => (
   <View style={styles.legendItem}>
-    <View style={styles.legendGlyph}>
-      <View style={[styles.legendBar, { backgroundColor: barColor }]} />
-      <View style={[styles.legendBar, { backgroundColor: barColor }]} />
-    </View>
+    <Svg width={24} height={10} viewBox="0 0 24 10">
+      <Path
+        d="M 2.82 5.4 A 16 16 0 0 1 21.18 5.4"
+        stroke={arcColor}
+        strokeWidth={5}
+        strokeLinecap="round"
+        fill="none"
+      />
+      {kind === "notch" ? (
+        <Line
+          x1={12}
+          y1={-1}
+          x2={12}
+          y2={6.5}
+          stroke={markColor}
+          strokeWidth={2}
+        />
+      ) : (
+        <Circle
+          cx={12}
+          cy={2.5}
+          r={2.9}
+          fill={markColor}
+          stroke={ringColor}
+          strokeWidth={1.5}
+        />
+      )}
+    </Svg>
     <Text style={[Type.caption1, styles.tabular, { color: textColor }]}>
       {label}
     </Text>
@@ -267,13 +292,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  goal: {
-    alignItems: "flex-end",
-    flexShrink: 1,
-  },
-  goalTitle: {
-    fontWeight: "600",
-  },
   gaugeRow: {
     alignItems: "center",
   },
@@ -294,24 +312,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  legendGlyph: {
-    flexDirection: "row",
-    gap: 2,
-  },
-  legendBar: {
-    width: 7,
-    height: 6,
-    borderRadius: 1.5,
-  },
-  goalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  goalDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
 });
