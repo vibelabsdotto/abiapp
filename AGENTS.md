@@ -38,6 +38,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 - Note immer ganzzahlig über `gradeFromPoints` berechnen, nie mit Gleitkomma.
 - Datenschicht: Repositories in `src/services/database/repositories/`, Stores in `src/stores/` (Fachdaten nur in SQLite, UI-Einstellungen in AsyncStorage). `useEvaluation()` baut den Engine-Input memoisiert; `targetAnalysis` ist teurer und nur memoisiert/verzögert aufrufen.
 - Store-Aktionen werfen `DataValidationError` mit deutscher Meldung; die UI zeigt sie als Toast.
+- Analytics nur über `src/services/analytics/appEvents.ts` (fire-and-forget). Parameter enthalten nie Noten, Fachnamen, Freitexte oder andere persönliche Daten, nur Länder, Ruleset-IDs, Zähler und Enum-Werte.
 - Bei zustand `persist` in `onRehydrateStorage` immer `setState` verwenden, nie den State mutieren (sonst hängt der Release-Build).
 - Routen: Root-Stack in `app/_layout.tsx` registriert alle Modals; das Onboarding steuert `Stack.Protected` über den Profil-Store. Tab-Roots sind eigene Stacks mit Large Title.
 - Texte: `src/locales/de.ts` ist die Quelle der Wahrheit, `en.ts` wird dagegen typgeprüft. Bereichstexte liegen in `src/locales/parts/<bereich>.{de,en}.ts`. Engine-Texte (Checks, Issues, Annahmen) sind deutsch.
