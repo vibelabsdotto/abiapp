@@ -204,6 +204,9 @@ function AnalyticsAutoCapture() {
   return null;
 }
 
+/** Root routes that lay out their own bottom inset on Android. */
+const FULL_SCREEN_ROUTES = new Set(["(tabs)", "(onboarding)", "+not-found"]);
+
 function RootLayoutNav() {
   const isDark = useThemeStore((state) => state.isDark);
   const themeMode = useThemeStore((state) => state.themeMode);
@@ -214,6 +217,7 @@ function RootLayoutNav() {
   // onboarding and the app without an imperative redirect: no replace()
   // races with the tab navigator mounting (former PRELOAD dev warning).
   const isOnboarded = useProfileStore(selectIsOnboarded);
+  const bottomInset = useSafeAreaInsets().bottom;
 
   // Native menus, sheets, alerts and tab bars follow the app's theme choice.
   useEffect(() => {
@@ -248,12 +252,19 @@ function RootLayoutNav() {
       <AnalyticsAutoCapture />
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
-        screenOptions={{
+        screenOptions={({ route }) => ({
           headerTintColor: colors.accent,
           headerTitleStyle: { color: colors.text },
           headerBackButtonDisplayMode: "minimal",
-          contentStyle: { backgroundColor: colors.background },
-        }}
+          contentStyle: {
+            backgroundColor: colors.background,
+            // Android (edge-to-edge): modals would scroll their last rows
+            // under the navigation bar. Tabs and onboarding handle it.
+            ...(Platform.OS === "android" && !FULL_SCREEN_ROUTES.has(route.name)
+              ? { paddingBottom: bottomInset }
+              : {}),
+          },
+        })}
       >
         <Stack.Protected guard={isOnboarded}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
