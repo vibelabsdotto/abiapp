@@ -13,6 +13,7 @@ import {
   IssueBanner,
   PointsBadge,
   Section,
+  formatDecimal,
   type ListRowMenu,
 } from "@components/ui";
 import { confirmRemoveSubject, showError } from "@components/subjects/actions";
@@ -38,7 +39,7 @@ interface RowModel {
 
 export default function SubjectsScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
   const subjects = useCourseStore((state) => state.subjects);
   const setCourseTaken = useCourseStore((state) => state.setCourseTaken);
@@ -225,7 +226,7 @@ export default function SubjectsScreen() {
             <View
               accessible
               style={styles.summary}
-              accessibilityLabel={`${t("subjects.list.average", { halfYear: label })}: ${average.exact.toFixed(1)}`}
+              accessibilityLabel={`${t("subjects.list.average", { halfYear: label })}: ${formatDecimal(average.exact, 1, locale)}`}
             >
               <PointsBadge
                 points={Math.round(average.exact)}

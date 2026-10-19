@@ -143,14 +143,21 @@ export const ResultCard = ({
         </Text>
       </Pressable>
 
-      <View style={[styles.divider, { backgroundColor: colors.separator }]} />
-
-      <GoalBlock
-        value={value}
-        targetPoints={targetPoints}
-        required={required}
-        onPress={onEditTarget}
-      />
+      {/* A finished half-year (official result) offers no new goal; a goal
+          set before stays visible with its outcome. */}
+      {value.source === "official" && targetPoints === null ? null : (
+        <>
+          <View
+            style={[styles.divider, { backgroundColor: colors.separator }]}
+          />
+          <GoalBlock
+            value={value}
+            targetPoints={targetPoints}
+            required={required}
+            onPress={onEditTarget}
+          />
+        </>
+      )}
     </View>
   );
 };

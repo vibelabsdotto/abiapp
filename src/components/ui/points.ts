@@ -101,12 +101,17 @@ export const formatDecimal = (
   value: number,
   digits: number,
   language: LanguageCode,
-): string =>
-  value.toLocaleString(language === "de" ? "de-DE" : "en-US", {
+): string => {
+  // Round half up first: Hermes on iOS formats with the platform default
+  // (half even), which showed 10,25 as "10,2" next to a spoken "10.3".
+  const factor = 10 ** digits;
+  const rounded = Math.round(value * factor + Number.EPSILON * factor) / factor;
+  return rounded.toLocaleString(language === "de" ? "de-DE" : "en-US", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
     useGrouping: false,
   });
+};
 
 /** Grade from tenths: 18 -> "1,8" (de) / "1.8" (en). */
 export const formatGrade = (tenths: number, language: LanguageCode): string =>
