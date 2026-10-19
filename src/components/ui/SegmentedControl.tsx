@@ -20,6 +20,9 @@ import { pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
 import { useThemeStore } from "@stores/themeStore";
 import { FontScale, Type } from "@constants/typography";
 
+/** Android fallback thumb in dark mode (iOS: tertiarySystemFill on dark). */
+const DARK_THUMB = "#4A4D5E";
+
 export interface SegmentedOption<T extends string | number> {
   value: T;
   label: string;
@@ -93,7 +96,13 @@ export function SegmentedControl<T extends string | number>({
             accessibilityState={{ selected }}
             style={[
               styles.segment,
-              selected && [styles.thumb, { backgroundColor: colors.card }],
+              selected && [
+                styles.thumb,
+                // Dark: the card color is darker than the track, so the
+                // thumb looked pressed in. Lighter thumb like iOS's
+                // segmented control in dark mode.
+                { backgroundColor: isDark ? DARK_THUMB : colors.card },
+              ],
             ]}
           >
             <Text
