@@ -14,11 +14,13 @@ import {
 } from "react-native";
 import { Stack } from "expo-router";
 
-import { SegmentedControl, SubjectAvatar } from "@components/ui";
+import { SegmentedControl } from "@components/ui";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
+
+import { SubjectBadge } from "./SubjectBadge";
 
 interface ModalHeaderProps {
   title: string;
@@ -100,9 +102,11 @@ export const SubjectContext = ({
   const colors = useThemeStore((state) => state.colors);
   return (
     <View style={styles.context}>
-      <SubjectAvatar
+      <SubjectBadge
         catalogKey={subject.catalogKey}
         color={subject.color}
+        name={subject.name}
+        tags={subject.tags}
         size={28}
       />
       <Text

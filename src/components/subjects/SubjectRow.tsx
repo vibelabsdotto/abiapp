@@ -5,13 +5,14 @@
 
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { CircleCheck } from "lucide-react-native";
 
 import { ContextMenuRow } from "@components/common/ContextMenuRow";
 import {
   Chip,
   HalfYearStrip,
+  Icon,
   PointsBadge,
-  SubjectAvatar,
   type ListRowMenu,
 } from "@components/ui";
 import { useTranslation } from "@locales/index";
@@ -19,7 +20,8 @@ import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
 
-import { formatExact, formatFactor } from "./format";
+import { formatExact } from "./format";
+import { SubjectBadge } from "./SubjectBadge";
 import type { CourseCell } from "./useSubjectData";
 
 interface SubjectRowProps {
@@ -53,25 +55,14 @@ export const SubjectRow = ({
   const cell = cells[selectedHalfYear];
   const value = cell?.value;
 
-  let status: { text: string; color: string } | null = null;
+  let status: { text: string; tone: "in" | "out" | "none" } | null = null;
   if (cell && !cell.taken) {
-    status = { text: t("subjects.list.notTaken"), color: colors.textSecondary };
+    status = { text: t("subjects.list.notTaken"), tone: "none" };
   } else if (cell && hasEvaluation) {
     if (cell.included) {
-      status = {
-        text:
-          cell.included.weight > 1
-            ? t("subjects.list.includedDouble", {
-                factor: formatFactor(cell.included.weight, locale),
-              })
-            : t("subjects.list.included"),
-        color: colors.success,
-      };
+      status = { text: t("subjects.list.included"), tone: "in" };
     } else {
-      status = {
-        text: t("subjects.list.notIncluded"),
-        color: colors.textSecondary,
-      };
+      status = { text: t("subjects.list.notIncluded"), tone: "out" };
     }
   }
 
@@ -120,9 +111,11 @@ export const SubjectRow = ({
         onPress={onPress}
       >
         <View style={styles.row}>
-          <SubjectAvatar
+          <SubjectBadge
             catalogKey={subject.catalogKey}
             color={subject.color}
+            name={subject.name}
+            tags={subject.tags}
             size={36}
           />
           <View style={styles.text}>
@@ -157,16 +150,28 @@ export const SubjectRow = ({
                 current={selectedHalfYear}
               />
               {status ? (
-                <Text
-                  style={[
-                    Type.caption1,
-                    styles.status,
-                    { color: status.color },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {status.text}
-                </Text>
+                <View style={styles.status}>
+                  {status.tone === "in" ? (
+                    <Icon
+                      sf="checkmark.circle.fill"
+                      fallback={CircleCheck}
+                      size={13}
+                      color={colors.success}
+                    />
+                  ) : null}
+                  <Text
+                    style={[
+                      Type.caption1,
+                      styles.statusText,
+                      {
+                        color: colors.textSecondary,
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {status.text}
+                  </Text>
+                </View>
               ) : null}
             </View>
             {stacked ? <View style={styles.stackedBadge}>{badge}</View> : null}
@@ -210,7 +215,12 @@ const styles = StyleSheet.create({
     rowGap: 4,
   },
   status: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 3,
+  },
+  statusText: {
     fontWeight: "500",
   },
   stackedBadge: {

@@ -241,11 +241,14 @@ export default function SubjectsScreen() {
               >
                 {t("subjects.list.average", { halfYear: label })}{" "}
                 {t("subjects.list.averageCount", { count: average.count })}
-                {", "}
-                {t("subjects.list.officialCount", {
-                  count: average.official,
-                  total: average.count,
-                })}
+                {average.allOfficial
+                  ? `, ${t("subjects.list.allOfficial")}`
+                  : average.official > 0
+                    ? `, ${t("subjects.list.officialCount", {
+                        count: average.official,
+                        total: average.count,
+                      })}`
+                    : ""}
               </Text>
             </View>
           ) : null}

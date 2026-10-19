@@ -31,7 +31,6 @@ export const subjectsEN = {
       legend:
         "Faded values do not count in Block I. Dashed values are estimates.",
       included: "counted",
-      includedDouble: "counted ×{{factor}}",
       notIncluded: "not counted",
       notTaken: "not taken",
       average: "Average {{halfYear}}",
@@ -40,6 +39,7 @@ export const subjectsEN = {
         other: "from {{count}} courses",
       },
       officialCount: "{{count}} of {{total}} official",
+      allOfficial: "all official",
       evaluationError: "Block I cannot be calculated right now: {{message}}",
     },
     menu: {
@@ -62,6 +62,7 @@ export const subjectsEN = {
         other:
           "All {{count}} grades, semester results and goals of this subject will be deleted.",
       },
+      messageEmpty: "This subject has no entries yet.",
       confirm: "Remove",
       done: "{{name}} removed",
     },
@@ -216,10 +217,11 @@ export const subjectsEN = {
       markTaken: "Mark as taken",
     },
     subjectEditor: {
-      titleNew: "Add subject",
+      titleNew: "New subject",
       titleEdit: "Edit subject",
       titleCustom: "Custom subject",
       add: "Add",
+      selected: "{{count}} selected",
       catalogTitle: "Catalog {{state}}",
       catalogFooter: "You can select several subjects at once.",
       allAdded: "All subjects from the {{state}} catalog are already added.",

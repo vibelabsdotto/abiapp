@@ -34,14 +34,22 @@ export const confirmRemoveSubject = (
   subject: SubjectRecord,
   onRemoved?: () => void,
 ): void => {
-  const gradeCount = useCourseStore
-    .getState()
-    .grades.filter((grade) => grade.subjectId === subject.id).length;
+  const { grades, courses } = useCourseStore.getState();
+  const gradeCount = grades.filter(
+    (grade) => grade.subjectId === subject.id,
+  ).length;
+  const hasCourseData = courses.some(
+    (course) =>
+      course.subjectId === subject.id &&
+      (course.officialPoints !== null || course.targetPoints !== null),
+  );
   Alert.alert(
     t("subjects.remove.title", { name: subject.name }),
     gradeCount > 0
       ? t("subjects.remove.messageGrades", { count: gradeCount })
-      : t("subjects.remove.message"),
+      : hasCourseData
+        ? t("subjects.remove.message")
+        : t("subjects.remove.messageEmpty"),
     [
       { text: t("subjects.common.cancel"), style: "cancel" },
       {

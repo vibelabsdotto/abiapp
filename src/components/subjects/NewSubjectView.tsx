@@ -7,13 +7,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Check, CirclePlus } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 
-import {
-  Icon,
-  ListRow,
-  Section,
-  SegmentedControl,
-  SubjectAvatar,
-} from "@components/ui";
+import { Icon, ListRow, Section, SegmentedControl } from "@components/ui";
 import type {
   CourseLevel,
   RulesetSummary,
@@ -28,6 +22,7 @@ import { Type } from "@constants/typography";
 import { savedFeedback, showError } from "./actions";
 import { ChoiceChips, EditorScroll, FormTextInput } from "./form";
 import { ModalHeader } from "./headers";
+import { SubjectBadge } from "./SubjectBadge";
 import { FIELD_ORDER, TAGS_BY_FIELD, suggestFromName } from "./subjectSuggest";
 import { useEditorClose } from "./useEditorClose";
 
@@ -111,14 +106,14 @@ const CatalogPicker = ({
   return (
     <>
       <ModalHeader
-        title={t("subjects.subjectEditor.titleNew")}
+        title={
+          selected.length > 0
+            ? t("subjects.subjectEditor.selected", { count: selected.length })
+            : t("subjects.subjectEditor.titleNew")
+        }
         onCancel={() => close()}
         onSave={() => void save()}
-        saveLabel={
-          selected.length > 0
-            ? `${t("subjects.subjectEditor.add")} (${selected.length})`
-            : t("subjects.subjectEditor.add")
-        }
+        saveLabel={t("subjects.subjectEditor.add")}
         saveDisabled={selected.length === 0 || saving}
       />
       <EditorScroll>
@@ -167,7 +162,13 @@ const CatalogPicker = ({
                   <ListRow
                     key={entry.key}
                     title={entry.name}
-                    leading={<SubjectAvatar catalogKey={entry.key} size={32} />}
+                    leading={
+                      <SubjectBadge
+                        catalogKey={entry.key}
+                        name={entry.name}
+                        size={32}
+                      />
+                    }
                     trailing={
                       isOn ? (
                         <Icon

@@ -54,15 +54,19 @@ export const InclusionNote = ({
             total: taken.length,
           });
 
-  const selectedLine = !selectedCell
-    ? null
-    : !selectedCell.taken
-      ? t("subjects.inclusion.selectedNotTaken", {
-          halfYear: selectedCell.label,
-        })
-      : selectedCell.included
-        ? t("subjects.inclusion.selectedIn", { halfYear: selectedCell.label })
-        : t("subjects.inclusion.selectedOut", { halfYear: selectedCell.label });
+  const allIncluded = included.length > 0 && included.length === taken.length;
+  const selectedLine =
+    !selectedCell || (allIncluded && selectedCell.taken)
+      ? null
+      : !selectedCell.taken
+        ? t("subjects.inclusion.selectedNotTaken", {
+            halfYear: selectedCell.label,
+          })
+        : selectedCell.included
+          ? t("subjects.inclusion.selectedIn", { halfYear: selectedCell.label })
+          : t("subjects.inclusion.selectedOut", {
+              halfYear: selectedCell.label,
+            });
 
   // Mandatory inclusions grouped by reason, most frequent first.
   const reasons = new Map<MandatoryReason, number>();

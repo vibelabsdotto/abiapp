@@ -15,7 +15,7 @@ import {
   Section,
   SegmentedControl,
   SubjectColors,
-  subjectVisual,
+  resolveSubjectColor,
   type SubjectColorKey,
 } from "@components/ui";
 import { validateSetup } from "@domain/index";
@@ -32,6 +32,7 @@ import { confirmRemoveSubject, savedFeedback, showError } from "./actions";
 import { EditorScroll, FormRow, FormSwitchRow, FormTextInput } from "./form";
 import { ModalHeader } from "./headers";
 import { levelLabel } from "./NewSubjectView";
+import { automaticColor } from "./SubjectBadge";
 import { useEditorClose } from "./useEditorClose";
 
 const EXAM_WEIGHT_PRESETS = [25, 33, 50, 67, 75];
@@ -157,7 +158,7 @@ export const EditSubjectView = ({
   const presets = EXAM_WEIGHT_PRESETS.includes(draft.examWeightPercent)
     ? EXAM_WEIGHT_PRESETS
     : [...EXAM_WEIGHT_PRESETS, draft.examWeightPercent].sort((a, b) => a - b);
-  const defaultColor = subjectVisual(subject.catalogKey).color;
+  const defaultColor = automaticColor(subject.catalogKey, subject.name);
   const stateName = ruleset?.stateName ?? "";
 
   return (
@@ -298,7 +299,7 @@ export const EditSubjectView = ({
           </Text>
           <View style={[styles.colors, { backgroundColor: colors.card }]}>
             <ColorSwatch
-              color={SubjectColors[defaultColor]}
+              color={resolveSubjectColor(defaultColor)}
               selected={draft.color === null}
               label={t("subjects.subjectEditor.colorAuto")}
               auto
@@ -402,20 +403,21 @@ const styles = StyleSheet.create({
   colors: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-    padding: 14,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderRadius: Radius.card,
     borderCurve: "continuous",
   },
   swatchRing: {
     padding: 2,
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 2,
   },
   swatch: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -31,7 +31,6 @@ export const subjectsDE = {
       legend:
         "Blasse Werte zählen nicht in Block I. Gestrichelte Werte sind geschätzt.",
       included: "eingebracht",
-      includedDouble: "eingebracht ×{{factor}}",
       notIncluded: "nicht eingebracht",
       notTaken: "nicht belegt",
       average: "Schnitt {{halfYear}}",
@@ -40,6 +39,7 @@ export const subjectsDE = {
         other: "aus {{count}} Kursen",
       },
       officialCount: "{{count}} von {{total}} amtlich",
+      allOfficial: "alle amtlich",
       evaluationError: "Block I lässt sich gerade nicht berechnen: {{message}}",
     },
     menu: {
@@ -61,6 +61,7 @@ export const subjectsDE = {
         other:
           "Alle {{count}} Noten, Halbjahresergebnisse und Ziele des Fachs werden gelöscht.",
       },
+      messageEmpty: "Das Fach hat noch keine Einträge.",
       confirm: "Entfernen",
       done: "{{name}} entfernt",
     },
@@ -216,10 +217,11 @@ export const subjectsDE = {
       markTaken: "Als belegt markieren",
     },
     subjectEditor: {
-      titleNew: "Fach hinzufügen",
+      titleNew: "Neues Fach",
       titleEdit: "Fach bearbeiten",
       titleCustom: "Eigenes Fach",
       add: "Hinzufügen",
+      selected: "{{count}} gewählt",
       catalogTitle: "Katalog {{state}}",
       catalogFooter: "Du kannst mehrere Fächer auf einmal auswählen.",
       allAdded:
