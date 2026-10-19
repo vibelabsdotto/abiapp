@@ -498,6 +498,7 @@ export default function SettingsScreen() {
           trigger={
             <ListRow
               title={t("settings.theme")}
+              accessibilityLabel={`${t("settings.theme")}, ${t(THEME_LABEL_KEYS[themeMode])}`}
               leading={
                 <SettingsIcon
                   sf="circle.lefthalf.filled"
@@ -519,6 +520,7 @@ export default function SettingsScreen() {
           trigger={
             <ListRow
               title={t("settings.language")}
+              accessibilityLabel={`${t("settings.language")}, ${t(LANGUAGE_LABEL_KEYS[languageMode])}`}
               leading={
                 <SettingsIcon
                   sf="globe"
