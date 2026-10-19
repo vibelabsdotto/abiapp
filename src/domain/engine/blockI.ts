@@ -612,6 +612,67 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     );
   }
 
+  /**
+   * Whether a configuration with this forced set can still produce a
+   * candidate strictly better than `b` (compare: E, deficits, P/S, N). Uses
+   * optimistic bounds: the remaining courses split into weight units, the
+   * best units taken for every possible weight sum; caps, groups,
+   * implications and deficit limits are dropped. A configuration that can
+   * at best tie loses anyway (the first candidate wins ties), so skipping it
+   * keeps the result exact.
+   */
+  function canBeat(
+    b: Candidate,
+    items: BlockItem[],
+    selected: Map<string, Chosen>,
+    slotsM: number,
+    PM: number,
+    SM: number,
+    defTM: number,
+  ): boolean {
+    const kMin = Math.max(0, minN - slotsM);
+    const kMax = Math.max(0, maxN - slotsM);
+    let wMin = Infinity;
+    let wMax = 0;
+    let clean = 0;
+    const units: number[] = [];
+    for (const it of items) {
+      if (selected.has(it.key)) continue;
+      if (!Number.isInteger(it.wS) || it.wS <= 0) return true;
+      wMin = Math.min(wMin, it.wS);
+      wMax = Math.max(wMax, it.wS);
+      if (it.deficits === 0) clean++;
+      for (let u = 0; u < it.wS; u++) units.push(it.points);
+    }
+    // items are sorted by points, so units are in descending order
+    const lo = units.length ? kMin * wMin : 0;
+    const hi = Math.min(units.length, kMax * wMax);
+    let eUb = -Infinity;
+    let rP = 0;
+    let rS = 0;
+    const consider = (P: number, S: number) => {
+      if (S <= 0) return;
+      eUb = Math.max(eUb, formula(P, S));
+      if (rS === 0 || P * rS > rP * S) {
+        rP = P;
+        rS = S;
+      }
+    };
+    if (lo === 0) consider(PM, SM);
+    let P = PM;
+    for (let W = 1; W <= hi; W++) {
+      P += units[W - 1];
+      if (W >= lo) consider(P, SM + W);
+    }
+    if (eUb === -Infinity) return true;
+    if (eUb !== b.E) return eUb > b.E;
+    const defLb = defTM + Math.max(0, kMin - clean);
+    if (defLb !== b.deficits) return defLb < b.deficits;
+    const r = rP * b.S - b.P * rS;
+    if (r !== 0) return r > 0;
+    return slotsM + kMin < b.N;
+  }
+
   interface FillList {
     items: BlockItem[];
     /** A list may only be used with 0 or at least minIfAny courses (implication subjects). */
@@ -638,6 +699,12 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       PM += c.item.wP;
       SM += c.item.wS;
       defTM += c.item.deficits;
+    }
+    // Branch and bound (exact): once a feasible selection exists, skip
+    // configurations that are infeasible anyway or cannot reach its E.
+    if (best && best.feasible) {
+      if (violationsIn.length > 0) return;
+      if (!canBeat(best, items, selected, slotsM, PM, SM, defTM)) return;
     }
     const inGroup = (g: GroupMin, it: BlockItem) =>
       !!it.subjectId &&
