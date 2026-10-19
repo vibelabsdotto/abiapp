@@ -10,6 +10,9 @@ export const de = {
   ...subjectsDE,
   ...overviewDE,
   common: {
+    cancel: "Abbrechen",
+    save: "Sichern",
+    done: "Fertig",
     comingSoon: "Kommt bald",
     retry: "Erneut versuchen",
     close: "Schließen",

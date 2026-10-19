@@ -27,7 +27,7 @@ import { Type } from "@constants/typography";
 
 import { savedFeedback, showError } from "./actions";
 import { ChoiceChips, EditorScroll, FormTextInput } from "./form";
-import { ModalHeader } from "./headers";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { FIELD_ORDER, TAGS_BY_FIELD, suggestFromName } from "./subjectSuggest";
 import { useEditorClose } from "./useEditorClose";
 

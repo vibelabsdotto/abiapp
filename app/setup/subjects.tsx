@@ -5,11 +5,11 @@ import React, { useState } from "react";
 import { ScreenLayout } from "@components/common/ScreenLayout";
 import {
   IntroText,
-  SetupModalHeader,
   SubjectPicker,
   saveSubjectsDraft,
   showError,
 } from "@components/setup";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { useSubjectsDraft } from "@hooks/useSetupFlows";
 import { useSetupModal } from "@hooks/useSetupModal";
 import { useTranslation } from "@locales/index";
@@ -35,13 +35,13 @@ export default function SetupSubjectsScreen() {
 
   return (
     <>
-      <SetupModalHeader
+      <ModalHeader
         title={t("setup.subjects.title")}
         onCancel={cancel}
         onSave={() => void save()}
         saveDisabled={!draft.dirty || !draft.canSave || saving || closing}
       />
-      <ScreenLayout contentContainerStyle={{ gap: 24 }}>
+      <ScreenLayout>
         <IntroText
           text={
             draft.canSave

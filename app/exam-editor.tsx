@@ -11,10 +11,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { router, Stack, useLocalSearchParams, type Href } from "expo-router";
+import { router, useLocalSearchParams, type Href } from "expo-router";
 import { CircleHelp, ListOrdered } from "lucide-react-native";
 
-import { ScreenLayout } from "@components/common";
+import { ModalHeader, ScreenLayout } from "@components/common";
 import {
   EmptyState,
   PointsPicker,
@@ -176,23 +176,12 @@ export default function ExamEditorScreen() {
   };
 
   const header = (
-    <>
-      <Stack.Screen options={{ title }} />
-      <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={() => router.back()}>
-          {t("editor.cancel")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button
-          variant="done"
-          disabled={!dirty || busy || !target}
-          onPress={() => void save()}
-        >
-          {t("editor.save")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
-    </>
+    <ModalHeader
+      title={title}
+      onCancel={() => router.back()}
+      onSave={() => void save()}
+      saveDisabled={!dirty || busy || !target}
+    />
   );
 
   if (!target || !ruleset || !input) {

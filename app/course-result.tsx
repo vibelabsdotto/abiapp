@@ -17,7 +17,8 @@ import {
 import { savedFeedback, showError } from "@components/subjects/actions";
 import { EditorScroll } from "@components/subjects/form";
 import { formatExact } from "@components/subjects/format";
-import { ModalHeader, SubjectContext } from "@components/subjects/headers";
+import { ModalHeader } from "@components/common/ModalHeader";
+import { SubjectContext } from "@components/subjects/headers";
 import { useEditorClose } from "@components/subjects/useEditorClose";
 import { usePrognosis } from "@hooks/usePrognosis";
 import { useHalfYearLabels } from "@hooks/useRuleset";

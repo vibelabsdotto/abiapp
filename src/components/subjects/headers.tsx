@@ -12,52 +12,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { Stack } from "expo-router";
 
 import { SegmentedControl, SubjectAvatar } from "@components/ui";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
-
-interface ModalHeaderProps {
-  title: string;
-  onCancel: () => void;
-  onSave?: () => void;
-  saveLabel?: string;
-  saveDisabled?: boolean;
-}
-
-export const ModalHeader = ({
-  title,
-  onCancel,
-  onSave,
-  saveLabel,
-  saveDisabled = false,
-}: ModalHeaderProps) => {
-  const { t } = useTranslation();
-  return (
-    <>
-      <Stack.Screen options={{ title, headerBackVisible: false }} />
-      <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={onCancel}>
-          {t("subjects.common.cancel")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
-      {onSave ? (
-        <Stack.Toolbar placement="right">
-          <Stack.Toolbar.Button
-            variant="done"
-            disabled={saveDisabled}
-            onPress={onSave}
-          >
-            {saveLabel ?? t("subjects.common.save")}
-          </Stack.Toolbar.Button>
-        </Stack.Toolbar>
-      ) : null}
-    </>
-  );
-};
 
 interface HalfYearPickerProps {
   labels: string[];

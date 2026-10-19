@@ -36,7 +36,8 @@ import {
   toIsoDate,
   todayIso,
 } from "@components/subjects/format";
-import { ModalHeader, SubjectContext } from "@components/subjects/headers";
+import { ModalHeader } from "@components/common/ModalHeader";
+import { SubjectContext } from "@components/subjects/headers";
 import { useEditorClose } from "@components/subjects/useEditorClose";
 import { halfYearPrognosis } from "@domain/index";
 import type { EngineGrade, GradeKind } from "@domain/model";

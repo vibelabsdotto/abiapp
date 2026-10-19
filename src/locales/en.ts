@@ -8,6 +8,9 @@ export const en: Translations = {
   ...subjectsEN,
   ...overviewEN,
   common: {
+    cancel: "Cancel",
+    save: "Save",
+    done: "Done",
     comingSoon: "Coming soon",
     retry: "Try again",
     close: "Close",

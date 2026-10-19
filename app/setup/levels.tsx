@@ -7,11 +7,11 @@ import { ScreenLayout } from "@components/common/ScreenLayout";
 import {
   IntroText,
   LevelPicker,
-  SetupModalHeader,
   elevatedPlural,
   showError,
   showSuccess,
 } from "@components/setup";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { useLevelsDraft } from "@hooks/useSetupFlows";
 import { useSetupModal } from "@hooks/useSetupModal";
 import { useTranslation } from "@locales/index";
@@ -43,13 +43,13 @@ export default function SetupLevelsScreen() {
 
   return (
     <>
-      <SetupModalHeader
+      <ModalHeader
         title={title}
         onCancel={cancel}
         onSave={() => void save()}
         saveDisabled={!draft.dirty || !draft.canSave || saving || closing}
       />
-      <ScreenLayout contentContainerStyle={{ gap: 24 }}>
+      <ScreenLayout>
         <IntroText text={t("onboarding.levels.intro", { name: title, need })} />
         {draft.ruleset ? (
           <LevelPicker

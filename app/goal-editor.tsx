@@ -4,9 +4,9 @@
 
 import React, { useDeferredValue, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 
-import { ScreenLayout } from "@components/common";
+import { ModalHeader, ScreenLayout } from "@components/common";
 import { formatGrade } from "@components/ui";
 import { Fact } from "@components/abitur/parts";
 import { DestructiveAction } from "@components/overview/DestructiveAction";
@@ -98,21 +98,12 @@ export default function GoalEditorScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("goalEditor.title") }} />
-      <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={() => router.back()}>
-          {t("editor.cancel")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button
-          variant="done"
-          disabled={!dirty || busy}
-          onPress={() => void save(selected)}
-        >
-          {t("editor.save")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
+      <ModalHeader
+        title={t("goalEditor.title")}
+        onCancel={() => router.back()}
+        onSave={() => void save(selected)}
+        saveDisabled={!dirty || busy}
+      />
       <ScreenLayout contentContainerStyle={styles.content}>
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           <Text style={[Type.headline, { color: colors.text }]}>
@@ -203,7 +194,7 @@ export default function GoalEditorScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 20,
+    gap: 24,
     paddingBottom: 40,
   },
   card: {

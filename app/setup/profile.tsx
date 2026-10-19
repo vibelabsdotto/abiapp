@@ -10,13 +10,13 @@ import { ScreenLayout } from "@components/common/ScreenLayout";
 import {
   RulesetCard,
   RulesetVersionPicker,
-  SetupModalHeader,
   YearPicker,
   applyRulesChange,
   issueLines,
   showError,
   showSuccess,
 } from "@components/setup";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { ListRow, Section } from "@components/ui";
 import { listStates } from "@domain/index";
 import {
@@ -84,13 +84,13 @@ export default function SetupProfileScreen() {
 
   return (
     <>
-      <SetupModalHeader
+      <ModalHeader
         title={t("setup.profileTitle")}
         onCancel={cancel}
         onSave={() => void save()}
         saveDisabled={!dirty || !ruleset || saving || closing}
       />
-      <ScreenLayout contentContainerStyle={{ gap: 24 }}>
+      <ScreenLayout>
         <Section>
           <ListRow
             title={t("setup.state")}

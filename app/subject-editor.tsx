@@ -9,7 +9,7 @@ import { BookOpen } from "lucide-react-native";
 import { EmptyState } from "@components/ui";
 import { EditSubjectView } from "@components/subjects/EditSubjectView";
 import { EditorScroll } from "@components/subjects/form";
-import { ModalHeader } from "@components/subjects/headers";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { NewSubjectView } from "@components/subjects/NewSubjectView";
 import { useRuleset } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";

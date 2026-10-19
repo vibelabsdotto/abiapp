@@ -3,10 +3,10 @@
 
 import React from "react";
 import { Linking, StyleSheet, Text, View } from "react-native";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { ArrowUpRight, Link } from "lucide-react-native";
 
-import { ScreenLayout } from "@components/common";
+import { ModalHeader, ScreenLayout } from "@components/common";
 import {
   Chip,
   Icon,
@@ -39,14 +39,7 @@ export default function RulesScreen() {
   const { ruleset, evaluation } = useAbiturData();
 
   const header = (
-    <>
-      <Stack.Screen options={{ title: t("rules.title") }} />
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button variant="done" onPress={() => router.back()}>
-          {t("editor.done")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
-    </>
+    <ModalHeader title={t("rules.title")} onDone={() => router.back()} />
   );
 
   if (!ruleset) {

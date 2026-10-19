@@ -3,12 +3,8 @@
 import React, { useState } from "react";
 
 import { ScreenLayout } from "@components/common/ScreenLayout";
-import {
-  ExamPicker,
-  SetupModalHeader,
-  showError,
-  showSuccess,
-} from "@components/setup";
+import { ExamPicker, showError, showSuccess } from "@components/setup";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { useExamsDraft } from "@hooks/useSetupFlows";
 import { useSetupModal } from "@hooks/useSetupModal";
 import { useTranslation } from "@locales/index";
@@ -34,13 +30,13 @@ export default function SetupExamsScreen() {
 
   return (
     <>
-      <SetupModalHeader
+      <ModalHeader
         title={t("settings.exams")}
         onCancel={cancel}
         onSave={() => void save()}
         saveDisabled={!draft.dirty || !draft.canSave || saving || closing}
       />
-      <ScreenLayout contentContainerStyle={{ gap: 24 }}>
+      <ScreenLayout>
         {draft.ruleset ? (
           <ExamPicker
             ruleset={draft.ruleset}

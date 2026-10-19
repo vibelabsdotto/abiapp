@@ -31,7 +31,7 @@ import { Radius, Type } from "@constants/typography";
 
 import { confirmRemoveSubject, savedFeedback, showError } from "./actions";
 import { EditorScroll, FormRow, FormSwitchRow, FormTextInput } from "./form";
-import { ModalHeader } from "./headers";
+import { ModalHeader } from "@components/common/ModalHeader";
 import { levelLabel } from "./NewSubjectView";
 import { useEditorClose } from "./useEditorClose";
 
@@ -137,7 +137,9 @@ export const EditSubjectView = ({
     setSaving(true);
     try {
       await updateSubject(subject.id, {
-        ...(subject.catalogKey ? {} : { name: draft.name.trim() }),
+        // Catalog names follow the ruleset; subjects whose key the current
+        // catalog does not know (other state) keep an editable name.
+        ...(catalogEntry ? {} : { name: draft.name.trim() }),
         level: draft.level,
         examWeightPercent: draft.examWeightPercent,
         color: draft.color,
@@ -173,7 +175,7 @@ export const EditSubjectView = ({
       />
       <EditorScroll>
         <Section title={t("subjects.subjectEditor.name")}>
-          {subject.catalogKey ? (
+          {catalogEntry ? (
             <FormRow
               label={subject.name}
               detail={t("subjects.subjectEditor.nameFromCatalog", {
