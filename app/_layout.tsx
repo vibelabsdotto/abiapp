@@ -16,6 +16,7 @@ import {
   Stack,
   ThemeProvider,
   usePathname,
+  useRouter,
   useSegments,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -33,6 +34,7 @@ import {
   trackScreenView,
 } from "@services/analytics/analyticsService";
 import { useLanguageStore } from "@stores/languageStore";
+import { selectIsOnboarded, useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
 import { ThemeMode } from "@apptypes/enums";
 
@@ -139,6 +141,26 @@ function AnalyticsAutoCapture() {
   return null;
 }
 
+// Sends first-run users (no finished onboarding) to the onboarding flow.
+function OnboardingGate() {
+  const router = useRouter();
+  const segments = useSegments();
+  const isLoaded = useProfileStore((state) => state.isLoaded);
+  const isOnboarded = useProfileStore(selectIsOnboarded);
+  const inOnboarding = segments[0] === "(onboarding)";
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!isOnboarded && !inOnboarding) {
+      router.replace("/(onboarding)");
+    } else if (isOnboarded && inOnboarding) {
+      router.replace("/(tabs)/(home)");
+    }
+  }, [isLoaded, isOnboarded, inOnboarding, router]);
+
+  return null;
+}
+
 function RootLayoutNav() {
   const isDark = useThemeStore((state) => state.isDark);
   const themeMode = useThemeStore((state) => state.themeMode);
@@ -176,6 +198,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={routerTheme}>
       <AnalyticsAutoCapture />
+      <OnboardingGate />
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -186,6 +209,30 @@ function RootLayoutNav() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* First-run flow (lane: setup). */}
+        <Stack.Screen
+          name="(onboarding)"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+        {/* Setup flows reused from settings: subjects, levels, exams (lane: setup). */}
+        <Stack.Screen
+          name="setup"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        {/* Editors (lane: subjects). Screens set their own header buttons. */}
+        <Stack.Screen name="grade-editor" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="course-result"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="subject-editor"
+          options={{ presentation: "modal" }}
+        />
+        {/* Editors and info (lane: overview). */}
+        <Stack.Screen name="exam-editor" options={{ presentation: "modal" }} />
+        <Stack.Screen name="goal-editor" options={{ presentation: "modal" }} />
+        <Stack.Screen name="rules" options={{ presentation: "modal" }} />
         <Stack.Screen
           name="feature-requests"
           options={{ presentation: "modal", headerShown: true }}
