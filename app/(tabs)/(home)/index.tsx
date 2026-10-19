@@ -17,11 +17,13 @@ import { StatusCard } from "@components/overview/StatusCard";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import { minPointsForGrade } from "@domain/index";
 import { useTargetAnalysis } from "@hooks/useEvaluation";
+import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { useTranslation } from "@locales/index";
 import { useProfileStore } from "@stores/profileStore";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const toolbarTint = useToolbarTint();
   const data = useAbiturData();
   const targetTenths = useProfileStore(
     (state) => state.profile?.targetTenths ?? null,
@@ -30,19 +32,19 @@ export default function HomeScreen() {
   const { evaluation, ruleset, input } = data;
 
   const toolbar = (
-    <Stack.Toolbar placement="right">
+    <Stack.Toolbar placement="right" tintColor={toolbarTint}>
       <Stack.Toolbar.Menu
-        icon="ellipsis"
+        icon={toolbarIcon("ellipsis")}
         accessibilityLabel={t("home.menu.label")}
       >
         <Stack.Toolbar.MenuAction
-          icon="target"
+          icon={toolbarIcon("target")}
           onPress={() => router.push("/goal-editor")}
         >
           {t("home.menu.goal")}
         </Stack.Toolbar.MenuAction>
         <Stack.Toolbar.MenuAction
-          icon="text.book.closed"
+          icon={toolbarIcon("text.book.closed")}
           onPress={() => router.push("/rules")}
         >
           {t("home.menu.rules")}

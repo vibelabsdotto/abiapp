@@ -2,11 +2,16 @@
 // action right ("Sichern" by default, `variant="done"`), or a single
 // "Fertig" for read-only screens. Real UIBarButtonItems through
 // Stack.Toolbar (Liquid Glass on iOS 26+), the same on every modal.
+// Android renders AndroidModalHeader (text-only toolbar items are dropped
+// there).
 
 import React from "react";
+import { Platform } from "react-native";
 import { Stack } from "expo-router";
 
 import { useTranslation } from "@locales/index";
+
+import { AndroidModalHeader } from "./AndroidModalHeader";
 
 export interface ModalHeaderProps {
   title: string;
@@ -20,7 +25,14 @@ export interface ModalHeaderProps {
   onDone?: () => void;
 }
 
-export const ModalHeader = ({
+export const ModalHeader = (props: ModalHeaderProps) =>
+  Platform.OS === "android" ? (
+    <AndroidModalHeader {...props} />
+  ) : (
+    <IosModalHeader {...props} />
+  );
+
+const IosModalHeader = ({
   title,
   onCancel,
   onSave,

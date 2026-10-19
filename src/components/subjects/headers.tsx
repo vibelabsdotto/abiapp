@@ -5,7 +5,6 @@
 
 import React from "react";
 import {
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -94,6 +93,5 @@ const styles = StyleSheet.create({
   },
 });
 
-/** SF Symbol only on iOS; Android toolbar items fall back to their label. */
-export const toolbarIcon = <T extends string>(name: T): T | undefined =>
-  Platform.OS === "ios" ? name : undefined;
+/** SF Symbol on iOS, Material drawable on Android (see constants). */
+export { toolbarIcon } from "@constants/toolbarIcons";

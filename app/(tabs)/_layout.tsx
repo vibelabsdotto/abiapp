@@ -34,6 +34,8 @@ export default function TabsLayout() {
       }
       indicatorColor={isAndroid ? colors.tabIndicator : undefined}
       rippleColor={isAndroid ? colors.ripple : undefined}
+      // Material hides labels of inactive items with four tabs; keep them.
+      labelVisibilityMode={isAndroid ? "labeled" : undefined}
     >
       <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Icon

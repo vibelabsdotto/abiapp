@@ -30,6 +30,7 @@ import type { GradeKind } from "@domain/model";
 import type { GradeRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
+import { useToolbarTint } from "@constants/toolbarIcons";
 import { Radius, Type } from "@constants/typography";
 
 const EXAM_WEIGHT_PRESETS = [25, 33, 50, 67, 75];
@@ -39,6 +40,7 @@ export default function SubjectDetailScreen() {
   const params = useLocalSearchParams<{ id: string; halfYear?: string }>();
   const { t } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
+  const toolbarTint = useToolbarTint();
   const { ruleset } = useRuleset();
   const { subject, courses } = useSubjectCourses(params.id);
   const { evaluation, labels, cellsOf } = useCourseOverview();
@@ -119,7 +121,7 @@ export default function SubjectDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ title: subject.name }} />
-      <Stack.Toolbar placement="right">
+      <Stack.Toolbar placement="right" tintColor={toolbarTint}>
         <Stack.Toolbar.Menu
           icon={toolbarIcon("ellipsis")}
           title={subject.name}

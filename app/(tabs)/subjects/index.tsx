@@ -30,6 +30,7 @@ import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
+import { useToolbarTint } from "@constants/toolbarIcons";
 import { Type } from "@constants/typography";
 
 interface RowModel {
@@ -41,6 +42,7 @@ export default function SubjectsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
+  const toolbarTint = useToolbarTint();
   const subjects = useCourseStore((state) => state.subjects);
   const setCourseTaken = useCourseStore((state) => state.setCourseTaken);
   const { ruleset } = useRuleset();
@@ -184,7 +186,7 @@ export default function SubjectsScreen() {
     ));
 
   const header = (
-    <Stack.Toolbar placement="right">
+    <Stack.Toolbar placement="right" tintColor={toolbarTint}>
       <Stack.Toolbar.Button
         icon={toolbarIcon("plus")}
         accessibilityLabel={t("subjects.list.add")}

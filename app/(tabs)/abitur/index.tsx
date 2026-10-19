@@ -24,34 +24,36 @@ import {
 } from "@components/overview/data";
 import { RulesetBanner } from "@components/overview/RulesetBanner";
 import { useAbiturData } from "@components/overview/useAbiturData";
+import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { useTranslation } from "@locales/index";
 
 export default function AbiturScreen() {
   const { t } = useTranslation();
+  const toolbarTint = useToolbarTint();
   const data = useAbiturData();
   const { evaluation, input, ruleset } = data;
   const overrides = input ? manualOverrides(input) : [];
 
   const toolbar = (
-    <Stack.Toolbar placement="right">
+    <Stack.Toolbar placement="right" tintColor={toolbarTint}>
       <Stack.Toolbar.Menu
-        icon="ellipsis"
+        icon={toolbarIcon("ellipsis")}
         accessibilityLabel={t("abitur.menu.label")}
       >
         <Stack.Toolbar.MenuAction
-          icon="text.book.closed"
+          icon={toolbarIcon("text.book.closed")}
           onPress={() => router.push("/rules")}
         >
           {t("abitur.menu.rules")}
         </Stack.Toolbar.MenuAction>
         <Stack.Toolbar.MenuAction
-          icon="list.number"
+          icon={toolbarIcon("list.number")}
           onPress={() => router.push("/setup/exams" as Href)}
         >
           {t("abitur.menu.exams")}
         </Stack.Toolbar.MenuAction>
         <Stack.Toolbar.MenuAction
-          icon="arrow.counterclockwise"
+          icon={toolbarIcon("arrow.counterclockwise")}
           destructive
           disabled={overrides.length === 0}
           onPress={() => confirmResetInclusions(overrides)}
