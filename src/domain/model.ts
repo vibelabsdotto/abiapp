@@ -275,6 +275,13 @@ export interface IncludedCourse {
   extraId?: string | null;
   /** Number of Block I places this entry occupies (default 1, Seminararbeit 2). */
   slots?: number;
+  /**
+   * Estimate for places the subject choice cannot fill yet (subjects still
+   * missing). Then subjectId is "placeholder", halfYear -1, source
+   * "estimate", `slots` places with `points` each (rounded average of the
+   * included courses, weight 1, never a deficit).
+   */
+  placeholder?: boolean;
 }
 
 export type IssueSeverity = "error" | "warning" | "info";
@@ -323,6 +330,13 @@ export interface BlockIResult {
   predicted: boolean;
   /** German notes on choices the engine made on the student's behalf. */
   assumptions?: string[];
+  /**
+   * Set if the subject choice offers fewer places than the minimum count
+   * (subjects still missing): at least this many courses are missing. The
+   * count check is open, `admitted` is never false because of the selection,
+   * and `included` holds a placeholder entry for the estimate.
+   */
+  missingCourses?: number;
 }
 
 export interface ExamComponentResult {

@@ -5,7 +5,7 @@ const COUNT_PREFIX =
 const ROLE =
   /^(Prüfungsfach|Leistungskurs|Leistungsfach|eA-Fach|Profilfach|Kernfach)\s/;
 const LEADING_LOWER =
-  /^(Je|Mindestens|Höchstens|Fortgeführte[snr]?|Eine[rs]?|Ein)\s/;
+  /^(Je|Mindestens|Höchstens|Fortgeführte[snr]?|Eine[rs]?|Ein|Zu|Mehr)\s/;
 
 /**
  * Requirement label inside a running list (after "Offen:" or between

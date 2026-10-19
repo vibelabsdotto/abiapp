@@ -14,7 +14,10 @@
 //    the best P for every (count, S, deficits, group progress) state.
 // 4. Every admissible count N in the range is scored: admissible first, then
 //    E_I, fewer deficits, higher exact P/S, fewer courses.
-// Verified against brute force on 20,000 random cases (scratch probes).
+// 5. Incomplete subject choice (fewer taken courses than the minimum count):
+//    the count is open, not violated, and the missing places become one
+//    placeholder entry with the rounded average of the included courses.
+// Verified against brute force on random cases (scratch probes).
 
 import type {
   BlockIResult,
@@ -75,6 +78,8 @@ interface Candidate {
   extraVariants: { def: BlockIExtraDef; variant: ExtraVariant | null }[];
   zeroIncluded: number;
   feasible: boolean;
+  /** Estimated places for missing subjects (incomplete setup), part of N. */
+  pad: number;
 }
 
 export interface BlockIOutcome {
@@ -83,6 +88,34 @@ export interface BlockIOutcome {
 }
 
 const DEFAULT_DEFICIT_THRESHOLD = 5;
+const PLACEHOLDER_KEY = "placeholder";
+
+/**
+ * Estimate for `places` missing Block I places: the rounded average per
+ * place of the included courses, weight 1, no deficits. Not a real course,
+ * so it never counts as a deficit or a course with 0 points.
+ */
+function placeholderItem(P: number, S: number, places: number): BlockItem {
+  const points = Math.min(15, Math.max(0, roundHalfUpFrac(P, S)));
+  return {
+    key: PLACEHOLDER_KEY,
+    subjectId: null,
+    extraId: null,
+    halfYear: -1,
+    points,
+    weight: 1,
+    slots: places,
+    wP: points * places,
+    wS: places,
+    deficits: 0,
+    zero: false,
+    elevated: false,
+    examSlot: null,
+    source: "estimate",
+    predicted: true,
+    manual: false,
+  };
+}
 
 function itemFromCourse(c: BaseCourse, w: WeightingOption): BlockItem {
   const weight = w.weight(c.subject, c.halfYear);
@@ -110,6 +143,68 @@ function byPointsDesc(a: BlockItem, b: BlockItem): number {
   return (
     b.points - a.points || a.halfYear - b.halfYear || (a.key < b.key ? -1 : 1)
   );
+}
+
+interface PickDuty {
+  req: Requirement;
+  pick: Pick;
+  /** Count after a relaxation. */
+  count: number;
+  short: string;
+}
+
+/**
+ * Subjects whose forced courses cannot be taken greedily as the best by
+ * points: a pick leaves a choice and the subject's courses have different
+ * weights, two picks have different half-year windows (nested windows
+ * filled in the wrong order or partly overlapping ones force too much), or
+ * a sum rule with half-years covers the subject. Their picks become sum
+ * rules, which the fill DP solves exactly.
+ */
+function exactPickSubjects(
+  picks: PickDuty[],
+  bySubject: Map<string, BlockItem[]>,
+  groupMins: GroupMin[],
+  mixed: Set<string>,
+): Set<string> {
+  const out = new Set<string>();
+  // Candidates first (cheap): mixed weights, two windows, sum rules with half-years.
+  const windowCount = new Map<string, number>();
+  const cand = new Set<string>();
+  for (const d of picks) {
+    if (d.count <= 0) continue;
+    const sid = d.pick.subjectId;
+    if (mixed.has(sid)) cand.add(sid);
+    if (d.pick.halfYears) {
+      const n = (windowCount.get(sid) ?? 0) + 1;
+      windowCount.set(sid, n);
+      if (n > 1) cand.add(sid);
+    }
+  }
+  for (const g of groupMins)
+    if (g.halfYears) for (const sid of g.subjectIds) cand.add(sid);
+  if (cand.size === 0) return out;
+  const bySid = new Map<string, Pick[]>();
+  for (const d of picks) {
+    if (d.count <= 0 || !cand.has(d.pick.subjectId)) continue;
+    const arr = bySid.get(d.pick.subjectId) ?? [];
+    arr.push({ ...d.pick, count: d.count });
+    bySid.set(d.pick.subjectId, arr);
+  }
+  for (const [sid, ps] of bySid) {
+    const list = bySubject.get(sid) ?? [];
+    const inWindow = (hys?: number[]) =>
+      list.filter((it) => !hys || hys.includes(it.halfYear)).length;
+    if (!ps.some((p) => p.count < inWindow(p.halfYears))) continue;
+    const windows = new Set(
+      ps.flatMap((p) => (p.halfYears ? [p.halfYears.join(",")] : [])),
+    );
+    const grouped = groupMins.some(
+      (g) => g.halfYears && g.subjectIds.includes(sid),
+    );
+    if (mixed.has(sid) || windows.size > 1 || grouped) out.add(sid);
+  }
+  return out;
 }
 
 function compare(a: Candidate, b: Candidate): number {
@@ -186,14 +281,20 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     excludedBySubject.set(sid, arr);
   }
 
+  const baseHalfYears = new Map<string, number[]>();
+  for (const c of base) {
+    const arr = baseHalfYears.get(c.subject.id) ?? [];
+    arr.push(c.halfYear);
+    baseHalfYears.set(c.subject.id, arr);
+  }
   const availCount = (
     sid: string,
     hys?: number[],
     withExcluded = false,
   ): number => {
     let n = 0;
-    for (const c of base) {
-      if (c.subject.id === sid && (!hys || hys.includes(c.halfYear))) n++;
+    for (const hy of baseHalfYears.get(sid) ?? []) {
+      if (!hys || hys.includes(hy)) n++;
     }
     if (withExcluded) {
       for (const hy of excludedBySubject.get(sid) ?? [])
@@ -246,6 +347,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   // setup or no value is entered is open (check passed = null), not violated.
   const requirements = rules.requirements(ctx);
   const unmet: Requirement[] = [];
+  const underTaken: Requirement[] = [];
   const open: string[] = [];
   const active: { req: Requirement; options: RequirementOption[] }[] = [];
   for (const req of requirements) {
@@ -272,12 +374,8 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     } else if (req.options.some((o) => optionFeasible(req, o, true, true))) {
       open.push(req.label);
     } else {
-      unmet.push(req);
-      issues.push({
-        code: `block1.requirement.${req.id}`,
-        severity: "error",
-        message: `Zu wenig belegt für die Pflichteinbringung: ${req.label}.`,
-      });
+      // Decided below: open while subjects are still missing, else violated.
+      underTaken.push(req);
     }
   }
 
@@ -315,6 +413,52 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     rules.formula ?? ((P: number, S: number) => roundHalfUpFrac(P * 40, S));
   let approximate = false;
 
+  // ---- incomplete subject choice ---------------------------------------------
+  // Places the setup offers at all: every taken course of an includable
+  // subject (also excluded ones, 0 points or no value yet), capped per
+  // subject, plus the most places an extra can take. Fewer than the minimum
+  // count means subjects are still missing. Then the count is open, not
+  // violated. Too few places only because of own exclusions or courses with
+  // 0 points stays a violation.
+  let capacity = 0;
+  for (const s of ctx.subjects) {
+    let n = 0;
+    for (const hy of ctx.takenHalfYears(s.id)) {
+      if (!rules.isIncludable || rules.isIncludable(s, hy, ctx)) n++;
+    }
+    const cap = caps.get(s.id);
+    capacity += cap === undefined ? n : Math.min(n, cap);
+  }
+  for (const e of extraChoices) {
+    let most = 0;
+    for (const v of e.variants) {
+      let slots = 0;
+      for (const x of v?.items ?? []) slots += x.slots;
+      most = Math.max(most, slots);
+    }
+    capacity += most;
+  }
+  const missingPlaces = Math.max(0, minN - capacity);
+  // Too little taken for a duty: open while subjects are missing (a new
+  // subject can still fill it), a violation once the choice is complete.
+  for (const req of underTaken) {
+    if (missingPlaces > 0) open.push(req.label);
+    else unmet.push(req);
+    issues.push({
+      code: `block1.requirement.${req.id}`,
+      severity: missingPlaces > 0 ? "warning" : "error",
+      message: `Zu wenig belegt für die Pflichteinbringung: ${req.label}.`,
+    });
+  }
+  if (missingPlaces > 0) {
+    const one = missingPlaces === 1;
+    issues.push({
+      code: "block1.setup.incomplete",
+      severity: "warning",
+      message: `Lege noch alle deine Fächer an: Es ${one ? "fehlt" : "fehlen"} mindestens ${missingPlaces} ${one ? "Kurs" : "Kurse"} für Block I.`,
+    });
+  }
+
   /**
    * Options of every active requirement without dominated ones. Option A
    * dominates B if A forces nothing B does not force as well (after merging
@@ -341,6 +485,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     }
     return active.map((a) => {
       if (a.options.length <= 1) return a.options;
+      const bits = new Map<string, number>();
       const eff = a.options.map((o) => {
         const extra = new Map<string, number>();
         const restricted = new Set<string>();
@@ -358,10 +503,22 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
               `${g.subjectIds.join(",")}:${g.count}:${g.halfYears?.join(",") ?? ""}`,
           ),
         );
-        return { o, extra, restricted, groups };
+        // Bit per subject with an extra duty: a quick necessary test for
+        // dominance (subjects beyond 30 bits are only checked exactly).
+        let mask = 0;
+        for (const sid of extra.keys()) {
+          let bit = bits.get(sid);
+          if (bit === undefined) {
+            bit = bits.size;
+            bits.set(sid, bit);
+          }
+          if (bit < 30) mask |= 1 << bit;
+        }
+        return { o, extra, restricted, groups, mask };
       });
       type Eff = (typeof eff)[number];
       const dominates = (A: Eff, B: Eff): boolean => {
+        if ((A.mask & ~B.mask) !== 0) return false;
         for (const [sid, c] of A.extra)
           if ((B.extra.get(sid) ?? fixed.get(sid) ?? 0) < c) return false;
         for (const r of A.restricted) if (!B.restricted.has(r)) return false;
@@ -369,17 +526,21 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         return true;
       };
       return eff
-        .filter(
-          (e, i) =>
-            !eff.some(
-              (f, j) =>
-                j !== i && dominates(f, e) && (!dominates(e, f) || j < i),
-            ),
-        )
+        .filter((e, i) => {
+          for (let j = 0; j < eff.length; j++) {
+            const f = eff[j];
+            if (j === i || (f.mask & ~e.mask) !== 0) continue;
+            if (dominates(f, e) && (!dominates(e, f) || j < i)) return false;
+          }
+          return true;
+        })
         .map((e) => e.o);
     });
   }
 
+  const prunedCache = new Map<Relaxation | null, RequirementOption[][]>();
+  /** Subjects whose courses have different weights in the current weighting. */
+  let mixedSubjects = new Set<string>();
   for (const weighting of weightings) {
     const items = base
       .map((c) => itemFromCourse(c, weighting))
@@ -390,11 +551,18 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       arr.push(it);
       bySubject.set(it.subjectId as string, arr);
     }
+    mixedSubjects = new Set(
+      [...bySubject]
+        .filter(([, l]) => l.some((it) => it.wS !== l[0].wS))
+        .map(([sid]) => sid),
+    );
     const manualItems = items.filter((i) => i.manual);
     const seen = new Set<string>();
     const budget = Math.max(1, Math.floor(MAX_CONFIGS / relaxations.length));
     for (const relaxation of relaxations) {
-      let optionLists = prunedOptions(relaxation);
+      let optionLists =
+        prunedCache.get(relaxation) ?? prunedOptions(relaxation);
+      prunedCache.set(relaxation, optionLists);
       const extraCount = extraChoices.reduce(
         (n, e) => n * e.variants.length,
         1,
@@ -477,7 +645,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       variant.items.forEach((x, j) => {
         add(
           {
-            key: `extra:${e.def.id}:${j}`,
+            key: `extra:${e.def.id}:${extraIdx[i]}:${j}`,
             subjectId: null,
             extraId: e.def.id,
             halfYear: -1,
@@ -517,7 +685,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       short: string;
     }[] = [];
     const groupMins: GroupMin[] = [];
-    const picked = new Set<string>();
+    const picks: PickDuty[] = [];
     for (const { req, option } of chosenOptions) {
       for (const p of option.picks) {
         let count = p.count;
@@ -528,29 +696,44 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         ) {
           count = Math.max(0, count - 1);
         }
-        if (count > 0) picked.add(p.subjectId);
         const short = p.label ?? req.short ?? shortRuleLabel(req.label);
-        if (p.halfYears)
-          restricted.push({
-            subjectId: p.subjectId,
+        picks.push({ req, pick: p, count, short });
+      }
+      for (const g of option.groupMins ?? []) groupMins.push(g);
+    }
+    const exact = exactPickSubjects(picks, bySubject, groupMins, mixedSubjects);
+    const picked = new Set<string>();
+    for (const { req, pick: p, count, short } of picks) {
+      if (count > 0) picked.add(p.subjectId);
+      if (exact.has(p.subjectId)) {
+        if (count > 0)
+          groupMins.push({
+            id: req.id,
+            label: req.label,
+            subjectIds: [p.subjectId],
             count,
             halfYears: p.halfYears,
+            short,
+          });
+      } else if (p.halfYears)
+        restricted.push({
+          subjectId: p.subjectId,
+          count,
+          halfYears: p.halfYears,
+          ruleId: req.id,
+          label: req.label,
+          short,
+        });
+      else {
+        const cur = lower.get(p.subjectId);
+        if (!cur || count > cur.count)
+          lower.set(p.subjectId, {
+            count,
             ruleId: req.id,
             label: req.label,
             short,
           });
-        else {
-          const cur = lower.get(p.subjectId);
-          if (!cur || count > cur.count)
-            lower.set(p.subjectId, {
-              count,
-              ruleId: req.id,
-              label: req.label,
-              short,
-            });
-        }
       }
-      for (const g of option.groupMins ?? []) groupMins.push(g);
     }
     // Implication courses first for subjects that are included anyway.
     const forceImplication = (imp: Implication) => {
@@ -597,7 +780,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       if ((countBySubject.get(imp.subjectId) ?? 0) > 0) forceImplication(imp);
     }
     // Identical forced sets give identical results.
-    const sig = `${[...selected.keys()].sort().join(",")}|${groupMins.map((g) => `${g.id}:${g.count}`).join(",")}|${violations.join(";")}`;
+    const sig = `${[...selected.keys()].sort().join(",")}|${groupMins.map((g) => `${g.id}:${g.subjectIds.join("+")}:${g.count}:${g.halfYears?.join("+") ?? ""}`).join(",")}|${violations.join(";")}`;
     if (seen.has(sig)) return;
     seen.add(sig);
     fill(
@@ -678,6 +861,13 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     items: BlockItem[];
     /** A list may only be used with 0 or at least minIfAny courses (implication subjects). */
     minIfAny: number;
+    /**
+     * Explicit choices instead of prefixes (courses that are not alike under
+     * a cap or an implication); the first choice is empty.
+     */
+    subsets?: BlockItem[][];
+    /** Most courses a subset choice takes. */
+    max?: number;
   }
 
   function fill(
@@ -730,25 +920,8 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       hys.push(imp.halfYear);
       impBySubject.set(imp.subjectId, hys);
     }
-    const lists: FillList[] = [];
-    const listKey = new Map<string, number>();
-    const used = new Map<string, number>();
-    const impItems = new Map<string, BlockItem[]>();
-    for (const it of items) {
-      const sid = it.subjectId as string;
-      if (selected.has(it.key)) continue;
-      if (impBySubject.has(sid)) {
-        const arr = impItems.get(sid) ?? [];
-        arr.push(it);
-        impItems.set(sid, arr);
-        continue;
-      }
-      const cap = caps.get(sid);
-      if (cap !== undefined) {
-        const u = (countBySubject.get(sid) ?? 0) + (used.get(sid) ?? 0);
-        if (u >= cap) continue;
-        used.set(sid, (used.get(sid) ?? 0) + 1);
-      }
+    // Courses with the same signature are interchangeable except for points.
+    const sigOf = (it: BlockItem) => {
       let sig = `${it.wS}|`;
       groupMins.forEach((g, gi) => {
         if (need[gi] > 0 && inGroup(g, it)) sig += `${gi},`;
@@ -757,6 +930,69 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       refLimits.forEach((l, li) => {
         if (l.filter && l.filter(it)) sig += `${li},`;
       });
+      return sig;
+    };
+    const alike = (arr: BlockItem[]) =>
+      arr.every((x) => sigOf(x) === sigOf(arr[0]));
+    /** The empty choice, then `fixed` plus every subset of `rest` up to `room` items. */
+    const subsetsOf = (
+      fixed: BlockItem[],
+      rest: BlockItem[],
+      room: number,
+    ): BlockItem[][] => {
+      const out: BlockItem[][] = [[]];
+      for (let mask = 0; mask < 1 << rest.length; mask++) {
+        const sub = [...fixed];
+        rest.forEach((x, i) => {
+          if (mask & (1 << i)) sub.push(x);
+        });
+        if (sub.length > 0 && sub.length <= room) out.push(sub);
+      }
+      return out;
+    };
+    const lists: FillList[] = [];
+    // Capped subjects: the best courses up to the cap if all are alike,
+    // otherwise every subset up to the cap is a choice of its own.
+    const cappedItems = new Map<string, BlockItem[]>();
+    for (const it of items) {
+      const sid = it.subjectId as string;
+      if (selected.has(it.key) || impBySubject.has(sid) || !caps.has(sid))
+        continue;
+      const arr = cappedItems.get(sid) ?? [];
+      arr.push(it);
+      cappedItems.set(sid, arr);
+    }
+    const skip = new Set<string>();
+    for (const [sid, arr] of cappedItems) {
+      const room = Math.max(
+        0,
+        (caps.get(sid) ?? 0) - (countBySubject.get(sid) ?? 0),
+      );
+      if (arr.length <= room) continue;
+      if (alike(arr)) {
+        for (const it of arr.slice(room)) skip.add(it.key);
+      } else {
+        for (const it of arr) skip.add(it.key);
+        lists.push({
+          items: arr,
+          minIfAny: 0,
+          max: room,
+          subsets: subsetsOf([], arr, room),
+        });
+      }
+    }
+    const listKey = new Map<string, number>();
+    const impItems = new Map<string, BlockItem[]>();
+    for (const it of items) {
+      const sid = it.subjectId as string;
+      if (selected.has(it.key) || skip.has(it.key)) continue;
+      if (impBySubject.has(sid)) {
+        const arr = impItems.get(sid) ?? [];
+        arr.push(it);
+        impItems.set(sid, arr);
+        continue;
+      }
+      const sig = sigOf(it);
       let li = listKey.get(sig);
       if (li === undefined) {
         li = lists.length;
@@ -773,17 +1009,31 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       const room =
         cap === undefined ? Infinity : cap - (countBySubject.get(sid) ?? 0);
       if (room < req.length) continue;
-      const ordered = [...req, ...arr.filter((x) => !hys.includes(x.halfYear))];
-      lists.push({
-        items: ordered.slice(0, Math.min(ordered.length, room)),
-        minIfAny: req.length,
-      });
+      const rest = arr.filter((x) => !hys.includes(x.halfYear));
+      if (alike(rest)) {
+        const ordered = [...req, ...rest];
+        lists.push({
+          items: ordered.slice(0, Math.min(ordered.length, room)),
+          minIfAny: req.length,
+        });
+      } else {
+        lists.push({
+          items: [...req, ...rest],
+          minIfAny: req.length,
+          max: Math.min(req.length + rest.length, room),
+          subsets: subsetsOf(req, rest, room),
+        });
+      }
     }
 
-    const poolSize = lists.reduce((n, l) => n + l.items.length, 0);
+    const poolSize = lists.reduce(
+      (n, l) => n + (l.subsets ? (l.max ?? 0) : l.items.length),
+      0,
+    );
     const violationsBase = [...violationsIn];
     let nFrom = Math.max(minN, slotsM);
     let nTo = maxN;
+    let pad = 0;
     if (slotsM > maxN) {
       if (!rules.count.extendToMandatory) {
         violationsBase.push(
@@ -792,9 +1042,12 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       }
       nFrom = nTo = slotsM;
     } else if (slotsM + poolSize < minN) {
-      violationsBase.push(
-        `Zu wenige einbringbare Kurse (${slotsM + poolSize} von ${countLabel})`,
-      );
+      // Missing subjects: estimate the rest. Own exclusions: violation.
+      if (missingPlaces > 0) pad = minN - slotsM - poolSize;
+      else
+        violationsBase.push(
+          `Zu wenige einbringbare Kurse (${slotsM + poolSize} von ${countLabel})`,
+        );
       nFrom = nTo = slotsM + poolSize;
     } else {
       nTo = Math.min(maxN, slotsM + poolSize);
@@ -824,57 +1077,84 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       pick: [],
     };
     states.set("", init);
+    const keep = (
+      next: Map<string, St>,
+      st: St,
+      k: number,
+      a: Omit<St, "t" | "pick">,
+      choice: number,
+    ) => {
+      const t = st.t + k;
+      const key = `${t}|${a.S}|${a.defT}|${a.defs.join(",")}|${a.zero}|${a.grp.join(",")}`;
+      const cur = next.get(key);
+      if (!cur || a.P > cur.P) {
+        next.set(key, {
+          t,
+          P: a.P,
+          S: a.S,
+          defT: a.defT,
+          defs: [...a.defs],
+          zero: a.zero,
+          grp: [...a.grp],
+          pick: [...st.pick, choice],
+        });
+      }
+    };
+    const take = (a: Omit<St, "t" | "pick">, it: BlockItem) => {
+      a.P += it.wP;
+      a.S += it.wS;
+      a.defT += it.deficits;
+      refLimits.forEach((l, i) => {
+        a.defs[i] += limitDef(l, it);
+      });
+      if (it.zero) a.zero = 1;
+      groupMins.forEach((g, gi) => {
+        if (a.grp[gi] < need[gi] && inGroup(g, it)) a.grp[gi]++;
+      });
+    };
+    const start = (st: St) => ({
+      P: st.P,
+      S: st.S,
+      defT: st.defT,
+      defs: [...st.defs],
+      zero: st.zero,
+      grp: [...st.grp],
+    });
     for (let li = 0; li < lists.length; li++) {
       const list = lists[li];
       const next = new Map<string, St>();
       for (const st of states.values()) {
-        let P = st.P;
-        let S = st.S;
-        let defT = st.defT;
-        const defs = [...st.defs];
-        let zero = st.zero;
-        const grp = [...st.grp];
+        if (list.subsets) {
+          list.subsets.forEach((sub, si) => {
+            if (st.t + sub.length > fMax) return;
+            const a = start(st);
+            for (const it of sub) take(a, it);
+            keep(next, st, sub.length, a, si);
+          });
+          continue;
+        }
+        const a = start(st);
         for (let k = 0; k <= list.items.length && st.t + k <= fMax; k++) {
-          if (k > 0) {
-            const it = list.items[k - 1];
-            P += it.wP;
-            S += it.wS;
-            defT += it.deficits;
-            refLimits.forEach((l, i) => {
-              defs[i] += limitDef(l, it);
-            });
-            if (it.zero) zero = 1;
-            groupMins.forEach((g, gi) => {
-              if (grp[gi] < need[gi] && inGroup(g, it)) grp[gi]++;
-            });
-          }
+          if (k > 0) take(a, list.items[k - 1]);
           if (k > 0 && k < list.minIfAny) continue;
-          const t = st.t + k;
-          const key = `${t}|${S}|${defT}|${defs.join(",")}|${zero}|${grp.join(",")}`;
-          const cur = next.get(key);
-          if (!cur || P > cur.P) {
-            next.set(key, {
-              t,
-              P,
-              S,
-              defT,
-              defs: [...defs],
-              zero,
-              grp: [...grp],
-              pick: [...st.pick, k],
-            });
-          }
+          keep(next, st, k, a, k);
         }
       }
       states = next;
     }
 
     for (const st of states.values()) {
-      const N = slotsM + st.t;
-      if (N < nFrom || N > nTo) continue;
-      const P = PM + st.P;
-      const S = SM + st.S;
+      const N0 = slotsM + st.t;
+      if (N0 < nFrom || N0 > nTo) continue;
+      let P = PM + st.P;
+      let S = SM + st.S;
       if (S <= 0) continue;
+      const placeholder = pad > 0 ? placeholderItem(P, S, pad) : null;
+      if (placeholder) {
+        P += placeholder.wP;
+        S += placeholder.wS;
+      }
+      const N = N0 + pad;
       const groupViolations: string[] = [];
       groupMins.forEach((g, gi) => {
         if (st.grp[gi] < need[gi]) groupViolations.push(g.label);
@@ -885,8 +1165,9 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       const chosen: Chosen[] = [...selected.values()];
       const groupLeft = [...need];
       lists.forEach((list, li) => {
-        for (let k = 0; k < (st.pick[li] ?? 0); k++) {
-          const it = list.items[k];
+        const c = st.pick[li] ?? 0;
+        const taken = list.subsets ? list.subsets[c] : list.items.slice(0, c);
+        for (const it of taken) {
           let ruleId: string | null = null;
           let label: string | null = null;
           for (let gi = 0; gi < groupMins.length; gi++) {
@@ -901,6 +1182,8 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
           chosen.push({ item: it, ruleId, label });
         }
       });
+      if (placeholder)
+        chosen.push({ item: placeholder, ruleId: null, label: null });
       const perSubject = new Map<string, number>();
       let zeroIncluded = 0;
       for (const c of chosen) {
@@ -944,6 +1227,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         extraVariants,
         zeroIncluded,
         feasible: violations.length === 0,
+        pad,
       };
       if (!best || compare(cand, best) > 0) best = cand;
     }
@@ -999,6 +1283,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         ],
         admitted: null,
         predicted: false,
+        ...(missingPlaces > 0 ? { missingCourses: missingPlaces } : {}),
       },
       issues,
     };
@@ -1007,7 +1292,9 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   const predicted = b.chosen.some((c) => c.item.predicted);
   const included: IncludedCourse[] = b.chosen
     .map((c) => ({
-      subjectId: c.item.subjectId ?? `extra:${c.item.extraId}`,
+      subjectId:
+        c.item.subjectId ??
+        (c.item.extraId ? `extra:${c.item.extraId}` : PLACEHOLDER_KEY),
       halfYear: c.item.halfYear,
       points: c.item.points,
       weight: c.item.weight,
@@ -1017,6 +1304,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       manual: c.item.manual,
       extraId: c.item.extraId,
       slots: c.item.slots,
+      ...(c.item.key === PLACEHOLDER_KEY ? { placeholder: true } : {}),
     }))
     .sort((x, y) =>
       x.subjectId < y.subjectId
@@ -1052,20 +1340,30 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     predicted,
   });
   checks.push(...zeroTakenChecks);
-  const structural = b.violations.filter(
-    (v) =>
-      !b.limitResults.some((lr) => lr.limit.label === v) &&
-      v !== "Eingebrachter Kurs mit 0 Punkten",
-  );
+  const structural = [
+    ...new Set(
+      b.violations.filter(
+        (v) =>
+          !b.limitResults.some((lr) => lr.limit.label === v) &&
+          v !== "Eingebrachter Kurs mit 0 Punkten",
+      ),
+    ),
+  ];
+  const openParts = [
+    ...(missingPlaces > 0
+      ? [`erst ${capacity} von ${minN} Kursen angelegt`]
+      : []),
+    ...[...new Set(open)].map(inlineRuleLabel),
+  ];
   checks.push({
     id: "block1.mandatory",
     // A condition like the other checks, so "Offen" next to it reads right.
     label: "Alle Pflichteinbringungen, richtige Anzahl",
-    passed: structural.length > 0 ? false : open.length > 0 ? null : true,
+    passed: structural.length > 0 ? false : openParts.length > 0 ? null : true,
     detail: structural.length
-      ? structural.join("; ")
-      : open.length
-        ? `Offen: ${listDe([...new Set(open)].map(inlineRuleLabel))}`
+      ? listDe(structural.map((v, i) => (i === 0 ? v : inlineRuleLabel(v))))
+      : openParts.length
+        ? `Offen: ${listDe(openParts)}`
         : `${b.N} eingebracht (${countLabel} nötig)`,
     predicted,
   });
@@ -1074,7 +1372,9 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       ...rules.checks(
         ctx,
         {
-          items: b.chosen.map((c) => c.item),
+          items: b.chosen
+            .filter((c) => c.item.key !== PLACEHOLDER_KEY)
+            .map((c) => c.item),
           P: b.P,
           S: b.S,
           count: b.N,
@@ -1083,6 +1383,18 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         predicted,
       ),
     );
+  }
+  // Incomplete subject choice: whatever depends on the selection is still
+  // open. Courses with 0 points and violated duties stay violations.
+  if (missingPlaces > 0) {
+    for (const c of checks) {
+      if (
+        c.passed === false &&
+        c.id !== "block1.zeroTaken" &&
+        c.id !== "block1.mandatory"
+      )
+        c.passed = null;
+    }
   }
 
   const assumptions: string[] = [];
@@ -1109,7 +1421,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       minPoints: rules.minPoints,
       weightedSum: b.P,
       weightSum: b.S,
-      countIncluded: b.N,
+      countIncluded: b.N - b.pad,
       countLabel,
       included,
       deficits: {
@@ -1125,6 +1437,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       admitted,
       predicted,
       assumptions,
+      ...(missingPlaces > 0 ? { missingCourses: missingPlaces } : {}),
     },
     issues,
   };

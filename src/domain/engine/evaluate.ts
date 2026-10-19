@@ -29,10 +29,19 @@ export function evaluateWithRuleset(
       ? blockI.points + blockII.points
       : null;
   const predicted = blockI.predicted || blockII.predicted;
+  // Subjects still missing: a total below the minimum is an estimate, open.
+  const incomplete = (blockI.missingCourses ?? 0) > 0;
   const totalCheck: RuleCheck = {
     id: "total.minPoints",
     label: `Mindestens ${ruleset.totalMinPoints} Punkte gesamt`,
-    passed: points === null ? null : points >= ruleset.totalMinPoints,
+    passed:
+      points === null
+        ? null
+        : points >= ruleset.totalMinPoints
+          ? true
+          : incomplete
+            ? null
+            : false,
     detail: points === null ? null : `${points} von 900`,
     predicted,
   };

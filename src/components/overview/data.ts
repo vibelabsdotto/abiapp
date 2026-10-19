@@ -33,8 +33,12 @@ export function allChecks(evaluation: AbiturEvaluation): RuleCheck[] {
 /** Engine warning: a mandatory inclusion has no matching subject yet. */
 export const MISSING_SUBJECT_CODE = "block1.requirement.missingSubject";
 
+/** Engine warning: fewer courses set up than Block I needs. */
+export const INCOMPLETE_SETUP_CODE = "block1.setup.incomplete";
+
+/** Issues the student fixes by adding subjects ("Fach hinzufügen"). */
 export const isMissingSubjectIssue = (issue: Issue): boolean =>
-  issue.code === MISSING_SUBJECT_CODE;
+  issue.code === MISSING_SUBJECT_CODE || issue.code === INCOMPLETE_SETUP_CODE;
 
 /** Issues worth showing to the student (assumptions live on /rules). */
 export function visibleIssues(evaluation: AbiturEvaluation): Issue[] {
