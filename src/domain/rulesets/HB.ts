@@ -215,8 +215,8 @@ function checkTwo(c: BlockIIContext): RuleCheck {
     {
       id: "block2.min",
       label: bll
-        ? "In 2 Prüfungsfächern je mindestens 20 Punkte, darunter ein LK"
-        : "In 2 Prüfungsfächern je mindestens 25 Punkte, darunter ein LK",
+        ? "In 2 Prüfungen je mindestens 20 Punkte, darunter ein LK"
+        : "In 2 Prüfungen je mindestens 25 Punkte, darunter ein LK",
       count: 2,
       minWeighted: bll ? 20 : 25,
       require: compIsElevated,
@@ -419,7 +419,7 @@ const deficitLimits = (ctx: RuleContext) => {
     limit(
       "elevated",
       2,
-      "Davon höchstens 2 Leistungskurse",
+      "Davon höchstens 2 in Leistungskursen",
       (i) => i.subjectId !== null && ids.has(i.subjectId),
     ),
   ];
@@ -514,7 +514,7 @@ export const HB_2030: Ruleset = {
     "Pflicht: beide LK, P3 und P4, Deutsch, Mathematik, eine fortgesetzte Fremdsprache, eine Gesellschaftswissenschaft und eine Naturwissenschaft (je 4), 2 Kurse Geschichte oder 4 Kurse Politik mit historischen Anteilen, 2 Kurse eines ästhetischen Fachs.",
     "Die übrigen Kurse wählt die App nach Punkten. Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
     "Zulassung: mindestens 200 Punkte, mindestens 28 von 34 Kursen und 6 von 8 LK mit 5 oder mehr Punkten. Kurse mit 0 Punkten sind vermutlich nicht einbringbar.",
-    "Block II wie bisher angenommen: vier Prüfungen fünffach, mit Besonderer Lernleistung alle fünf vierfach; zusätzliche mündliche Prüfung 2:1.",
+    "Block II wie bisher angenommen: vier Prüfungen fünffach, mit Besonderer Lernleistung alle fünf vierfach. Zusätzliche mündliche Prüfung 2:1.",
     "Bestehen: Block II mindestens 100 Punkte, zwei Prüfungen mit je mindestens 5 Punkten (einfach), darunter ein LK.",
   ],
   sources: [

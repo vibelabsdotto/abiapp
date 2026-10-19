@@ -23,6 +23,7 @@ import {
   limit,
   requireFieldsCovered,
   taken,
+  listDe,
 } from "./helpers";
 import { roundHalfUpFrac } from "../engine/math";
 
@@ -79,7 +80,7 @@ function requirements(ctx: RuleContext): Requirement[] {
     exempt === 0
       ? [{ picks: two(others) }]
       : combinations(others, exempt).map((free) => {
-          const names = free.map((s) => s.name).join(" und ");
+          const names = listDe(free.map((s) => s.name));
           return {
             label: `Wahlfach ${names}`,
             picks: two(others.filter((s) => !free.includes(s))),
@@ -232,13 +233,13 @@ export const TH_2027: Ruleset = {
   defaults: { examWeightPercent: 50 },
   summary: [
     "Qualifikationsphase Q1 bis Q4 mit drei Fächern auf erhöhtem Niveau (eA), mindestens eines davon Deutsch oder Mathematik.",
-    "Block I: genau 36 Halbjahresergebnisse, alle einfach; Punkte = Summe × 40 / 36, ab ,5 aufgerundet.",
+    "Block I: genau 36 Halbjahresergebnisse, alle einfach. Punkte = Summe × 40 / 36, ab 0,5 aufgerundet.",
     "Pflicht: alle eA-Fächer, Deutsch bzw. Mathematik auf gA und die mündlichen Prüfungsfächer je 4, aus jedem weiteren Fach mindestens 2. Das Wahlfach ist frei.",
     "Zulassung: mindestens 200 Punkte, höchstens 7 Ergebnisse unter 5 Punkten. Ein Halbjahr mit 0 Punkten gilt als nicht belegt, das Schuljahr wird wiederholt.",
-    "Seminarfach: Prozess 20 %, Arbeit 30 %, Kolloquium 50 %, kaufmännisch gerundet; jede Teilleistung braucht mindestens 1 Punkt.",
+    "Seminarfach: Prozess 20 %, Arbeit 30 %, Kolloquium 50 %, kaufmännisch gerundet. Jede Teilleistung braucht mindestens 1 Punkt.",
     "Block II: drei schriftliche Prüfungen in den eA-Fächern und zwei mündliche, alle vierfach. Die Seminarfachleistung kann eine mündliche Prüfung ersetzen.",
     "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, abgerundet (Anlage 14 A).",
-    "Bestehen: Block II mindestens 100 Punkte und in drei Prüfungsfächern je mindestens 5 Punkte einfach (20 vierfach).",
+    "Bestehen: Block II mindestens 100 Punkte und in drei Prüfungen je mindestens 5 Punkte einfach (20 vierfach).",
     "Gesamt mindestens 300 von 900 Punkten, Note nach Anlage 15.",
   ],
   sources: [
@@ -334,7 +335,7 @@ export const TH_2027: Ruleset = {
       checkBlockIIMin(c),
       checkMinComponents(c, {
         id: "block2.min20",
-        label: "In 3 Prüfungsfächern je mindestens 5 Punkte (20 vierfach)",
+        label: "In 3 Prüfungen je mindestens 5 Punkte (20 vierfach)",
         count: 3,
         minWeighted: 20,
       }),

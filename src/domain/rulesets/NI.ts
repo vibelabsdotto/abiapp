@@ -393,13 +393,13 @@ export const NI_2027: Ruleset = {
   defaults: { examWeightPercent: 50 },
   summary: [
     "Qualifikationsphase 12/1 bis 13/2 mit drei Fächern auf erhöhtem Niveau: P1 und P2 sind deine Schwerpunktfächer, P3 ist ein drittes eA-Fach.",
-    "Block I: 32 bis 36 Ergebnisse, nur P1 und P2 zählen doppelt. Punkte = 40 × Summe / gewichtete Anzahl, ab ,5 aufgerundet. Die App wählt die beste Anzahl.",
+    "Block I: 32 bis 36 Ergebnisse, nur P1 und P2 zählen doppelt. Punkte = 40 × Summe / gewichtete Anzahl, ab 0,5 aufgerundet. Die App wählt die beste Anzahl.",
     "Pflicht: alle fünf Prüfungsfächer, Deutsch, Mathematik, eine Fremdsprache und eine Naturwissenschaft (je 4), dazu je 2 in Kunst, Musik oder Darstellendem Spiel, Politik-Wirtschaft, Geschichte, Religion oder Werte und Normen und im Seminarfach.",
     "Je nach Schwerpunkt kommen Pflichtergebnisse dazu, im mathematisch-naturwissenschaftlichen Schwerpunkt etwa 4 Ergebnisse einer zweiten Naturwissenschaft oder Informatik.",
     "Zulassung: mindestens 200 Punkte, höchstens 6 Ergebnisse unter 5 Punkten (bei 35 oder 36 Ergebnissen 7), in P1 bis P3 höchstens 3, kein eingebrachtes Ergebnis mit 0 Punkten.",
     "Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
     "Block II: fünf Prüfungen vierfach. P1 bis P4 schriftlich, P5 mündlich oder als Präsentation. Eine Besondere Lernleistung kann P4 ersetzen.",
-    "Zusätzliche mündliche Prüfung: (8 × schriftlich + 4 × mündlich) / 3, ab ,5 aufgerundet.",
+    "Zusätzliche mündliche Prüfung: (8 × schriftlich + 4 × mündlich) / 3, ab 0,5 aufgerundet.",
     "Bestehen: Block II mindestens 100 Punkte und drei Prüfungen mit je mindestens 20 Punkten, gesamt mindestens 300.",
   ],
   sources: [
@@ -621,9 +621,9 @@ export const NI_2030: Ruleset = {
     "Drei Leistungsfächer P1 bis P3 mit schriftlicher Prüfung, P4 und P5 werden mündlich geprüft. Schwerpunkte, Seminarfach und Facharbeit entfallen.",
     "Block I: genau 32 Ergebnisse. Zwei Leistungsfächer deiner Wahl zählen doppelt, die App nimmt die günstigsten. Block I ist damit gleich der Punktsumme.",
     "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine Fremdsprache und eine Naturwissenschaft (je 4), dazu je 2 in Kunst, Musik oder Darstellendem Spiel, Geschichte, einem weiteren gesellschaftswissenschaftlichen Fach und Religion, Werte und Normen oder Philosophie.",
-    "Zulassung: mindestens 200 Punkte, höchstens 6 Ergebnisse unter 5 Punkten, davon höchstens 3 in den Leistungsfächern, kein eingebrachtes Ergebnis mit 0 Punkten.",
+    "Zulassung: mindestens 200 Punkte, höchstens 6 Ergebnisse unter 5 Punkten, davon höchstens 3 in Leistungsfächern, kein eingebrachtes Ergebnis mit 0 Punkten.",
     "Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist. Ein Projektfach zählt nur mit beiden Halbjahren.",
-    "Block II: fünf Prüfungen vierfach. Zusätzliche mündliche Prüfung in P1 bis P3: (8 × schriftlich + 4 × mündlich) / 3, ab ,5 aufgerundet.",
+    "Block II: fünf Prüfungen vierfach. Zusätzliche mündliche Prüfung in P1 bis P3: (8 × schriftlich + 4 × mündlich) / 3, ab 0,5 aufgerundet.",
     "Bestehen: Block II mindestens 100 Punkte und drei Prüfungen mit je mindestens 20 Punkten.",
   ],
   sources: [
@@ -660,7 +660,7 @@ export const NI_2030: Ruleset = {
       limit(
         "elevated",
         3,
-        "Davon höchstens 3 in den Leistungsfächern",
+        "Davon höchstens 3 in Leistungsfächern",
         isElevatedItem,
       ),
     ],

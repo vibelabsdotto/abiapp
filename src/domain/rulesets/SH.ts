@@ -255,7 +255,7 @@ function sh(
     defaults: { examWeightPercent: 50 },
     summary: [
       "Profiloberstufe Q1.1 bis Q2.2 mit genau zwei Fächern auf erhöhtem Niveau: dein Profilfach und ein Kernfach (Deutsch, Mathematik oder Kern-Fremdsprache).",
-      "Block I: genau 36 Ergebnisse, die beiden eA-Fächer zählen doppelt. Punkte = Summe / 44 × 40, ab ,5 aufgerundet.",
+      "Block I: genau 36 Ergebnisse, die beiden eA-Fächer zählen doppelt. Punkte = Summe / 44 × 40, ab 0,5 aufgerundet.",
       "Pflicht: alle Prüfungsfächer, alle drei Kernfächer, eine Naturwissenschaft und Geschichte (je 4), Geographie und Wirtschaft/Politik zusammen 2, Religion oder Philosophie 2, je 1 aus Profilseminar und Kunst, Musik oder Darstellendem Spiel.",
       "Den Rest wählst du frei, die App nimmt die besten Ergebnisse. Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
       "Zulassung: mindestens 200 Punkte, mindestens 29 Ergebnisse mit 5 oder mehr Punkten (höchstens 7 darunter), kein eingebrachtes Ergebnis mit 0 Punkten.",

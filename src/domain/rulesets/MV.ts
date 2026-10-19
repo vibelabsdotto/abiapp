@@ -332,17 +332,17 @@ function mv(v2028: boolean): Ruleset {
     ]),
     defaults: { examWeightPercent: 50 },
     summary: [
-      "Qualifikationsphase 11/1 bis 12/2 mit zwei Leistungskursen; einer davon Mathematik, Deutsch, eine fortgeführte Fremdsprache oder eine Naturwissenschaft.",
-      "Block I: 8 LK-Halbjahre doppelt und genau 28 Grundkurs-Halbjahre; Punkte = Summe / 44 × 40, ab ,5 aufgerundet.",
+      "Qualifikationsphase 11/1 bis 12/2 mit zwei Leistungskursen. Einer davon ist Mathematik, Deutsch, eine fortgeführte Fremdsprache oder eine Naturwissenschaft.",
+      "Block I: 8 LK-Halbjahre doppelt und genau 28 Grundkurs-Halbjahre. Punkte = Summe / 44 × 40, ab 0,5 aufgerundet.",
       v2028
-        ? "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine fortgeführte Fremdsprache und eine Naturwissenschaft je 4; Musik, Kunst oder Theater, Geschichte, Politische Bildung/Sozialkunde, Religion oder Philosophie je 2."
-        : "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine fortgeführte Fremdsprache, eine Naturwissenschaft sowie Geschichte und Politische Bildung je 4; Musik, Kunst oder Darstellendes Spiel und Religion oder Philosophie je 2.",
+        ? "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine fortgeführte Fremdsprache und eine Naturwissenschaft je 4. Musik, Kunst oder Theater, Geschichte, Politische Bildung/Sozialkunde, Religion oder Philosophie je 2."
+        : "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine fortgeführte Fremdsprache, eine Naturwissenschaft sowie Geschichte und Politische Bildung je 4. Musik, Kunst oder Darstellendes Spiel und Religion oder Philosophie je 2.",
       "Eine Facharbeit kann doppelt als zwei Halbjahresleistungen zählen.",
-      "Zulassung: mindestens 200 Punkte, mindestens 29 Halbjahre mit 5 Punkten (höchstens 7 darunter). Halbjahre mit 0 Punkten zählen nicht.",
+      "Zulassung: mindestens 200 Punkte, mindestens 29 Halbjahre mit 5 oder mehr Punkten (höchstens 7 darunter). Halbjahre mit 0 Punkten zählen nicht.",
       "Block II: P1 und P2 (LK) und P3 schriftlich, P4 und P5 mündlich, alle vierfach. Eine Besondere Lernleistung kann P4 ersetzen.",
       v2028
-        ? "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, ab ,5 aufgerundet. BLL: Dokumentation 40 %, Kolloquium 60 %."
-        : "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, ab ,5 aufgerundet. BLL: Dokumentation und Kolloquium je zur Hälfte.",
+        ? "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, ab 0,5 aufgerundet. BLL: Dokumentation 40 %, Kolloquium 60 %."
+        : "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, ab 0,5 aufgerundet. BLL: Dokumentation und Kolloquium je zur Hälfte.",
       "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 5 Punkten (20 vierfach), darunter P1 oder P2.",
       "Gesamt mindestens 300 von 900 Punkten, Note nach Anlage 7.",
     ],

@@ -81,16 +81,16 @@ function weightings2027(ctx: RuleContext): WeightingOption[] {
       const notes: string[] = [];
       if (p && k && !fromExam)
         notes.push(
-          `Annahme: ${p.name} (Profilfach) und ${k.name} (Kernfach) werden Prüfungsfächer und zählen doppelt.`,
+          `${p.name} (Profilfach) und ${k.name} (Kernfach) werden Prüfungsfächer und zählen doppelt.`,
         );
       else {
         if (p && profiles.length > 1)
           notes.push(
-            `Annahme: ${p.name} ist das profilgebende Fach deiner Profilprüfung.`,
+            `${p.name} ist das profilgebende Fach deiner Profilprüfung.`,
           );
         if (k && ks.length > 1)
           notes.push(
-            `Annahme: ${k.name} ist das doppelt gewertete eA-Kernfach (die APO-AH legt nicht fest, welches).`,
+            `${k.name} ist das doppelt gewertete eA-Kernfach, die APO-AH legt es nicht fest.`,
           );
       }
       out.push({
@@ -100,7 +100,7 @@ function weightings2027(ctx: RuleContext): WeightingOption[] {
           .join(" und ")
           .concat(" doppelt"),
         weight: (s) => (ids.has(s.id) ? 2 : 1),
-        assumption: notes.length ? notes.join(" ") : undefined,
+        assumption: notes.length ? `Annahme: ${notes.join(" ")}` : undefined,
       });
     }
   }
@@ -187,7 +187,7 @@ function checkTwoFive(c: BlockIIContext, factor: number): RuleCheck {
     {
       id: "block2.min5",
       label:
-        "In 2 Prüfungsfächern je mindestens 5 Punkte (einfach), darunter ein eA-Fach",
+        "In 2 Prüfungen je mindestens 5 Punkte (einfach), darunter ein eA-Fach",
       count: 2,
       minWeighted: 5 * factor,
       require: compIsElevated,
@@ -388,7 +388,7 @@ export const HH_2027: Ruleset = {
   defaults: { examWeightPercent: 50 },
   summary: [
     "Studienstufe S1 bis S4: mindestens zwei Kernfächer (Deutsch, Mathematik, Fremdsprache) und ein profilgebendes Fach auf erhöhtem Niveau.",
-    "Block 1: 32 bis 40 Semesterergebnisse nach deiner Wahl, die App wählt die beste Anzahl. Punkte = 40 × Summe / gewichtete Anzahl, ab ,5 aufgerundet.",
+    "Block 1: 32 bis 40 Semesterergebnisse nach deiner Wahl, die App wählt die beste Anzahl. Punkte = 40 × Summe / gewichtete Anzahl, ab 0,5 aufgerundet.",
     "Doppelt zählen nur das geprüfte Profilfach und ein eA-Kernfach, das Prüfungsfach ist. Sind zwei eA-Kernfächer Prüfungsfächer, nimmt die App das günstigere.",
     "Pflicht: die drei Kernfächer, alle Prüfungsfächer, das künstlerische Fach, Geschichte, PGW oder Geografie und eine Naturwissenschaft, jeweils alle 4 Semester.",
     "Zulassung: mindestens 200 Punkte, höchstens ein Fünftel der Ergebnisse unter 5 Punkten, kein eingebrachtes Ergebnis mit 0 Punkten. 0 Punkte in einem belegpflichtigen Fach verhindern die Zulassung.",
@@ -485,7 +485,7 @@ export const HH_2030: Ruleset = {
   summary: [
     "Vorläufig: Die Dritte Änderungsverordnung zur APO-AH ist noch nicht verkündet. Grundlage sind der Entwurf und die KMK-Vereinbarung 2024.",
     "Studienstufe S1 bis S4 mit zwei Fächern auf erhöhtem Niveau, die Profiloberstufe bleibt.",
-    "Block 1: genau 36 Semesterergebnisse, beide eA-Prüfungsfächer zählen doppelt. Punkte = 40 × Summe / 44, ab ,5 aufgerundet.",
+    "Block 1: genau 36 Semesterergebnisse, beide eA-Prüfungsfächer zählen doppelt. Punkte = 40 × Summe / 44, ab 0,5 aufgerundet.",
     "Pflichteinbringungen wie bisher angenommen: Kernfächer, Prüfungsfächer, künstlerisches Fach, Geschichte, PGW oder Geografie und eine Naturwissenschaft, je 4 Semester.",
     "Zulassung: mindestens 200 Punkte, höchstens 7 Ergebnisse unter 5 Punkten, kein eingebrachtes Ergebnis mit 0 Punkten.",
     "Block 2: vier Prüfungen fünffach, drei schriftlich und eine mündlich. Die Präsentationsprüfung entfällt.",

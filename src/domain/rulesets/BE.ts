@@ -352,7 +352,7 @@ function be(v: Version): Ruleset {
       "Zulassung: höchstens 2 LK und 4 GK unter 5 Punkten, LK zusammen mindestens 80 (doppelt), GK mindestens 120, Block I mindestens 200, kein eingebrachter Kurs mit 0 Punkten.",
       "Block II: P1 bis P3 schriftlich, P4 mündlich, 5. Prüfungskomponente als Präsentationsprüfung oder Besondere Lernleistung, alle vierfach.",
       "Zusätzliche mündliche Prüfung: 4 × (2 × schriftlich + mündlich) / 3, kaufmännisch gerundet.",
-      `${p5.presentation}; ${p5.bllText}.`,
+      `${p5.presentation}. ${p5.bllText}.`,
       "Bestehen: Block II mindestens 100, zwei Prüfungsfächer (P1 bis P4) mit je 20 Punkten, darunter ein LK, eine schriftliche Prüfung mit mindestens 5 Punkten.",
       ...v.note,
     ],
@@ -406,10 +406,10 @@ function be(v: Version): Ruleset {
         limit(
           "elevated",
           2,
-          "Davon höchstens 2 Leistungskurse",
+          "Davon höchstens 2 in Leistungskursen",
           isElevatedItem,
         ),
-        limit("basic", 4, "Davon höchstens 4 Grundkurse", isBasicItem),
+        limit("basic", 4, "Davon höchstens 4 in Grundkursen", isBasicItem),
       ],
       // § 15 Abs. 7: 0-point courses count as not taken; checked for the subjects with Belegpflicht.
       zero: {
@@ -448,7 +448,7 @@ function be(v: Version): Ruleset {
       variants: [
         {
           id: "presentation",
-          label: "4 Prüfungsfächer + Präsentationsprüfung",
+          label: "4 Prüfungsfächer und Präsentationsprüfung",
           components: [
             ...base,
             component("P5", "presentation", "any", 4, {
@@ -459,7 +459,7 @@ function be(v: Version): Ruleset {
         },
         {
           id: "bll",
-          label: "4 Prüfungsfächer + Besondere Lernleistung",
+          label: "4 Prüfungsfächer und Besondere Lernleistung",
           components: [
             ...base,
             component("P5", "bll", "any", 4, {
@@ -540,6 +540,6 @@ export const BE_2030 = be({
   oldP5: false,
   oldPolitics: false,
   note: [
-    "Ab Abitur 2030 gilt die VO-GO in der heutigen Fassung; eine Anpassung an die KMK-Vereinbarung ist noch nicht veröffentlicht.",
+    "Ab Abitur 2030 gilt die VO-GO in der heutigen Fassung. Eine Anpassung an die KMK-Vereinbarung ist noch nicht veröffentlicht.",
   ],
 });

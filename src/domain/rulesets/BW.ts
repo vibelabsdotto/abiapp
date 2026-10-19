@@ -125,12 +125,12 @@ function bw(
     ]),
     defaults: { examWeightPercent: 50 },
     summary: [
-      "Kursstufe J1.1 bis J2.2 mit drei Leistungsfächern; zwei davon aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft.",
-      "Block I: genau 40 Kurse; die Kurse von zwei Leistungsfächern zählen doppelt (du wählst nach den schriftlichen Ergebnissen, die App nimmt die zwei stärksten).",
+      "Kursstufe J1.1 bis J2.2 mit drei Leistungsfächern. Zwei davon sind aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft.",
+      "Block I: genau 40 Kurse. Die Kurse von zwei Leistungsfächern zählen doppelt (du wählst nach den schriftlichen Ergebnissen, die App nimmt die zwei stärksten).",
       "Punkte = Summe / 48 × 40, kaufmännisch gerundet.",
       "Pflicht: alle Leistungsfächer, Deutsch, Mathematik, eine Fremdsprache, eine Naturwissenschaft, Geschichte (je 4), Kunst oder Musik (2), Geographie und Gemeinschaftskunde (je 2), die mündlichen Prüfungsfächer, dazu zwei Fremdsprachen oder zwei Naturwissenschaften.",
       "Zulassung: mindestens 200 Punkte, höchstens 8 Kurse unter 5 Punkten (davon höchstens 3 in Leistungsfächern), kein Kurs mit 0 Punkten.",
-      "Block II: drei schriftliche Prüfungen in den Leistungsfächern, zwei mündliche, alle vierfach; Zusatzprüfung 4 × (2s + m)/3, gerundet.",
+      "Block II: drei schriftliche Prüfungen in den Leistungsfächern, zwei mündliche, alle vierfach. Zusatzprüfung 4 × (2s + m)/3, gerundet.",
       "Bestehen: mindestens 100 Punkte, drei Fächer mit je 20 Punkten (darunter zwei schriftliche), kein Fach unter 4.",
       "Seminarkurs: zählt als zwei Kurse in Block I oder ersetzt ein mündliches Prüfungsfach (nicht Deutsch oder Mathematik).",
       ...note,
@@ -299,7 +299,7 @@ function bw(
         checkMinComponents(c, {
           id: "block2.min20",
           label:
-            "In 3 Prüfungsfächern je mindestens 20 Punkte, darunter 2 schriftliche",
+            "In 3 Prüfungen je mindestens 20 Punkte, darunter 2 schriftliche",
           count: 3,
           minWeighted: 20,
           require: compIsWritten,
@@ -357,5 +357,5 @@ function bw(
 
 export const BW_2027 = bw("BW-2027", 2027, 2029, "high", []);
 export const BW_2030 = bw("BW-2030", 2030, 2030, "medium", [
-  "Für Abitur 2030 gelten nach aktuellem Stand dieselben Regeln; eine Anpassung an die KMK-Vereinbarung ist noch offen.",
+  "Für Abitur 2030 gelten nach aktuellem Stand dieselben Regeln. Eine Anpassung an die KMK-Vereinbarung ist noch offen.",
 ]);

@@ -231,15 +231,15 @@ function bb(v2028: boolean): Ruleset {
     ]),
     defaults: { examWeightPercent: 50 },
     summary: [
-      "Qualifikationsphase mit vier Schulhalbjahren und zwei Leistungskursen; einer davon Deutsch, Mathematik oder eine fortgeführte Fremdsprache.",
-      `Block I: alle 8 LK-Halbjahre doppelt und genau ${gk} Grundkurs-Halbjahre; Punkte = Summe / ${divisor} × 40, ab ,5 aufgerundet.`,
+      "Qualifikationsphase mit vier Schulhalbjahren und zwei Leistungskursen. Einer davon ist Deutsch, Mathematik oder eine fortgeführte Fremdsprache.",
+      `Block I: alle 8 LK-Halbjahre doppelt und genau ${gk} Grundkurs-Halbjahre. Punkte = Summe / ${divisor} × 40, ab 0,5 aufgerundet.`,
       v2028
         ? "Pflicht: LK und Prüfungsfächer, Deutsch, Mathematik und eine fortgeführte Fremdsprache je 4, eine Naturwissenschaft 4 (oder zwei je 2), Kunst, Musik oder Darstellendes Spiel 2, eine neu einsetzende Fremdsprache 2."
         : "Pflicht: LK und Prüfungsfächer, Deutsch, Mathematik und eine fortgeführte Fremdsprache je 4, eine Naturwissenschaft 4 (oder zwei je 2), eine neu einsetzende Fremdsprache 2.",
       "Der Seminarkurs kann als Grundkurs eingebracht werden.",
       "Zulassung: mindestens 200 Punkte, höchstens 3 LK- und 4 GK-Halbjahre unter 5 Punkten. Kurse mit 0 Punkten gelten als nicht belegt und zählen nicht.",
       "Block II: P1 und P2 (LK) und P3 schriftlich, P4 mündlich, alle fünffach. Mit Besonderer Lernleistung als 5. Prüfung zählen alle fünf vierfach.",
-      "Zusatzprüfung: (2 × Prüfung + Zusatzprüfung)/3. Die Rundung ist nicht geregelt; die App rundet kaufmännisch nach der Multiplikation.",
+      "Zusatzprüfung: (2 × Prüfung + Zusatzprüfung)/3. Die Rundung ist nicht geregelt. Die App rundet kaufmännisch nach der Multiplikation.",
       v2028
         ? "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 5 Punkten (einfach), jede Prüfung mindestens 1 Punkt."
         : "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 5 Punkten (einfach), keine Prüfung mit 0 Punkten.",

@@ -186,7 +186,7 @@ function validate(ctx: RuleContext): Issue[] {
       issue(
         "assumption",
         "info",
-        "Annahme: Die besondere Lernleistung (Dokumentation 2 : Kolloquium 1) wird kaufmännisch auf ganze Punkte gerundet (sonst entscheidet der Fachprüfungsausschuss).",
+        "Annahme: Die besondere Lernleistung (Dokumentation zu Kolloquium 2:1) wird kaufmännisch auf ganze Punkte gerundet. Sonst entscheidet der Fachprüfungsausschuss.",
         { slot: "P4" },
       ),
     );
@@ -292,7 +292,7 @@ export const ST_2027: Ruleset = {
   defaults: { examWeightPercent: 50 },
   summary: [
     "Qualifikationsphase 11/1 bis 12/2 mit drei Fächern auf erhöhtem Niveau (eA) aus Deutsch, Mathematik, Fremdsprachen und Naturwissenschaften.",
-    "Block I: 36 bis 40 Kurshalbjahre, einfach gewertet. Wahlweise zählen P1 und P2 doppelt (A = Anzahl + 8). Punkte = Summe / A × 40, ab ,5 aufgerundet. Die App wählt die beste Variante.",
+    "Block I: 36 bis 40 Kurshalbjahre, einfach gewertet. Wahlweise zählen P1 und P2 doppelt (A = Anzahl + 8). Punkte = Summe / A × 40, ab 0,5 aufgerundet. Die App wählt die beste Variante.",
     "Pflicht: Deutsch, Mathematik, Geschichte, Profil-Fremdsprache, Profil-Naturwissenschaft und alle Prüfungsfächer je 4, Musik oder Kunst 2, eine neu begonnene Fremdsprache 2.",
     "Zulassung: mindestens 200 Punkte, höchstens 20 % von A unter 5 Punkten, kein eingebrachter Kurs mit 0 Punkten, mindestens 2 Kurshalbjahre mehr belegt als eingebracht.",
     "Block II: P1 und P2 schriftlich auf eA, P3 und P4 schriftlich auf gA, P5 mündlich, alle vierfach. Eine besondere Lernleistung kann P4 ersetzen.",

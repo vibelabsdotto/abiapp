@@ -317,13 +317,13 @@ export const NW_2027: Ruleset = {
   defaults: { examWeightPercent: 50 },
   summary: [
     "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen (1. und 2. Abiturfach).",
-    "Block I: 35 bis 40 Kurse nach eigener Wahl; LK zählen doppelt, Punkte = Summe / gewichtete Anzahl × 40, ab ,5 aufgerundet. Die App wählt die beste Anzahl.",
+    "Block I: 35 bis 40 Kurse nach eigener Wahl. LK zählen doppelt, Punkte = Summe / gewichtete Anzahl × 40, ab 0,5 aufgerundet. Die App wählt die beste Anzahl.",
     "Pflicht: die vier Abiturfächer, Deutsch, Mathematik, fortgeführte Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), Zusatzkurse Geschichte/Sozialwissenschaften, 2 Kurse Kunst oder Musik, 2 Kurse Religionslehre/Philosophie, Q2-Kurse des neunten Pflichtfachs.",
-    "Defizite: bei 35–37 Kursen höchstens 7, bei 38–40 höchstens 8 Kurse mit 4 oder weniger Punkten, davon höchstens 3 LK; Kurse mit 0 Punkten zählen nicht.",
+    "Defizite (Kurse unter 5 Punkten): bei 35–37 Kursen höchstens 7, bei 38–40 höchstens 8, davon höchstens 3 in Leistungskursen. Kurse mit 0 Punkten zählen nicht.",
     "Ein Projektkurs zählt wie zwei Grundkurse (bei höchstens 4 Punkten zwei Defizite).",
-    "Block II: vier Prüfungen fünffach (LK1, LK2, 3. Fach schriftlich, 4. Fach mündlich); mit Besonderer Lernleistung alle fünf vierfach.",
-    "Zusatzprüfung in schriftlichen Fächern: (2s + m)/3 × 5, gerundet ab ,5.",
-    "Bestehen: Block II mindestens 100 Punkte und zwei Fächer mit je 25 Punkten (mit BLL 20), darunter ein LK; Block I mindestens 200.",
+    "Block II: vier Prüfungen fünffach (LK1, LK2, 3. Fach schriftlich, 4. Fach mündlich). Mit Besonderer Lernleistung alle fünf vierfach.",
+    "Zusatzprüfung in schriftlichen Fächern: (2s + m)/3 × 5, ab 0,5 aufgerundet.",
+    "Bestehen: Block II mindestens 100 Punkte und zwei Fächer mit je 25 Punkten (mit BLL 20), darunter ein LK. Block I mindestens 200.",
   ],
   sources: [
     {
@@ -363,7 +363,12 @@ export const NW_2027: Ruleset = {
           ? "Höchstens 7 Defizite (bei 35–37 Kursen)"
           : "Höchstens 8 Defizite (bei 38–40 Kursen)",
       ),
-      limit("elevated", 3, "Davon höchstens 3 im LK", isElevatedItem),
+      limit(
+        "elevated",
+        3,
+        "Davon höchstens 3 in Leistungskursen",
+        isElevatedItem,
+      ),
     ],
     zero: { includable: false, failIfTaken: false },
   },
@@ -384,7 +389,7 @@ export const NW_2027: Ruleset = {
       },
       {
         id: "bll",
-        label: "4 Abiturfächer + Besondere Lernleistung (vierfach)",
+        label: "4 Abiturfächer und Besondere Lernleistung (vierfach)",
         components: [
           component("P1", "written", "elevated", 4, { levelShort: "LK" }),
           component("P2", "written", "elevated", 4, { levelShort: "LK" }),
@@ -404,8 +409,8 @@ export const NW_2027: Ruleset = {
         checkMinComponents(c, {
           id: "block2.min",
           label: bll
-            ? "In 2 Prüfungsfächern je mindestens 20 Punkte, darunter ein LK"
-            : "In 2 Prüfungsfächern je mindestens 25 Punkte, darunter ein LK",
+            ? "In 2 Prüfungen je mindestens 20 Punkte, darunter ein LK"
+            : "In 2 Prüfungen je mindestens 25 Punkte, darunter ein LK",
           count: 2,
           minWeighted: bll ? 20 : 25,
           require: compIsElevated,
@@ -426,9 +431,9 @@ export const NW_2030: Ruleset = {
   summary: [
     "Neue APO-GOSt: gilt für alle, die 2027/28 in die Einführungsphase eingetreten sind (erstes Abitur 2030).",
     "Qualifikationsphase Q1.1 bis Q2.2: genau 40 Kurse, davon 8 LK und ein Projektkurs in Q2.",
-    "Block I: genau 36 Kurse (8 LK doppelt, 28 weitere), Punkte = Summe × 40 / 44, ab ,5 aufgerundet.",
+    "Block I: genau 36 Kurse (8 LK doppelt, 28 weitere), Punkte = Summe × 40 / 44, ab 0,5 aufgerundet.",
     "Pflicht: alle fünf Abiturfächer, Deutsch, Mathematik, fortgeführte Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), Zusatzkurse, Kunst oder Musik (2), Religionslehre/Philosophie (2), Projektkurs (2), Q2-Kurse des neunten Pflichtfachs.",
-    "Höchstens 7 Kurse mit 4 oder weniger Punkten, davon höchstens 3 LK; höchstens 4 Grundkurse je Fach.",
+    "Höchstens 7 Defizite (Kurse unter 5 Punkten), davon höchstens 3 in Leistungskursen. Höchstens 4 Grundkurse je Fach.",
     "Block II: fünf Prüfungen vierfach: drei schriftlich, eine mündlich, eine Präsentationsprüfung oder Besondere Lernleistung.",
     "Bestehen: Block II mindestens 100 Punkte, drei Fächer mit je 20 Punkten, darunter ein LK.",
   ],
@@ -457,8 +462,13 @@ export const NW_2030: Ruleset = {
     maxPerSubject: (s) =>
       hasKey(s, "lit") ? 2 : s.level === "basic" ? 4 : null,
     deficitLimits: () => [
-      limit("total", 7, "Höchstens 7 Kurse mit 4 oder weniger Punkten"),
-      limit("elevated", 3, "Davon höchstens 3 im LK", isElevatedItem),
+      limit("total", 7, "Höchstens 7 Defizite (Kurse unter 5 Punkten)"),
+      limit(
+        "elevated",
+        3,
+        "Davon höchstens 3 in Leistungskursen",
+        isElevatedItem,
+      ),
     ],
     zero: { includable: false, failIfTaken: false },
   },
@@ -497,7 +507,7 @@ export const NW_2030: Ruleset = {
       checkBlockIIMin(c),
       checkMinComponents(c, {
         id: "block2.min20",
-        label: "In 3 Prüfungsfächern je mindestens 20 Punkte, darunter ein LK",
+        label: "In 3 Prüfungen je mindestens 20 Punkte, darunter ein LK",
         count: 3,
         minWeighted: 20,
         require: compIsElevated,

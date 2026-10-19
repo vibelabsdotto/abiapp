@@ -991,13 +991,13 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   );
   checks.push({
     id: "block1.mandatory",
-    label: `Pflichteinbringungen erfüllt (${countLabel} Kurse)`,
+    label: "Pflichteinbringungen und Anzahl erfüllt",
     passed: structural.length > 0 ? false : open.length > 0 ? null : true,
     detail: structural.length
       ? structural.join("; ")
       : open.length
         ? `Offen: ${open.join("; ")}`
-        : `${b.N} Kurse eingebracht`,
+        : `${b.N} eingebracht (${countLabel} nötig)`,
     predicted,
   });
   if (rules.checks) {

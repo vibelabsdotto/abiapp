@@ -206,7 +206,7 @@ function validate(ctx: RuleContext): Issue[] {
         issue(
           "exam.profile",
           "error",
-          "Die Prüfungsfächer decken kein Prüfungsprofil ab (Mathematik, Naturwissenschaft, Gesellschaftswissenschaft, Deutsch oder Fremdsprache bzw. Deutsch, Fremdsprache, Gesellschaftswissenschaft, Mathematik oder Naturwissenschaft).",
+          "Deine Prüfungsfächer passen zu keinem Profil. Nötig sind Mathematik, Naturwissenschaft, Gesellschaftswissenschaft und Deutsch oder Fremdsprache, oder Deutsch, Fremdsprache, Gesellschaftswissenschaft und Mathematik oder Naturwissenschaft.",
         ),
       );
     }
@@ -318,14 +318,14 @@ function rp(
     defaults: { examWeightPercent: 50 },
     summary: [
       "Mainzer Studienstufe (G9): Kurse 11/2, 12/1, 12/2 und 13 mit drei Leistungsfächern.",
-      "Block I: genau 36 Ergebnisse; die Kurse von zwei LK zählen doppelt (der LK mit der niedrigsten Summe einfach), E_I = Summe × 40 / 44, gerundet.",
+      "Block I: genau 36 Ergebnisse. Die Kurse von zwei LK zählen doppelt (der LK mit der niedrigsten Summe einfach), E_I = Summe × 40 / 44, gerundet.",
       "Pflicht: alle 12 LK-Kurse, mündliche Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, fortgeführte Fremdsprache, Naturwissenschaft und Gesellschaftswissenschaft, 1 Kurs zweite Fremdsprache, Naturwissenschaft oder Informatik, 2 Kurse eines künstlerischen Fachs.",
       "Wer einen Kurs eines Grundfachs einbringt, muss auch den Kurs aus 13 (Prüfungshalbjahr) einbringen.",
-      "Eine Facharbeit kann einen oder zwei freie Kurse ersetzen; die App rechnet beide Varianten.",
+      "Eine Facharbeit kann einen oder zwei freie Kurse ersetzen. Die App rechnet beide Varianten.",
       "Zulassung: höchstens 7 Kurse unter 5 Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
-      "Block II: drei LK schriftlich, ein Grundfach mündlich, je fünffach; mit 5. Prüfungsfach oder BLL alle vierfach.",
-      "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) / 3 × Faktor, ab ,5 aufgerundet.",
-      "Bestehen: Block II mindestens 100; bei 4 Fächern zwei mit 25 Punkten, bei 5 Fächern drei mit 20 Punkten.",
+      "Block II: drei LK schriftlich, ein Grundfach mündlich, je fünffach. Mit 5. Prüfungsfach oder BLL alle vierfach.",
+      "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) / 3 × Faktor, ab 0,5 aufgerundet.",
+      "Bestehen: Block II mindestens 100. Bei 4 Fächern zwei mit 25 Punkten, bei 5 Fächern drei mit 20 Punkten.",
       ...note,
     ],
     sources: [
@@ -404,7 +404,7 @@ function rp(
         },
         {
           id: "bll",
-          label: "4 Prüfungsfächer + Besondere Lernleistung (vierfach)",
+          label: "4 Prüfungsfächer und Besondere Lernleistung (vierfach)",
           components: [
             ...lk(4),
             component("P5", "bll", "any", 4, {
@@ -421,8 +421,8 @@ function rp(
           checkMinComponents(c, {
             id: "block2.min",
             label: four
-              ? "In 2 Prüfungsfächern je mindestens 25 Punkte"
-              : "In 3 Prüfungsfächern je mindestens 20 Punkte",
+              ? "In 2 Prüfungen je mindestens 25 Punkte"
+              : "In 3 Prüfungen je mindestens 20 Punkte",
             count: four ? 2 : 3,
             minWeighted: four ? 25 : 20,
           }),
@@ -435,5 +435,5 @@ function rp(
 
 export const RP_2027 = rp("RP-2027", 2027, 2029, "high", []);
 export const RP_2030 = rp("RP-2030", 2030, null, "medium", [
-  "Für Abitur 2030 gelten nach aktuellem Stand dieselben Regeln; eine Anpassung an die KMK-Vereinbarung ist noch offen.",
+  "Für Abitur 2030 gelten nach aktuellem Stand dieselben Regeln. Eine Anpassung an die KMK-Vereinbarung ist noch offen.",
 ]);

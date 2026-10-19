@@ -315,7 +315,7 @@ function blockII(v2030: boolean): BlockIIRules {
       },
       {
         id: "bll",
-        label: "4 Prüfungsfächer + Besondere Lernleistung (P5)",
+        label: "4 Prüfungsfächer und Besondere Lernleistung (P5)",
         components: [
           ...base,
           component("P5", "bll", "any", 4, {
@@ -329,7 +329,7 @@ function blockII(v2030: boolean): BlockIIRules {
       checkBlockIIMin(c),
       checkMinComponents(c, {
         id: "block2.min20",
-        label: "In 3 Prüfungsfächern je mindestens 20 Punkte, darunter ein LK",
+        label: "In 3 Prüfungen je mindestens 20 Punkte, darunter ein LK",
         count: 3,
         minWeighted: 20,
         require: compIsElevated,
@@ -338,7 +338,7 @@ function blockII(v2030: boolean): BlockIIRules {
     ],
     assumptions: v2030
       ? [
-          "Annahme: Prüfungsblock wie bisher (5 Fächer vierfach); Zusatzprüfung nach KMK ab ,5 aufgerundet.",
+          "Annahme: Prüfungsblock wie bisher mit 5 Fächern vierfach, Zusatzprüfung nach KMK ab 0,5 aufgerundet.",
         ]
       : [
           "Annahme: 5 Punkte einfach entsprechen bei Zusatzprüfung 20 Punkten vierfach.",
@@ -361,11 +361,11 @@ export const HE_2027: Ruleset = {
   catalog: CATALOG,
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase Q1 bis Q4 mit zwei Leistungskursen; einer ist fortgeführte Fremdsprache, Mathematik oder Naturwissenschaft.",
+    "Qualifikationsphase Q1 bis Q4 mit zwei Leistungskursen. Einer ist fortgeführte Fremdsprache, Mathematik oder Naturwissenschaft.",
     "Block I: genau 8 LK doppelt und 24 GK einfach, E_I = 2 × Summe LK + Summe GK, ohne Rundung.",
     "Pflicht: alle Prüfungsfächer (bei BLL ohne P5), je 4 Kurse Deutsch, Mathematik, fortgeführte Fremdsprache und Naturwissenschaft, 2 Kurse Kunst, Musik oder DS, 2 Kurse weitere Fremdsprache oder Naturwissenschaft/Informatik, 6 Kurse Gesellschaftswissenschaften (darin 2 Geschichte, 2 PoWi, Wirtschaftswissenschaften oder Geographie).",
-    "Sport höchstens 3 Kurse; Religion und Ethik zählen zum gesellschaftswissenschaftlichen Feld.",
-    "Zulassung: höchstens 6 Kurse unter 5 Punkten, davon höchstens 2 LK; LK-Bereich mindestens 80, GK-Bereich mindestens 120; kein eingebrachter Kurs mit 0 Punkten.",
+    "Sport höchstens 3 Kurse. Religion und Ethik zählen zum gesellschaftswissenschaftlichen Feld.",
+    "Zulassung: höchstens 6 Kurse unter 5 Punkten, davon höchstens 2 LK. LK zusammen mindestens 80, GK zusammen mindestens 120. Kein eingebrachter Kurs mit 0 Punkten.",
     "Block II: P1 bis P3 schriftlich, P4 mündlich, P5 Präsentation, mündliche Prüfung oder Besondere Lernleistung, alle vierfach.",
     "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) × 4/3, abgerundet (Anlage 10a).",
     "Bestehen: Block II mindestens 100, drei Fächer mit mindestens 5 Punkten einfach (darunter ein LK), kein Fach mit 0 Punkten.",
@@ -407,7 +407,12 @@ export const HE_2027: Ruleset = {
     maxPerSubject: (s) => (hasKey(s, "sp") && !s.examSlot ? 3 : null),
     deficitLimits: () => [
       limit("total", 6, "Höchstens 6 Kurse unter 5 Punkten"),
-      limit("elevated", 2, "Davon höchstens 2 Leistungskurse", isElevatedItem),
+      limit(
+        "elevated",
+        2,
+        "Davon höchstens 2 in Leistungskursen",
+        isElevatedItem,
+      ),
     ],
     // § 13 Abs. 9: 0-point courses count as not attended; checked for subjects with Belegpflicht.
     zero: {
@@ -453,11 +458,11 @@ export const HE_2030: Ruleset = {
   elevatedSubjects: { min: 2, max: 3 },
   summary: [
     "Vorläufig: Hessen hat die KMK-Vereinbarung für Abitur 2030 noch nicht umgesetzt. Die App rechnet mit dem KMK-Rahmen.",
-    "Zwei oder drei Leistungskurse; die Kurse von zwei LK zählen doppelt (bei drei LK nimmt die App die günstigsten zwei).",
-    "Block I (Annahme): 36 Kurse nach KMK-Regelwert, E_I = Summe / gewichtete Anzahl × 40, ab ,5 aufgerundet.",
+    "Zwei oder drei Leistungskurse. Die Kurse von zwei LK zählen doppelt (bei drei LK nimmt die App die günstigsten zwei).",
+    "Block I (Annahme): 36 Kurse nach KMK-Regelwert, E_I = Summe / gewichtete Anzahl × 40, ab 0,5 aufgerundet.",
     "Pflicht (Annahme): alle Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, Fremdsprache und Naturwissenschaft.",
     "Zulassung: höchstens 20 % der Kurse unter 5 Punkten, kein eingebrachter Kurs mit 0 Punkten, mindestens 200 Punkte.",
-    "Block II (Annahme): fünf Prüfungsfächer vierfach wie bisher; Zusatzprüfung nach KMK kaufmännisch gerundet.",
+    "Block II (Annahme): fünf Prüfungsfächer vierfach wie bisher. Zusatzprüfung nach KMK kaufmännisch gerundet.",
     "Bestehen: Block II mindestens 100, drei Fächer mit je 20 Punkten, darunter ein LK.",
   ],
   sources: [

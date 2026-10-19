@@ -83,6 +83,12 @@ export function elevatedSubjects(ctx: RuleContext): EngineSubject[] {
   return ctx.subjects.filter((s) => s.level === "elevated");
 }
 
+/** German list: "A", "A und B", "A, B und C". */
+export function listDe(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} und ${items[items.length - 1]}`;
+}
+
 /** All k-element combinations. */
 export function combinations<T>(arr: T[], k: number): T[][] {
   const out: T[][] = [];

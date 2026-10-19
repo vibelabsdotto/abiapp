@@ -231,8 +231,8 @@ function validate2027(ctx: RuleContext): Issue[] {
           "exam.slot.level",
           "error",
           elevatedSlot
-            ? "P1 und P2 sind die beiden L-Kurs-Fächer."
-            : "P3 bis P5 sind G-Kurs-Fächer.",
+            ? "P1 und P2 sind die beiden L-Kurse."
+            : "P3 bis P5 sind G-Kurse.",
           { subjectId: s.id, slot: s.examSlot ?? undefined },
         ),
       );
@@ -311,10 +311,10 @@ export const SL_2027: Ruleset = {
   catalog: catalog(CATALOG),
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Hauptphase 11/1 bis 12/2 (G8) mit zwei L-Kursen; einer ist Deutsch, Mathematik oder die Pflichtfremdsprache.",
+    "Hauptphase 11/1 bis 12/2 (G8) mit zwei L-Kursen. Einer ist Deutsch, Mathematik oder die Pflichtfremdsprache.",
     "Block I: genau 40 Kurse, alle einfach (auch L-Kurse), E_I = Punktsumme, ohne Rundung.",
     "Pflicht: alle fünf Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, Pflichtfremdsprache, gesellschaftswissenschaftliches und naturwissenschaftliches Pflichtfach, 2 Kurse Geschichte (bei Erdkunde oder Politik), je 2 Kurse Kunst oder Musik und Religion oder Ethik.",
-    "Zulassung: höchstens 8 Kurse unter 5 Punkten, mindestens 5 der 12 Kernfachkurse mit 5 Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
+    "Zulassung: höchstens 8 Kurse unter 5 Punkten, mindestens 5 der 12 Kernfachkurse mit 5 oder mehr Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
     "Block II: P1 bis P4 schriftlich, P5 mündlich, alle vierfach.",
     "Zusätzliche mündliche Prüfung: 4 × (2 × schriftlich + mündlich) / 3, kaufmännisch gerundet. Pflicht, wenn das schriftliche Ergebnis 4 oder mehr Punkte vom Kursschnitt abweicht.",
     "Bestehen: Block II mindestens 100, drei Fächer mit 20 Punkten (darunter ein L-Kurs), ein Kernfach mit 20 Punkten.",
@@ -350,7 +350,7 @@ export const SL_2027: Ruleset = {
         limit(
           "core",
           7,
-          "Mindestens 5 der 12 Kernfachkurse mit 5 Punkten",
+          "Mindestens 5 der 12 Kernfachkurse mit 5 oder mehr Punkten",
           (i) => i.subjectId !== null && core.has(i.subjectId),
         ),
       ];
@@ -379,8 +379,7 @@ export const SL_2027: Ruleset = {
       checkBlockIIMin(c),
       checkMinComponents(c, {
         id: "block2.min20",
-        label:
-          "In 3 Prüfungsfächern je mindestens 20 Punkte, darunter ein L-Kurs",
+        label: "In 3 Prüfungen je mindestens 20 Punkte, darunter ein L-Kurs",
         count: 3,
         minWeighted: 20,
         require: compIsElevated,
@@ -427,10 +426,10 @@ export const SL_2030: Ruleset = {
   summary: [
     "Vorläufig: Die neue GOS-VO für den ersten G9-Jahrgang ist noch ein Entwurf. Die App rechnet mit dem KMK-Rahmen.",
     "Hauptphase 12/1 bis 13/2 mit drei Leistungskursen.",
-    "Block I (Annahme): 36 Kurse, zwei LK der schriftlichen eA-Prüfungen doppelt, E_I = Summe / gewichtete Anzahl × 40, ab ,5 aufgerundet.",
+    "Block I (Annahme): 36 Kurse, zwei LK der schriftlichen eA-Prüfungen doppelt, E_I = Summe / gewichtete Anzahl × 40, ab 0,5 aufgerundet.",
     "Pflicht (Annahme): alle Prüfungsfächer, je 4 Kurse Deutsch, Mathematik und Fremdsprache.",
     "Zulassung: höchstens 20 % der Kurse unter 5 Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
-    "Block II: in der Regel vier Prüfungsfächer fünffach (drei schriftlich, zwei davon auf erhöhtem Niveau); mit Besonderer Lernleistung alle fünf vierfach.",
+    "Block II: in der Regel vier Prüfungsfächer fünffach (drei schriftlich, zwei davon auf erhöhtem Niveau). Mit Besonderer Lernleistung alle fünf vierfach.",
     "Bestehen nach KMK: Block II mindestens 100, bei vier Fächern zwei mit 25 Punkten (darunter ein LK), bei fünf drei mit 20 Punkten.",
   ],
   sources: [
@@ -482,7 +481,7 @@ export const SL_2030: Ruleset = {
       },
       {
         id: "bll",
-        label: "4 Prüfungsfächer + Besondere Lernleistung (vierfach)",
+        label: "4 Prüfungsfächer und Besondere Lernleistung (vierfach)",
         components: [
           component("P1", "written", "elevated", 4, { levelShort: "LK" }),
           component("P2", "written", "elevated", 4, { levelShort: "LK" }),
@@ -502,8 +501,8 @@ export const SL_2030: Ruleset = {
         checkMinComponents(c, {
           id: "block2.min",
           label: four
-            ? "In 2 Prüfungsfächern je mindestens 25 Punkte, darunter ein LK"
-            : "In 3 Prüfungsfächern je mindestens 20 Punkte, darunter ein LK",
+            ? "In 2 Prüfungen je mindestens 25 Punkte, darunter ein LK"
+            : "In 3 Prüfungen je mindestens 20 Punkte, darunter ein LK",
           count: four ? 2 : 3,
           minWeighted: four ? 25 : 20,
           require: compIsElevated,

@@ -75,8 +75,8 @@ export const SN_2027: Ruleset = {
   ]),
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase 11/I bis 12/II mit zwei Leistungskursen; der 1. LK ist Deutsch oder Mathematik.",
-    "Block I: genau 40 Kurshalbjahre, LK zählen in Summe und Anzahl doppelt; Punkte = Summe × 40 / Anzahl, ab ,5 aufgerundet.",
+    "Qualifikationsphase 11/I bis 12/II mit zwei Leistungskursen. Der 1. LK ist Deutsch oder Mathematik.",
+    "Block I: genau 40 Kurshalbjahre, LK zählen in Summe und Anzahl doppelt. Punkte = Summe × 40 / Anzahl, ab 0,5 aufgerundet.",
     "Pflicht sind alle Prüfungsfächer, eine fortgeführte Fremdsprache und Geschichte (je 4), zwei Naturwissenschaften (8), je 2 in Kunst oder Musik, Geographie oder GRW, Religion oder Ethik, dazu aus jedem Fach mindestens 1.",
     "Zulassung: mindestens 200 Punkte, höchstens 8 Unterkurse (davon höchstens 4 im LK), kein belegter Kurs mit 0 Punkten.",
     "Block II: fünf Prüfungen, P1 bis P3 schriftlich, P4 und P5 mündlich, alle vierfach.",
@@ -183,7 +183,7 @@ export const SN_2027: Ruleset = {
       limit(
         "elevated",
         4,
-        "Davon höchstens 4 im Leistungskurs",
+        "Davon höchstens 4 in Leistungskursen",
         isElevatedItem,
       ),
     ],
@@ -315,6 +315,12 @@ export const SN_2027: Ruleset = {
         );
       }
       if (s.level !== "basic" || !s.examSlot || s.catalogKey === null) continue;
+      // Subjects that can never be exam subjects are reported by the generic check.
+      if (
+        ctx.ruleset.catalog.find((c) => c.key === s.catalogKey)?.canBeExam ===
+        false
+      )
+        continue;
       const okP3 = hasKey(s, ...P3_KEYS);
       const okP45 =
         okP3 || hasKey(s, ...P45_EXTRA) || hasTag(s, "foreign_language");
