@@ -19,7 +19,6 @@ import { confirmRemoveSubject, showError } from "@components/subjects/actions";
 import { levelSectionTitle } from "@components/subjects/format";
 import { HalfYearPicker, toolbarIcon } from "@components/subjects/headers";
 import { SubjectRow } from "@components/subjects/SubjectRow";
-import { UndoBar } from "@components/subjects/UndoBar";
 import {
   useCourseOverview,
   useSelectedHalfYear,
@@ -298,7 +297,6 @@ export default function SubjectsScreen() {
           {t("subjects.list.legend")}
         </Text>
       </ScreenLayout>
-      <UndoBar />
     </>
   );
 }

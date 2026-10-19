@@ -5,11 +5,10 @@ import { Alert } from "react-native";
 import * as Haptics from "expo-haptics";
 import Toast from "react-native-toast-message";
 
+import { showActionToast } from "@components/common/actionToast";
 import { t } from "@locales/index";
 import type { GradeRecord, SubjectRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
-
-import { useUndoStore } from "./UndoBar";
 
 /** Error toast; DataValidationError messages are user-facing German text. */
 export const showError = (error: unknown): void => {
@@ -75,8 +74,8 @@ export const confirmRemoveSubject = (
 };
 
 /**
- * Deletes a grade right away and offers "Wiederherstellen" in the undo bar
- * for a few seconds. Undo re-creates the grade with the same values.
+ * Deletes a grade right away and offers "Wiederherstellen" in the root
+ * action toast for a few seconds. Undo re-creates the grade with the same values.
  */
 export const deleteGradeWithUndo = async (
   grade: GradeRecord,
@@ -88,7 +87,7 @@ export const deleteGradeWithUndo = async (
     return;
   }
   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  useUndoStore.getState().show(t("subjects.grade.deleted"), () => {
+  const restore = () => {
     useCourseStore
       .getState()
       .addGrade({
@@ -105,6 +104,12 @@ export const deleteGradeWithUndo = async (
         Toast.show({ type: "success", text1: t("subjects.grade.restored") });
       })
       .catch(showError);
+  };
+  showActionToast({
+    text1: t("subjects.grade.deleted"),
+    actionLabel: t("subjects.grade.undo"),
+    onAction: restore,
+    icon: "trash",
   });
 };
 

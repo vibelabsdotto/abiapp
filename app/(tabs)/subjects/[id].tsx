@@ -18,7 +18,6 @@ import { GradeRow } from "@components/subjects/GradeRow";
 import { HalfYearPicker, toolbarIcon } from "@components/subjects/headers";
 import { InclusionNote } from "@components/subjects/InclusionNote";
 import { ResultCard } from "@components/subjects/ResultCard";
-import { UndoBar } from "@components/subjects/UndoBar";
 import {
   useCourseOverview,
   useSelectedHalfYear,
@@ -263,7 +262,6 @@ export default function SubjectDetailScreen() {
           </View>
         </Section>
       </ScreenLayout>
-      <UndoBar />
     </>
   );
 }

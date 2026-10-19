@@ -5,6 +5,7 @@ import React, { useEffect, useMemo } from "react";
 import {
   Appearance,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -16,7 +17,6 @@ import {
   Stack,
   ThemeProvider,
   usePathname,
-  useRouter,
   useSegments,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -24,8 +24,18 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { FullWindowOverlay } from "react-native-screens";
 import Toast, { type ToastConfig } from "react-native-toast-message";
 import { VibeUpdate, type StorageAdapter } from "@vibelabsdotto/vibeupdate";
-import { CircleCheck, CircleX, Info, TriangleAlert } from "lucide-react-native";
+import {
+  CircleCheck,
+  CircleX,
+  Info,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react-native";
 
+import {
+  ACTION_TOAST_TYPE,
+  type ActionToastProps,
+} from "@components/common/actionToast";
 import { ErrorBoundary } from "@components/common/ErrorBoundary";
 import { VIBEUPDATE_APP_ID } from "@constants/config";
 import { AppProvider } from "@providers/AppProvider";
@@ -57,20 +67,42 @@ function ToastBody({
   background,
   text1,
   text2,
+  action,
 }: {
   icon: React.ReactNode;
   color: ColorValue;
   background: ColorValue;
   text1?: string;
   text2?: string;
+  /** Trailing text button ("Wiederherstellen"). */
+  action?: { label: string; color: ColorValue; onPress: () => void };
 }) {
   return (
-    <View style={[styles.toast, { backgroundColor: background }]}>
+    <View
+      accessibilityLiveRegion="polite"
+      style={[styles.toast, { backgroundColor: background }]}
+    >
       {icon}
       <View style={styles.toastText}>
         {text1 ? <Text style={[styles.text1, { color }]}>{text1}</Text> : null}
         {text2 ? <Text style={[styles.text2, { color }]}>{text2}</Text> : null}
       </View>
+      {action ? (
+        <Pressable
+          onPress={action.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={action.label}
+          hitSlop={12}
+          style={({ pressed }) => [
+            styles.toastAction,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={[styles.toastActionText, { color: action.color }]}>
+            {action.label}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -115,6 +147,35 @@ function useToastConfig(): ToastConfig {
           text2={text2}
         />
       ),
+      // Toast with one action, see components/common/actionToast.ts.
+      [ACTION_TOAST_TYPE]: ({ text1, text2, props, hide }) => {
+        const { actionLabel, onAction, icon } = props as ActionToastProps;
+        const iconNode =
+          icon === "trash" ? (
+            <Trash2 size={20} color={colors.textSecondary} />
+          ) : icon === "success" ? (
+            <CircleCheck size={20} color={colors.success} />
+          ) : (
+            <Info size={20} color={colors.accent} />
+          );
+        return (
+          <ToastBody
+            icon={iconNode}
+            color={colors.text}
+            background={colors.card}
+            text1={text1}
+            text2={text2}
+            action={{
+              label: actionLabel,
+              color: colors.accent,
+              onPress: () => {
+                hide();
+                onAction();
+              },
+            }}
+          />
+        );
+      },
     }),
     [colors],
   );
@@ -141,31 +202,16 @@ function AnalyticsAutoCapture() {
   return null;
 }
 
-// Sends first-run users (no finished onboarding) to the onboarding flow.
-function OnboardingGate() {
-  const router = useRouter();
-  const segments = useSegments();
-  const isLoaded = useProfileStore((state) => state.isLoaded);
-  const isOnboarded = useProfileStore(selectIsOnboarded);
-  const inOnboarding = segments[0] === "(onboarding)";
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!isOnboarded && !inOnboarding) {
-      router.replace("/(onboarding)");
-    } else if (isOnboarded && inOnboarding) {
-      router.replace("/(tabs)/(home)");
-    }
-  }, [isLoaded, isOnboarded, inOnboarding, router]);
-
-  return null;
-}
-
 function RootLayoutNav() {
   const isDark = useThemeStore((state) => state.isDark);
   const themeMode = useThemeStore((state) => state.themeMode);
   const colors = useThemeStore((state) => state.colors);
   const currentLanguage = useLanguageStore((state) => state.currentLanguage);
+  // AppProvider renders this tree only after the stores are loaded, so the
+  // profile is known here. Protected routes (Expo Router) switch between
+  // onboarding and the app without an imperative redirect: no replace()
+  // races with the tab navigator mounting (former PRELOAD dev warning).
+  const isOnboarded = useProfileStore(selectIsOnboarded);
 
   // Native menus, sheets, alerts and tab bars follow the app's theme choice.
   useEffect(() => {
@@ -198,7 +244,6 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={routerTheme}>
       <AnalyticsAutoCapture />
-      <OnboardingGate />
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -208,35 +253,48 @@ function RootLayoutNav() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        {/* First-run flow (lane: setup). */}
-        <Stack.Screen
-          name="(onboarding)"
-          options={{ headerShown: false, gestureEnabled: false }}
-        />
-        {/* Setup flows reused from settings: subjects, levels, exams (lane: setup). */}
-        <Stack.Screen
-          name="setup"
-          options={{ presentation: "modal", headerShown: false }}
-        />
-        {/* Editors (lane: subjects). Screens set their own header buttons. */}
-        <Stack.Screen name="grade-editor" options={{ presentation: "modal" }} />
-        <Stack.Screen
-          name="course-result"
-          options={{ presentation: "modal" }}
-        />
-        <Stack.Screen
-          name="subject-editor"
-          options={{ presentation: "modal" }}
-        />
-        {/* Editors and info (lane: overview). */}
-        <Stack.Screen name="exam-editor" options={{ presentation: "modal" }} />
-        <Stack.Screen name="goal-editor" options={{ presentation: "modal" }} />
-        <Stack.Screen name="rules" options={{ presentation: "modal" }} />
-        <Stack.Screen
-          name="feature-requests"
-          options={{ presentation: "modal", headerShown: true }}
-        />
+        <Stack.Protected guard={isOnboarded}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          {/* Setup flows reused from settings: subjects, levels, exams (lane: setup). */}
+          <Stack.Screen
+            name="setup"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          {/* Editors (lane: subjects). Screens set their own header buttons. */}
+          <Stack.Screen
+            name="grade-editor"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="course-result"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="subject-editor"
+            options={{ presentation: "modal" }}
+          />
+          {/* Editors and info (lane: overview). */}
+          <Stack.Screen
+            name="exam-editor"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="goal-editor"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen name="rules" options={{ presentation: "modal" }} />
+          <Stack.Screen
+            name="feature-requests"
+            options={{ presentation: "modal", headerShown: true }}
+          />
+        </Stack.Protected>
+        {/* First-run flow (lane: setup), only without a finished onboarding. */}
+        <Stack.Protected guard={!isOnboarded}>
+          <Stack.Screen
+            name="(onboarding)"
+            options={{ headerShown: false, gestureEnabled: false }}
+          />
+        </Stack.Protected>
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
         {/* Design-system gallery, development builds only (abiapp://dev-gallery). */}
         {__DEV__ ? (
@@ -303,9 +361,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
     borderCurve: "continuous",
+    boxShadow: "0 6px 20px rgba(18, 19, 43, 0.18)",
   },
   toastText: {
     flex: 1,
+  },
+  toastAction: {
+    paddingVertical: 6,
+    paddingLeft: 4,
+  },
+  toastActionText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.5,
   },
   text1: {
     fontSize: 14,
