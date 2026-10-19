@@ -97,6 +97,8 @@ export const overviewEN = {
       minPoints: "Admission from {{min}} points",
       included: "Counted",
       includedValue: "{{count}} of {{label}}",
+      placeholderDetail:
+        "Plus {{slots}} estimated places at {{points}} points each until all subjects are added.",
       deficits: "Deficits",
       deficitsValue: "{{count}} of max. {{max}}",
       deficitsNoMax: "{{count}}",

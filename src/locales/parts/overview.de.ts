@@ -99,6 +99,8 @@ export const overviewDE = {
       minPoints: "Zulassung ab {{min}} Punkten",
       included: "Eingebracht",
       includedValue: "{{count}} von {{label}}",
+      placeholderDetail:
+        "Dazu {{slots}} geschätzte Plätze mit je {{points}} Punkten, bis alle Fächer angelegt sind.",
       deficits: "Unterkurse",
       deficitsValue: "{{count}} von max. {{max}}",
       deficitsNoMax: "{{count}}",

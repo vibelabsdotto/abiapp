@@ -29,6 +29,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - Note nur ganzzahlig: `tenths = max(floor((1020 − E) / 18), 10)`, E < 300 → keine Note. Nie die Gleitkommaformel `17/3 − E/180` verwenden.
 - Schriftlich + zusätzliche mündliche Prüfung mit der Landesformel und Landesrundung (z. B. erst nach der Multiplikation runden, in HE/TH abrunden).
 - Fehlende Eingaben (noch nicht belegtes Pflichtfach, fehlendes Extra, offene Prüfung) gelten als offen (`RuleCheck.passed = null`), nicht als Verletzung.
+- Unvollständige Fächerwahl (weniger Block-I-Plätze angelegt als gefordert): Die fehlenden Plätze füllt ein Platzhalter (`IncludedCourse.placeholder`, `source: "estimate"`, `slots` = Anzahl, Punkte = gerundeter Schnitt der vorhandenen Kurse, nie Defizit). `BlockIResult.missingCourses` nennt die Lücke, Anzahl- und Pflicht-Check sind offen, `blockI.admitted` und `total.passed` sind `null`. Echte Verletzungen bei vollständiger Wahl (Defizite, eigener Ausschluss gegen eine Pflicht, 0 Punkte) bleiben `false`.
 
 ## Optimierer Block I
 

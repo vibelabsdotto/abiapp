@@ -81,6 +81,10 @@ export const BlockISection = ({
       )
       .values(),
   ];
+  // Placeholder places fill Block I while the subject choice is incomplete.
+  const placeholder = blockI.included.find((item) => item.placeholder);
+  const placeholderSlots = placeholder ? (placeholder.slots ?? 1) : 0;
+
   const extraLabel = (id: string) =>
     ruleset.extraInputs.find((extra) => extra.id === id)?.label ?? id;
 
@@ -132,6 +136,14 @@ export const BlockISection = ({
             count: blockI.countIncluded,
             label: blockI.countLabel,
           })}
+          detail={
+            placeholder && placeholderSlots > 0
+              ? t("abitur.blockI.placeholderDetail", {
+                  slots: placeholderSlots,
+                  points: placeholder.points,
+                })
+              : null
+          }
         />
         <Fact
           label={t("abitur.blockI.deficits")}
