@@ -103,6 +103,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    // Brand accent for native Android widgets (alerts, menus, cursor).
+    "./plugins/withAndroidAccent.js",
     ...firebasePlugins,
   ],
   experiments: {

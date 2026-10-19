@@ -5,6 +5,7 @@
 import React, { useState } from "react";
 import {
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -251,7 +252,14 @@ export default function ExamEditorScreen() {
       {/* The head card with the live preview stays fixed above the
           scrolling pickers, so every tap shows its effect. */}
       <View style={[styles.screen, { backgroundColor: colors.background }]}>
-        <View style={[styles.fixed, { paddingTop: headerHeight + 12 }]}>
+        {/* iOS: the transparent modal header overlaps the content. Android
+            lays content out below its opaque header. */}
+        <View
+          style={[
+            styles.fixed,
+            { paddingTop: (Platform.OS === "ios" ? headerHeight : 0) + 12 },
+          ]}
+        >
           <View style={[styles.head, { backgroundColor: colors.card }]}>
             <View style={styles.headTop}>
               {subject ? (

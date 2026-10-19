@@ -21,6 +21,7 @@ import {
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FullWindowOverlay } from "react-native-screens";
 import Toast, { type ToastConfig } from "react-native-toast-message";
 import { VibeUpdate, type StorageAdapter } from "@vibelabsdotto/vibeupdate";
@@ -329,8 +330,15 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const toastConfig = useToastConfig();
+  const insets = useSafeAreaInsets();
+  // Android (edge-to-edge): the offset counts from the screen edge, so it
+  // has to clear the navigation bar plus the 80 dp Material tab bar.
   const toast = (
-    <Toast config={toastConfig} position="bottom" bottomOffset={100} />
+    <Toast
+      config={toastConfig}
+      position="bottom"
+      bottomOffset={Platform.OS === "android" ? insets.bottom + 92 : 100}
+    />
   );
 
   return (

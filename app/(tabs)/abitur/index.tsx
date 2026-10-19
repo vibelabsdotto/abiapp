@@ -2,7 +2,7 @@
 // components), special achievements, admission/pass checklist, rules link.
 
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { router, Stack, type Href } from "expo-router";
 import { CircleAlert } from "lucide-react-native";
 
@@ -56,6 +56,8 @@ export default function AbiturScreen() {
           icon={toolbarIcon("arrow.counterclockwise")}
           destructive
           disabled={overrides.length === 0}
+          // Compose menus paint destructive text red even when disabled.
+          hidden={Platform.OS === "android" && overrides.length === 0}
           onPress={() => confirmResetInclusions(overrides)}
         >
           {t("abitur.menu.reset")}
