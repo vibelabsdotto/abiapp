@@ -13,7 +13,7 @@ import type {
 import {
   deleteHalfYearsFrom,
   deleteSubject,
-  ensureCoursesForAllSubjects,
+  ensureCourses,
   findDataBeyond,
   getDatabase,
   updateProfile,
@@ -23,7 +23,12 @@ import {
 } from "@services/database";
 
 import { useCourseStore } from "./courseStore";
-import { errorMessage, requireRuleset, tryDomain } from "./domainAccess";
+import {
+  defaultHalfYearsOf,
+  errorMessage,
+  requireRuleset,
+  tryDomain,
+} from "./domainAccess";
 import { buildEngineInput } from "./engineInput";
 import { useExamStore } from "./examStore";
 import { usePreferencesStore } from "./preferencesStore";
@@ -282,6 +287,38 @@ export async function changeRules(
     });
   }
 
+  // 1b. Manual settings in dropped half-years (Block I overrides, "nicht
+  // belegt" where the catalog expects the course). Not blocking, but the
+  // user should know they disappear with the half-year.
+  const lostKeys = new Set(
+    losses.map((loss) => `${loss.subjectId}:${loss.halfYear}`),
+  );
+  const { courses } = useCourseStore.getState();
+  for (const course of courses) {
+    if (course.halfYear < newCount) continue;
+    if (lostKeys.has(`${course.subjectId}:${course.halfYear}`)) continue;
+    const subject = subjects.find((item) => item.id === course.subjectId);
+    const usual = subject?.catalogKey
+      ? catalogEntry(previous, subject.catalogKey)
+      : undefined;
+    const usualHalfYears = usual ? defaultHalfYearsOf(usual) : undefined;
+    const takenByDefault =
+      !usualHalfYears || usualHalfYears.includes(course.halfYear);
+    const settings = [
+      course.inclusion === "include" ? "„immer einbringen“" : null,
+      course.inclusion === "exclude" ? "„nie einbringen“" : null,
+      !course.taken && takenByDefault ? "„nicht belegt“" : null,
+    ].filter(Boolean);
+    if (settings.length === 0) continue;
+    issues.push({
+      code: "rules.halfYears.settingsLoss",
+      severity: "warning",
+      message: `${nameOf(course.subjectId)}: Die Einstellung ${settings.join(" und ")} in ${labelOf(course.halfYear)} entfällt, weil es dieses Halbjahr in ${next.label} nicht gibt.`,
+      subjectId: course.subjectId,
+      halfYear: course.halfYear,
+    });
+  }
+
   // 2. Catalog subjects unknown in the new ruleset.
   const renames: {
     id: string;
@@ -368,7 +405,16 @@ export async function changeRules(
     });
     // Blocking losses returned above, so only confirmed data goes here.
     await deleteHalfYearsFrom(db, newCount);
-    await ensureCoursesForAllSubjects(db, newCount);
+    // New half-years follow the catalog (e.g. W-Seminar only in 12/1–12/2).
+    for (const subject of subjects) {
+      const entry = catalogEntry(next, subject.catalogKey);
+      await ensureCourses(
+        db,
+        subject.id,
+        newCount,
+        entry ? defaultHalfYearsOf(entry) : undefined,
+      );
+    }
     for (const { id, patch } of renames) await updateSubject(db, id, patch);
   });
   await loadAllStores();

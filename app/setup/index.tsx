@@ -1,15 +1,8 @@
-// PLACEHOLDER route, replaced by the setup lane.
-import React from "react";
-import { Stack } from "expo-router";
+// /setup opens the profile flow.
 
-import { EmptyState } from "@components/ui";
-import { ScreenLayout } from "@components/common";
+import React from "react";
+import { Redirect } from "expo-router";
 
 export default function SetupIndexScreen() {
-  return (
-    <ScreenLayout>
-      <Stack.Screen options={{ title: "Einrichtung" }} />
-      <EmptyState title="Einrichtung" message="Kommt gleich." />
-    </ScreenLayout>
-  );
+  return <Redirect href="/setup/profile" />;
 }

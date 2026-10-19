@@ -1,0 +1,68 @@
+// Settings → Fächer und Kurswahl (same picker as onboarding).
+
+import React, { useState } from "react";
+
+import { ScreenLayout } from "@components/common/ScreenLayout";
+import {
+  IntroText,
+  SetupModalHeader,
+  SubjectPicker,
+  saveSubjectsDraft,
+  showError,
+} from "@components/setup";
+import { useSubjectsDraft } from "@hooks/useSetupFlows";
+import { useSetupModal } from "@hooks/useSetupModal";
+import { useTranslation } from "@locales/index";
+import { useCourseStore } from "@stores/courseStore";
+
+export default function SetupSubjectsScreen() {
+  const { t } = useTranslation();
+  const draft = useSubjectsDraft();
+  const subjects = useCourseStore((state) => state.subjects);
+  const { cancel, closeAfterSave, closing } = useSetupModal(draft.dirty);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (await saveSubjectsDraft(draft)) closeAfterSave();
+    } catch (error) {
+      showError(t("setup.saveFailed"), error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <SetupModalHeader
+        title={t("setup.subjects.title")}
+        onCancel={cancel}
+        onSave={() => void save()}
+        saveDisabled={!draft.dirty || !draft.canSave || saving || closing}
+      />
+      <ScreenLayout contentContainerStyle={{ gap: 24 }}>
+        <IntroText
+          text={
+            draft.canSave
+              ? t("setup.subjects.selected", { count: draft.selectedCount })
+              : t("setup.subjects.minHint", { count: draft.minimum })
+          }
+        />
+        {draft.ruleset ? (
+          <SubjectPicker
+            ruleset={draft.ruleset}
+            keys={draft.keys}
+            onToggleKey={draft.toggleKey}
+            custom={draft.custom}
+            onToggleCustom={draft.toggleCustom}
+            onAddCustom={draft.addCustom}
+            onRemoveCustom={draft.removeCustom}
+            subjects={subjects}
+            withData={draft.withData}
+          />
+        ) : null}
+      </ScreenLayout>
+    </>
+  );
+}
