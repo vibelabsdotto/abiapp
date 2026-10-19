@@ -133,7 +133,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 24,
     paddingBottom: 32,
   },
   heroGroup: {

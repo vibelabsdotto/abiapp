@@ -700,7 +700,6 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 28,
     paddingBottom: 32,
   },
   pickerValue: {

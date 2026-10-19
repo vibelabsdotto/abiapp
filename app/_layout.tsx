@@ -38,6 +38,7 @@ import {
 } from "@components/common/actionToast";
 import { ErrorBoundary } from "@components/common/ErrorBoundary";
 import { VIBEUPDATE_APP_ID } from "@constants/config";
+import { Radius } from "@constants/typography";
 import { AppProvider } from "@providers/AppProvider";
 import {
   initializeAnalytics,
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 14,
+    borderRadius: Radius.card,
     borderCurve: "continuous",
     boxShadow: "0 6px 20px rgba(18, 19, 43, 0.18)",
   },

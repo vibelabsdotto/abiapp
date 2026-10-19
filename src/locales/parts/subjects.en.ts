@@ -72,7 +72,7 @@ export const subjectsEN = {
       back: "Back to subjects",
       resultLabel: "Semester result {{halfYear}}",
       source: {
-        official: "Official, from your report card",
+        official: "Official half-year result from your report card",
         grades: {
           one: "Prognosis from {{count}} grade",
           other: "Prognosis from {{count}} grades",
@@ -82,7 +82,7 @@ export const subjectsEN = {
       },
       gradeEquivalent: "Grade {{grade}}",
       rounded: "counts as {{points}}",
-      enterResult: "Enter report card",
+      enterResult: "Enter result",
       editResult: "Change",
       notTaken: "Not taken in {{halfYear}}",
       notTakenMessage:
@@ -199,9 +199,9 @@ export const subjectsEN = {
     },
     courseResult: {
       title: "Semester result",
-      titleResult: "Report card",
+      titleResult: "Result",
       titleTarget: "Semester goal",
-      tabResult: "Report card",
+      tabResult: "Result",
       tabTarget: "Goal",
       resultFooter:
         "The points from your report card replace the prognosis from your grades.",

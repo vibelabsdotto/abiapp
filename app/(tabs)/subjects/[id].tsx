@@ -144,6 +144,7 @@ export default function SubjectDetailScreen() {
             {presets.map((percent) => (
               <Stack.Toolbar.MenuAction
                 key={percent}
+                icon={toolbarIcon("chart.pie")}
                 isOn={percent === subject.examWeightPercent}
                 onPress={() => {
                   setExamWeight(subject.id, percent).catch(showError);

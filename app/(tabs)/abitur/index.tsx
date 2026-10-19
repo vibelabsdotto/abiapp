@@ -129,7 +129,6 @@ export default function AbiturScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 20,
     paddingBottom: 32,
   },
   issues: {

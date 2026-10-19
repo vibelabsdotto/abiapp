@@ -73,7 +73,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    gap: 16,
+    // One spacing between top-level blocks on every screen (Spacing.xl).
+    gap: 24,
   },
   padding: {
     paddingHorizontal: 16,

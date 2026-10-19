@@ -71,7 +71,7 @@ export const subjectsDE = {
       back: "Zur Fächerliste",
       resultLabel: "Halbjahresergebnis {{halfYear}}",
       source: {
-        official: "Amtlich vom Zeugnis",
+        official: "Amtliches Halbjahresergebnis vom Zeugnis",
         grades: {
           one: "Prognose aus {{count}} Note",
           other: "Prognose aus {{count}} Noten",
@@ -81,7 +81,7 @@ export const subjectsDE = {
       },
       gradeEquivalent: "Note {{grade}}",
       rounded: "zählt als {{points}}",
-      enterResult: "Zeugnis eintragen",
+      enterResult: "Ergebnis eintragen",
       editResult: "Ändern",
       notTaken: "In {{halfYear}} nicht belegt",
       notTakenMessage:
@@ -199,9 +199,9 @@ export const subjectsDE = {
     },
     courseResult: {
       title: "Halbjahresergebnis",
-      titleResult: "Zeugnisnote",
+      titleResult: "Ergebnis",
       titleTarget: "Halbjahresziel",
-      tabResult: "Zeugnis",
+      tabResult: "Ergebnis",
       tabTarget: "Ziel",
       resultFooter:
         "Die Punkte von deinem Zeugnis ersetzen die Prognose aus deinen Noten.",
