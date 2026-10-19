@@ -70,6 +70,87 @@ export type ExamKind = "written" | "oral" | "presentation" | "bll";
 export type GradeKind = "exam" | "other"; // Klausur vs. sonstige Leistung
 
 // ---------------------------------------------------------------------------
+// Public ruleset information (for data layer and UI). The engine's internal
+// ruleset type extends this with the calculation logic.
+// ---------------------------------------------------------------------------
+
+export interface CatalogSubject {
+  /** Stable key, e.g. "de", "ma", "en", "bio", "grw", "w_seminar". */
+  key: string;
+  /** German display name as used in this state. */
+  name: string;
+  /** Short label, e.g. "De", "Ma". */
+  shortName: string;
+  field: SubjectField;
+  tags: SubjectTag[];
+  canBeElevated: boolean;
+  canBeExam: boolean;
+  /** SF Symbol name for iOS (must exist on the app's iOS deployment target). */
+  sfSymbol: string;
+}
+
+export interface ExamComponentInfo {
+  slot: ExamSlot;
+  kind: ExamKind;
+  /** Required level of the exam subject, "any" if unrestricted. */
+  level: CourseLevel | "any";
+  factor: number;
+  /** Whether a supplementary oral exam can be added. */
+  supplementaryOral: boolean;
+  /** German label, e.g. "P1 · schriftlich (LK)". */
+  label: string;
+}
+
+export interface ExamVariantInfo {
+  id: string;
+  /** German label, e.g. "4 Prüfungsfächer" or "mit Besonderer Lernleistung". */
+  label: string;
+  components: ExamComponentInfo[];
+}
+
+export interface ExtraInputInfo {
+  /** Key in EngineInput.extras, e.g. "seminar_paper". */
+  id: string;
+  label: string;
+  description: string;
+  min: number;
+  max: number;
+}
+
+export interface RulesetSource {
+  title: string;
+  section?: string;
+  url: string;
+}
+
+export interface RulesetSummary {
+  id: string; // "SN-2027"
+  state: StateCode;
+  stateName: string; // "Sachsen"
+  /** Inclusive range of Abitur years this version applies to. */
+  abiturYears: { from: number; to: number | null };
+  /** German label, e.g. "Sachsen · Abitur ab 2027". */
+  label: string;
+  confidence: "high" | "medium" | "low";
+  /** Based on a draft regulation that is not yet in force. */
+  draft: boolean;
+  /** Half-year labels in order, e.g. ["11/I", "11/II", "12/I", "12/II"]. */
+  halfYears: string[];
+  levelNames: {
+    elevated: { name: string; short: string };
+    basic: { name: string; short: string };
+  };
+  elevatedSubjects: { min: number; max: number };
+  examVariants: ExamVariantInfo[];
+  extraInputs: ExtraInputInfo[];
+  catalog: CatalogSubject[];
+  defaults: { examWeightPercent: number };
+  /** Short German bullet points for the rules info screen. */
+  summary: string[];
+  sources: RulesetSource[];
+}
+
+// ---------------------------------------------------------------------------
 // Engine input (built by the data layer)
 // ---------------------------------------------------------------------------
 
