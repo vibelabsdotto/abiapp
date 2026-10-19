@@ -2,7 +2,7 @@
 // facts and the bullet list for assumptions.
 
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
 import { Chip, ProgressBar, formatGrade } from "@components/ui";
 import type { AbiturEvaluation } from "@domain/model";
@@ -14,6 +14,8 @@ import { pointsOrDash } from "@components/overview/data";
 
 export const TotalCard = ({ evaluation }: { evaluation: AbiturEvaluation }) => {
   const colors = useThemeStore((state) => state.colors);
+  // Large text: one figure per line instead of three squeezed columns.
+  const stacked = useWindowDimensions().fontScale >= 1.6;
   const { t, locale } = useTranslation();
   const { total, blockI, blockII } = evaluation;
   const failed = total.passed === false;
@@ -82,9 +84,12 @@ export const TotalCard = ({ evaluation }: { evaluation: AbiturEvaluation }) => {
         />
       </View>
       <View style={[styles.divider, { backgroundColor: colors.separator }]} />
-      <View style={styles.figures}>
+      <View style={[styles.figures, stacked && styles.figuresStacked]}>
         {figures.map((figure) => (
-          <View key={figure.label} style={styles.figure}>
+          <View
+            key={figure.label}
+            style={[styles.figure, stacked && styles.figureStacked]}
+          >
             <Text style={[Type.caption1, { color: colors.textSecondary }]}>
               {figure.label}
             </Text>
@@ -184,8 +189,10 @@ export const Fact = ({
   tone?: string;
 }) => {
   const colors = useThemeStore((state) => state.colors);
+  // Large text: value under the label, left-aligned.
+  const stacked = useWindowDimensions().fontScale >= 1.6;
   return (
-    <View style={styles.fact}>
+    <View style={[styles.fact, stacked && styles.factStacked]}>
       <Text
         style={[
           Type.subhead,
@@ -195,11 +202,12 @@ export const Fact = ({
       >
         {label}
       </Text>
-      <View style={styles.factValue}>
+      <View style={[styles.factValue, stacked && styles.factValueStacked]}>
         <Text
           style={[
             Type.subhead,
             styles.factValueText,
+            stacked && styles.factValueTextStacked,
             { color: tone ?? colors.text },
           ]}
         >
@@ -312,6 +320,12 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     gap: 1,
   },
+  figuresStacked: {
+    flexDirection: "column",
+  },
+  figureStacked: {
+    flex: 0,
+  },
   blockCard: {
     borderRadius: Radius.card,
     borderCurve: "continuous",
@@ -345,6 +359,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
     textAlign: "right",
+  },
+  factStacked: {
+    flexDirection: "column",
+    gap: 2,
+  },
+  factValueStacked: {
+    flex: 0,
+    alignItems: "flex-start",
+  },
+  factValueTextStacked: {
+    textAlign: "left",
   },
   bullets: {
     gap: 6,

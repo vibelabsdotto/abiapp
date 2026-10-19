@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 import { useThemeStore } from "@stores/themeStore";
-import { Radius, Type } from "@constants/typography";
+import { FontScale, Radius, Type } from "@constants/typography";
 
 export interface SectionProps {
   title?: string;
@@ -50,6 +50,7 @@ export const Section = ({
           {title ? (
             <Text
               accessibilityRole="header"
+              maxFontSizeMultiplier={FontScale.heading}
               style={[Type.title3, styles.title, { color: colors.text }]}
             >
               {title}

@@ -96,24 +96,31 @@ export const ResultCard = ({
         accessibilityHint={t("subjects.detail.enterResult")}
         style={({ pressed }) => [styles.result, pressed && styles.pressed]}
       >
+        {/* Wraps at large text sizes: label first line, link second. */}
         <View style={styles.resultHeader}>
           <Text
-            style={[Type.subhead, styles.flex, { color: colors.textSecondary }]}
+            style={[
+              Type.subhead,
+              styles.resultLabel,
+              { color: colors.textSecondary },
+            ]}
           >
             {t("subjects.detail.resultLabel", { halfYear: halfYearLabel })}
           </Text>
-          <Text style={[Type.subhead, { color: colors.accent }]}>
-            {value.source === "official"
-              ? t("subjects.detail.editResult")
-              : t("subjects.detail.enterResult")}
-          </Text>
-          <Icon
-            sf="chevron.right"
-            fallback={ChevronRight}
-            size={12}
-            weight="bold"
-            color={colors.accent}
-          />
+          <View style={styles.resultLink}>
+            <Text style={[Type.subhead, { color: colors.accent }]}>
+              {value.source === "official"
+                ? t("subjects.detail.editResult")
+                : t("subjects.detail.enterResult")}
+            </Text>
+            <Icon
+              sf="chevron.right"
+              fallback={ChevronRight}
+              size={12}
+              weight="bold"
+              color={colors.accent}
+            />
+          </View>
         </View>
         <View style={styles.numberRow}>
           <Text
@@ -188,7 +195,10 @@ const GoalBlock = ({
         <View style={styles.goalHeader}>
           <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
           <View style={styles.flex}>
-            <Text style={[Type.headline, { color: colors.accent }]}>
+            <Text
+              maxFontSizeMultiplier={FontScale.heading}
+              style={[Type.headline, { color: colors.accent }]}
+            >
               {t("subjects.goal.set")}
             </Text>
             <Text style={[Type.footnote, { color: colors.textSecondary }]}>
@@ -276,7 +286,10 @@ const GoalBlock = ({
     >
       <View style={styles.goalHeader}>
         <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
-        <Text style={[Type.headline, styles.flex, { color: colors.text }]}>
+        <Text
+          maxFontSizeMultiplier={FontScale.heading}
+          style={[Type.headline, styles.flex, { color: colors.text }]}
+        >
           {t("subjects.goal.title", { points: targetPoints })}
         </Text>
         {official !== null ? (
@@ -344,6 +357,17 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   resultHeader: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: 6,
+    rowGap: 2,
+  },
+  resultLabel: {
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  resultLink: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,

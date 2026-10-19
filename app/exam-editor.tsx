@@ -11,6 +11,7 @@ import {
   Switch,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { CircleHelp, ListOrdered } from "lucide-react-native";
@@ -50,6 +51,8 @@ export default function ExamEditorScreen() {
   const { t, locale } = useTranslation();
   const params = useLocalSearchParams<{ slot?: string; extra?: string }>();
   const headerHeight = useHeaderHeight();
+  // Large text: preview figures one per line instead of three columns.
+  const stackedStats = useWindowDimensions().fontScale >= 1.6;
   const { evaluation, input, ruleset, subjectsById } = useAbiturData();
   const results = useExamStore((state) => state.results);
   const setExamResult = useExamStore((state) => state.setExamResult);
@@ -299,7 +302,7 @@ export default function ExamEditorScreen() {
                 <View
                   accessible
                   accessibilityLabel={t("examEditor.preview")}
-                  style={styles.strip}
+                  style={[styles.strip, stackedStats && styles.stripStacked]}
                 >
                   {previewComponent ? (
                     <>
@@ -415,8 +418,10 @@ const PreviewStat = ({
   detail?: string;
 }) => {
   const colors = useThemeStore((state) => state.colors);
+  // In the stacked strip (large text) flex: 1 would collapse the height.
+  const stacked = useWindowDimensions().fontScale >= 1.6;
   return (
-    <View style={styles.stat}>
+    <View style={[styles.stat, stacked && styles.statStacked]}>
       <Text
         style={[Type.caption1, { color: colors.textSecondary }]}
         numberOfLines={1}
@@ -477,9 +482,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
   },
+  stripStacked: {
+    flexDirection: "column",
+  },
   stat: {
     flex: 1,
     gap: 1,
+  },
+  statStacked: {
+    flex: 0,
   },
   tabular: {
     fontVariant: ["tabular-nums"],

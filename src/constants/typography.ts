@@ -92,6 +92,11 @@ export const FontScale = {
   display: 1.5,
   badge: 1.5,
   chip: 1.6,
+  /**
+   * Headings and one-line link titles with long German compounds
+   * ("Leistungskurse", "Halbjahresziel"): beyond this they break mid-word.
+   */
+  heading: 1.6,
 } as const;
 
 export const Radius = {
