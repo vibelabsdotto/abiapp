@@ -1,5 +1,6 @@
 // AppProvider - prepares everything the first screen needs before it renders:
-// persisted theme/language stores and the migrated SQLite database. Keeps the
+// persisted theme/language/preferences stores, the migrated SQLite database
+// and the data stores hydrated from it (profile, subjects, exams). Keeps the
 // native splash screen up until then and shows a retry on init failure.
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -15,13 +16,18 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 
 import { initDatabase } from "@services/database/database";
+import { registerDevTools } from "@services/demo/devTools";
 import { useLanguageStore } from "@stores/languageStore";
+import { usePreferencesStore } from "@stores/preferencesStore";
+import { loadAllStores } from "@stores/setupActions";
 import { useThemeStore } from "@stores/themeStore";
 import { t } from "@locales/index";
 
 void SplashScreen.preventAutoHideAsync().catch(() => {
   // Already hidden (e.g. Fast Refresh); nothing to do.
 });
+
+registerDevTools();
 
 type PersistedStore = {
   persist: {
@@ -60,7 +66,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     Promise.all([
       waitForHydration(useThemeStore),
       waitForHydration(useLanguageStore),
-      initDatabase(),
+      waitForHydration(usePreferencesStore),
+      // Data stores read SQLite, so they hydrate after the migrations.
+      initDatabase().then(loadAllStores),
     ])
       .then(() => {
         isAppReady = true;
