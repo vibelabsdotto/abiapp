@@ -75,10 +75,7 @@ export const StatusCard = ({
           size={22}
           color={summaryColor}
         />
-        <Text
-          style={[Type.body, styles.summaryText, { color: colors.text }]}
-          numberOfLines={2}
-        >
+        <Text style={[Type.body, styles.summaryText, { color: colors.text }]}>
           {summary}
         </Text>
         <Icon

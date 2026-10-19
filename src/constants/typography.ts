@@ -97,6 +97,8 @@ export const FontScale = {
    * ("Leistungskurse", "Halbjahresziel"): beyond this they break mid-word.
    */
   heading: 1.6,
+  /** Dense grids with fixed cell widths (Block I matrix). */
+  grid: 1.25,
 } as const;
 
 export const Radius = {

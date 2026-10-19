@@ -63,6 +63,7 @@ export const InclusionMatrix = ({ rows, ruleset }: InclusionMatrixProps) => {
         >
           <View style={[styles.nameColumn, styles.name]}>
             <Text
+              maxFontSizeMultiplier={FontScale.grid}
               style={[Type.subhead, styles.nameText, { color: colors.text }]}
               numberOfLines={2}
             >
@@ -215,6 +216,7 @@ const MatrixCell = ({ cell, subjectName, halfYearLabel }: MatrixCellProps) => {
             exact={value?.exact ?? null}
             source={source}
             size="small"
+            maxFontScale={FontScale.grid}
             dimmed={!isIncluded}
           />
           {mandatory ? (

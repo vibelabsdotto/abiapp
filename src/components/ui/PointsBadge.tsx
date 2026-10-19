@@ -35,6 +35,8 @@ export interface PointsBadgeProps {
   showDecimal?: boolean;
   /** Dim the badge, e.g. a course not counted in Block I. */
   dimmed?: boolean;
+  /** Font scale cap; fixed-width grids pass `FontScale.grid`. */
+  maxFontScale?: number;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }
@@ -91,6 +93,7 @@ export const PointsBadge = ({
   size = "medium",
   showDecimal,
   dimmed = false,
+  maxFontScale = FontScale.badge,
   style,
   accessibilityLabel,
 }: PointsBadgeProps) => {
@@ -163,7 +166,7 @@ export const PointsBadge = ({
       ]}
     >
       <Text
-        maxFontSizeMultiplier={FontScale.badge}
+        maxFontSizeMultiplier={maxFontScale}
         numberOfLines={1}
         style={[
           NumberType.badge,

@@ -65,7 +65,10 @@ export const Section = ({
               hitSlop={8}
               style={({ pressed }) => pressed && styles.pressed}
             >
-              <Text style={[Type.subhead, { color: colors.accent }]}>
+              <Text
+                maxFontSizeMultiplier={FontScale.heading}
+                style={[Type.subhead, { color: colors.accent }]}
+              >
                 {action.title}
               </Text>
             </Pressable>
@@ -117,9 +120,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    // Large text: the action moves below the title instead of squeezing it.
+    flexWrap: "wrap",
     alignItems: "baseline",
     justifyContent: "space-between",
-    gap: 12,
+    columnGap: 12,
+    rowGap: 2,
     paddingHorizontal: 4,
   },
   title: {
