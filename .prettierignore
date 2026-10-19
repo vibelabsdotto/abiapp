@@ -1,0 +1,9 @@
+.agents/
+.expo/
+.hermes/
+android/
+dist/
+ios/
+node_modules/
+web-build/
+package-lock.json

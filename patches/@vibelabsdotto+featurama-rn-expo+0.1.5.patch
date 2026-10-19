@@ -1,0 +1,13 @@
+diff --git a/node_modules/@vibelabsdotto/featurama-rn-expo/android/src/main/java/com/featurama/reactnative/FeaturamaInsetsModule.kt b/node_modules/@vibelabsdotto/featurama-rn-expo/android/src/main/java/com/featurama/reactnative/FeaturamaInsetsModule.kt
+index 9799c6a..355e0e2 100644
+--- a/node_modules/@vibelabsdotto/featurama-rn-expo/android/src/main/java/com/featurama/reactnative/FeaturamaInsetsModule.kt
++++ b/node_modules/@vibelabsdotto/featurama-rn-expo/android/src/main/java/com/featurama/reactnative/FeaturamaInsetsModule.kt
+@@ -20,7 +20,7 @@ class FeaturamaInsetsModule(
+ 
+     override fun getSafeAreaInsets(): WritableMap {
+         val result = Arguments.createMap()
+-        val activity = currentActivity
++        val activity = getCurrentActivity()
+         if (activity == null) {
+             result.putDouble("top", 0.0)
+             result.putDouble("right", 0.0)
