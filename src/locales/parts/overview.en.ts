@@ -21,9 +21,13 @@ export const overviewEN = {
         "You need an average of {{points}} points in all open courses and exams.",
       reached: "You are {{points}} points above your goal.",
       reachedExact: "You are exactly on your goal.",
+      keepAverage:
+        "An average of {{points}} points in the open courses and exams is enough.",
       unreachable:
         "No longer reachable with the open courses, even with 15 points everywhere.",
       noOpen: "Nothing is open any more. Your result is final.",
+      failed:
+        "You only get a grade once every condition is met. Check the open points.",
     },
     blockI: {
       label: "Block I",
@@ -76,7 +80,9 @@ export const overviewEN = {
       notPassed: "Not passed",
       noGrade: "No grade yet",
       points: "{{points}} of {{max}} points",
-      sum: "Block I {{blockI}} + Block II {{blockII}}",
+      blockI: "Block I",
+      blockII: "Block II",
+      total: "Total",
       prognosis: "Prognosis",
       result: "Result",
     },
@@ -229,6 +235,8 @@ export const overviewEN = {
     reachableDone: "already reached",
     summary: "For {{grade}} you need {{points}} points.",
     currentTotal: "You are at {{points}} points.",
+    failed:
+      "As long as an admission or pass condition is not met, there is no grade.",
     explain:
       "Open means every course without an official result and every exam without an entry. The average applies to each of them.",
     remove: "Remove goal",

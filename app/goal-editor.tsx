@@ -78,21 +78,22 @@ export default function GoalEditorScreen() {
     ]);
   };
 
+  const failed = evaluation?.total.passed === false;
   const reachable =
     analysis === null
       ? "–"
-      : analysis.missingPoints === 0
-        ? t("goalEditor.reachableDone")
-        : analysis.reachable === false
-          ? t("goalEditor.reachableNo")
+      : analysis.reachable === false
+        ? t("goalEditor.reachableNo")
+        : analysis.missingPoints === 0
+          ? t("goalEditor.reachableDone")
           : analysis.reachable === true
             ? t("goalEditor.reachableYes")
             : "–";
   const reachableTone =
-    analysis?.missingPoints === 0 || analysis?.reachable === true
-      ? colors.success
-      : analysis?.reachable === false
-        ? colors.error
+    analysis?.reachable === false
+      ? colors.error
+      : analysis?.missingPoints === 0 || analysis?.reachable === true
+        ? colors.success
         : undefined;
 
   return (
@@ -125,6 +126,11 @@ export default function GoalEditorScreen() {
           {total !== null ? (
             <Text style={[Type.subhead, { color: colors.textSecondary }]}>
               {t("goalEditor.currentTotal", { points: total })}
+            </Text>
+          ) : null}
+          {failed ? (
+            <Text style={[Type.subhead, { color: colors.error }]}>
+              {t("goalEditor.failed")}
             </Text>
           ) : null}
           {selected !== null ? (

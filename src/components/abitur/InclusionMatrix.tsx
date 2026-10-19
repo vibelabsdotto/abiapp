@@ -16,7 +16,7 @@ import { FontScale, Radius, Type } from "@constants/typography";
 import { setCourseInclusion } from "./inclusionActions";
 import type { Inclusion, MatrixCellData, MatrixRowData } from "./matrix";
 
-const CELL_WIDTH = 52;
+const CELL_WIDTH = 50;
 const CELL_HEIGHT = 40;
 
 interface InclusionMatrixProps {
@@ -92,9 +92,15 @@ export const InclusionMatrix = ({ rows, ruleset }: InclusionMatrixProps) => {
   );
 };
 
-/** Long names (GRW in Saxony) fall back to the short name in the matrix. */
-const displayName = (name: string, shortName: string | null) =>
-  name.length > 22 && shortName ? shortName : name;
+/**
+ * The name column is narrow: very long names (GRW in Saxony) and single
+ * words that would break mid-word (Sozialwissenschaften) use the short name.
+ */
+const displayName = (name: string, shortName: string | null) => {
+  if (!shortName) return name;
+  const longestWord = Math.max(...name.split(/[\s/-]+/).map((w) => w.length));
+  return name.length > 28 || longestWord > 16 ? shortName : name;
+};
 
 interface MatrixCellProps {
   cell: MatrixCellData;
@@ -114,7 +120,7 @@ const MatrixCell = ({ cell, subjectName, halfYearLabel }: MatrixCellProps) => {
         accessibilityLabel={`${subjectName} ${halfYearLabel}, ${t("abitur.cell.spokenNotTaken")}`}
         style={styles.cell}
       >
-        <View style={[styles.notTaken, { backgroundColor: colors.fill }]} />
+        <View style={[styles.notTaken, { borderColor: colors.separator }]} />
       </View>
     );
   }
@@ -293,7 +299,7 @@ export const MatrixLegend = () => {
       </View>
       <View style={styles.legendItem}>
         <View
-          style={[styles.legendNotTaken, { backgroundColor: colors.fill }]}
+          style={[styles.legendNotTaken, { borderColor: colors.separator }]}
         />
         <Text style={[Type.caption1, { color: colors.textSecondary }]}>
           {t("abitur.blockI.legend.notTaken")}
@@ -356,10 +362,10 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
   notTaken: {
-    width: 30,
-    height: 22,
-    borderRadius: Radius.chip,
-    borderCurve: "continuous",
+    width: 18,
+    height: 0,
+    borderTopWidth: 2,
+    borderRadius: 1,
   },
   markerRight: {
     position: "absolute",
@@ -403,8 +409,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   legendNotTaken: {
-    width: 18,
-    height: 14,
-    borderRadius: 4,
+    width: 14,
+    height: 0,
+    borderTopWidth: 2,
+    borderRadius: 1,
   },
 });

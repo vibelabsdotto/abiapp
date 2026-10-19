@@ -120,7 +120,7 @@ export default function RulesScreen() {
 
         <Section title={t("rules.summary")} variant="plain">
           <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Bullets items={ruleset.summary} />
+            <Bullets items={ruleset.summary} large />
           </View>
         </Section>
 
@@ -131,7 +131,7 @@ export default function RulesScreen() {
         >
           <View style={[styles.card, { backgroundColor: colors.card }]}>
             {assumptions.length > 0 ? (
-              <Bullets items={assumptions} />
+              <Bullets items={assumptions} large />
             ) : (
               <Text style={[Type.subhead, { color: colors.textSecondary }]}>
                 {t("rules.assumptionsNone")}

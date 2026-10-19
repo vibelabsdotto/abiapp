@@ -109,10 +109,10 @@ export default function ExamEditorScreen() {
     input && target ? previewEvaluation(input, target, main, oralValue) : null;
 
   const title = extraInfo
-    ? extraInfo.label
+    ? t("examEditor.extraTitle")
     : subject
       ? `${slot} · ${subject.name}`
-      : (slot ?? t("examEditor.title"));
+      : (component?.label ?? slot ?? t("examEditor.title"));
 
   const close = () => {
     allowClose();
@@ -145,7 +145,9 @@ export default function ExamEditorScreen() {
     if (!target) return;
     Alert.alert(
       t("examEditor.removeTitle"),
-      t("examEditor.removeMessage", { label: title }),
+      t("examEditor.removeMessage", {
+        label: extraInfo?.label ?? title,
+      }),
       [
         { text: t("editor.cancel"), style: "cancel" },
         {
@@ -276,7 +278,7 @@ export default function ExamEditorScreen() {
                 </Text>
                 <Text style={[Type.subhead, { color: colors.textSecondary }]}>
                   {[
-                    slot ? `${slot} · ${kindLabel ?? ""}` : null,
+                    slot && subject ? `${slot} · ${kindLabel ?? ""}` : slot,
                     extraInfo && !slot ? extraInfo.description : null,
                     factor !== null && slot
                       ? t("examEditor.factor", { factor })

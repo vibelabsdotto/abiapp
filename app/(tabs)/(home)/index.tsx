@@ -75,8 +75,11 @@ export default function HomeScreen() {
     );
   }
 
+  const failed = evaluation.total.passed === false;
+  // Without a pass there is no grade: the hero then shows the goal without
+  // claiming "Ziel erreicht".
   const goalPoints =
-    targetTenths === null
+    targetTenths === null || failed
       ? null
       : (analysis?.requiredTotal ?? minPointsForGrade(targetTenths));
 
@@ -102,6 +105,7 @@ export default function HomeScreen() {
                 targetTenths={targetTenths}
                 analysis={analysis}
                 totalPoints={evaluation.total.points}
+                failed={failed}
               />
             </View>
             <BlockTiles evaluation={evaluation} />

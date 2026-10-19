@@ -16,12 +16,15 @@ interface GoalLineProps {
   targetTenths: number | null;
   analysis: TargetAnalysis | null;
   totalPoints: number | null;
+  /** total.passed === false: no grade, so no goal can be "reached". */
+  failed: boolean;
 }
 
 export const GoalLine = ({
   targetTenths,
   analysis,
   totalPoints,
+  failed,
 }: GoalLineProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t, locale } = useTranslation();
@@ -35,8 +38,14 @@ export const GoalLine = ({
   if (targetTenths === null) {
     title = t("home.goal.setTitle");
     message = t("home.goal.setMessage");
+  } else if (failed) {
+    title = t("home.goal.failed");
+    tone = colors.error;
   } else if (!analysis) {
     title = t("home.goal.title", { grade: formatGrade(targetTenths, locale) });
+  } else if (analysis.reachable === false) {
+    title = t("home.goal.unreachable");
+    tone = colors.error;
   } else if (analysis.missingPoints === 0 && totalPoints !== null) {
     const buffer = totalPoints - analysis.requiredTotal;
     title =
@@ -44,9 +53,11 @@ export const GoalLine = ({
         ? t("home.goal.reached", { points: buffer })
         : t("home.goal.reachedExact");
     tone = colors.success;
-  } else if (analysis.reachable === false) {
-    title = t("home.goal.unreachable");
-    tone = colors.error;
+    if (analysis.requiredAverageOpen !== null) {
+      message = t("home.goal.keepAverage", {
+        points: analysis.requiredAverageOpen,
+      });
+    }
   } else if (analysis.requiredAverageOpen === null) {
     title = t("home.goal.noOpen");
   } else {
@@ -57,7 +68,9 @@ export const GoalLine = ({
 
   return (
     <Pressable
-      onPress={() => router.push("/goal-editor")}
+      onPress={() =>
+        failed ? router.navigate("/abitur") : router.push("/goal-editor")
+      }
       accessibilityRole="button"
       accessibilityLabel={[title, message].filter(Boolean).join(", ")}
       style={({ pressed }) => [
@@ -71,11 +84,7 @@ export const GoalLine = ({
       </View>
       <View style={styles.text}>
         <Text
-          style={[
-            Type.subhead,
-            message ? styles.title : null,
-            { color: message ? colors.text : tone },
-          ]}
+          style={[Type.subhead, message ? styles.title : null, { color: tone }]}
         >
           {title}
         </Text>

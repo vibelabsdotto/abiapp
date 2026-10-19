@@ -33,34 +33,44 @@ export const TotalCard = ({ evaluation }: { evaluation: AbiturEvaluation }) => {
     .filter(Boolean)
     .join(", ");
 
+  const figures = [
+    { label: t("abitur.total.blockI"), value: pointsOrDash(blockI.points) },
+    { label: t("abitur.total.blockII"), value: pointsOrDash(blockII.points) },
+    {
+      label: t("abitur.total.total"),
+      value: pointsOrDash(total.points),
+      unit: `/${total.maxPoints}`,
+    },
+  ];
+
   return (
     <View
       accessible
       accessibilityLabel={spoken}
       style={[styles.totalCard, { backgroundColor: colors.card }]}
     >
-      <View style={styles.totalGrade}>
-        <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-          {t("abitur.total.grade")}
-        </Text>
-        {failed ? (
-          <Text style={[Type.title2, { color: colors.error }]}>
-            {t("abitur.total.notPassed")}
+      <View style={styles.totalTop}>
+        <View style={styles.totalGrade}>
+          <Text style={[Type.footnote, { color: colors.textSecondary }]}>
+            {t("abitur.total.grade")}
           </Text>
-        ) : (
-          <Text
-            maxFontSizeMultiplier={FontScale.display}
-            style={[
-              NumberType.display,
-              styles.totalNumber,
-              { color: grade ? colors.text : colors.textTertiary },
-            ]}
-          >
-            {grade ?? "–"}
-          </Text>
-        )}
-      </View>
-      <View style={styles.totalFacts}>
+          {failed ? (
+            <Text style={[Type.title1, { color: colors.error }]}>
+              {t("abitur.total.notPassed")}
+            </Text>
+          ) : (
+            <Text
+              maxFontSizeMultiplier={FontScale.display}
+              style={[
+                NumberType.display,
+                styles.totalNumber,
+                { color: grade ? colors.text : colors.textTertiary },
+              ]}
+            >
+              {grade ?? "–"}
+            </Text>
+          )}
+        </View>
         <Chip
           label={
             total.predicted
@@ -70,28 +80,32 @@ export const TotalCard = ({ evaluation }: { evaluation: AbiturEvaluation }) => {
           tone={total.predicted ? "accent" : "success"}
           size="medium"
         />
-        <Text
-          style={[Type.subhead, styles.tabular, { color: colors.text }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {t("abitur.total.points", {
-            points: pointsOrDash(total.points),
-            max: total.maxPoints,
-          })}
-        </Text>
-        <Text
-          style={[
-            Type.footnote,
-            styles.tabular,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("abitur.total.sum", {
-            blockI: pointsOrDash(blockI.points),
-            blockII: pointsOrDash(blockII.points),
-          })}
-        </Text>
+      </View>
+      <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+      <View style={styles.figures}>
+        {figures.map((figure) => (
+          <View key={figure.label} style={styles.figure}>
+            <Text style={[Type.caption1, { color: colors.textSecondary }]}>
+              {figure.label}
+            </Text>
+            <View style={styles.figureValue}>
+              <Text
+                maxFontSizeMultiplier={FontScale.display}
+                style={[NumberType.title, { color: colors.text }]}
+              >
+                {figure.value}
+              </Text>
+              {figure.unit ? (
+                <Text
+                  maxFontSizeMultiplier={FontScale.display}
+                  style={[NumberType.small, { color: colors.textSecondary }]}
+                >
+                  {figure.unit}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -201,20 +215,31 @@ export const Fact = ({
   );
 };
 
-export const Bullets = ({ items }: { items: string[] }) => {
+export const Bullets = ({
+  items,
+  large = false,
+}: {
+  items: string[];
+  /** Body-size text in the primary colour (rules screen). */
+  large?: boolean;
+}) => {
   const colors = useThemeStore((state) => state.colors);
   return (
-    <View style={styles.bullets}>
+    <View style={[styles.bullets, large && styles.bulletsLarge]}>
       {items.map((item, index) => (
         <View key={index} style={styles.bullet}>
           <View
-            style={[styles.bulletDot, { backgroundColor: colors.textTertiary }]}
+            style={[
+              styles.bulletDot,
+              large && styles.bulletDotLarge,
+              { backgroundColor: large ? colors.accent : colors.textTertiary },
+            ]}
           />
           <Text
             style={[
-              Type.footnote,
+              large ? Type.subhead : Type.footnote,
               styles.bulletText,
-              { color: colors.textSecondary },
+              { color: large ? colors.text : colors.textSecondary },
             ]}
           >
             {item}
@@ -253,28 +278,39 @@ export const BlockTitle = ({
 
 const styles = StyleSheet.create({
   totalCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
     padding: 18,
+    gap: 12,
     borderRadius: Radius.hero,
     borderCurve: "continuous",
   },
+  totalTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   totalGrade: {
-    minWidth: 96,
+    flexShrink: 1,
   },
   totalNumber: {
-    fontSize: 52,
-    lineHeight: 60,
+    fontSize: 56,
+    lineHeight: 64,
   },
-  totalFacts: {
+  divider: {
+    height: StyleSheet.hairlineWidth,
+  },
+  figures: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  figure: {
     flex: 1,
-    alignItems: "flex-end",
-    gap: 6,
+    gap: 2,
   },
-  tabular: {
-    fontVariant: ["tabular-nums"],
-    textAlign: "right",
+  figureValue: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 1,
   },
   blockCard: {
     borderRadius: Radius.card,
@@ -323,6 +359,12 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 2.5,
     marginTop: 7,
+  },
+  bulletsLarge: {
+    gap: 10,
+  },
+  bulletDotLarge: {
+    marginTop: 8,
   },
   bulletText: {
     flex: 1,

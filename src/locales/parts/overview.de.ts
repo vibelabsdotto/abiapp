@@ -22,9 +22,13 @@ export const overviewDE = {
         "Dafür brauchst du im Schnitt {{points}} Punkte in allen offenen Kursen und Prüfungen.",
       reached: "Du liegst {{points}} Punkte über deinem Ziel.",
       reachedExact: "Du liegst genau auf deinem Ziel.",
+      keepAverage:
+        "Es reicht, wenn du in den offenen Kursen und Prüfungen im Schnitt {{points}} Punkte holst.",
       unreachable:
         "Mit den offenen Kursen nicht mehr erreichbar, selbst mit 15 Punkten überall.",
       noOpen: "Es ist nichts mehr offen. Dein Ergebnis steht fest.",
+      failed:
+        "Eine Note gibt es erst, wenn alle Bedingungen erfüllt sind. Sieh dir die offenen Punkte an.",
     },
     blockI: {
       label: "Block I",
@@ -78,7 +82,9 @@ export const overviewDE = {
       notPassed: "Nicht bestanden",
       noGrade: "Noch keine Note",
       points: "{{points}} von {{max}} Punkten",
-      sum: "Block I {{blockI}} + Block II {{blockII}}",
+      blockI: "Block I",
+      blockII: "Block II",
+      total: "Gesamt",
       prognosis: "Prognose",
       result: "Ergebnis",
     },
@@ -232,6 +238,8 @@ export const overviewDE = {
     reachableDone: "schon erreicht",
     summary: "Für {{grade}} brauchst du {{points}} Punkte.",
     currentTotal: "Du stehst bei {{points}} Punkten.",
+    failed:
+      "Solange eine Bedingung zur Zulassung oder zum Bestehen verletzt ist, gibt es keine Note.",
     explain:
       "Offen sind alle Kurse ohne amtliches Ergebnis und alle Prüfungen ohne Eintrag. Der Schnitt gilt für jeden davon.",
     remove: "Ziel entfernen",

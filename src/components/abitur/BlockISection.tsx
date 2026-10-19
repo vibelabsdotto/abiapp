@@ -9,12 +9,13 @@ import { Icon, PointsBadge } from "@components/ui";
 import type {
   AbiturEvaluation,
   EngineInput,
+  IncludedCourse,
   RulesetSummary,
 } from "@domain/model";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
-import { Radius, Type } from "@constants/typography";
+import { NumberType, Radius, Type } from "@constants/typography";
 
 import { confirmResetInclusions } from "./inclusionActions";
 import { InclusionMatrix, MatrixLegend } from "./InclusionMatrix";
@@ -45,7 +46,41 @@ export const BlockISection = ({
     ruleset.halfYears.length,
   );
   const overrides = manualOverrides(input);
-  const extras = blockI.included.filter((item) => item.extraId);
+  // An extra can occupy several Block I places, as one entry with `slots`
+  // (BY Seminararbeit) or as several entries (NW Projektkurs): one row each.
+  const extras = [
+    ...blockI.included
+      .filter((item) => item.extraId)
+      .reduce(
+        (groups, item) => {
+          const id = item.extraId ?? "";
+          const group = groups.get(id) ?? {
+            extraId: id,
+            points: 0,
+            slots: 0,
+            entries: 0,
+            source: item.source,
+          };
+          group.points += item.points;
+          group.slots += item.slots ?? 1;
+          group.entries += 1;
+          if (item.source !== "official") group.source = item.source;
+          groups.set(id, group);
+          return groups;
+        },
+        new Map<
+          string,
+          {
+            extraId: string;
+            points: number;
+            slots: number;
+            entries: number;
+            source: IncludedCourse["source"];
+          }
+        >(),
+      )
+      .values(),
+  ];
   const extraLabel = (id: string) =>
     ruleset.extraInputs.find((extra) => extra.id === id)?.label ?? id;
 
@@ -159,24 +194,40 @@ export const BlockISection = ({
             {t("abitur.blockI.extras")}
           </Text>
           {extras.map((item) => (
-            <View key={item.subjectId} style={styles.extraRow}>
+            <View key={item.extraId} style={styles.extraRow}>
               <View style={styles.extraText}>
                 <Text style={[Type.subhead, { color: colors.text }]}>
-                  {extraLabel(item.extraId ?? "")}
+                  {extraLabel(item.extraId)}
                 </Text>
-                {(item.slots ?? 1) > 1 ? (
+                {item.slots > 1 ? (
                   <Text
                     style={[Type.footnote, { color: colors.textSecondary }]}
                   >
-                    {t("abitur.blockI.extraSlots", { count: item.slots ?? 1 })}
+                    {t("abitur.blockI.extraSlots", { count: item.slots })}
                   </Text>
                 ) : null}
               </View>
-              <PointsBadge
-                points={item.points}
-                source={item.source}
-                size="small"
-              />
+              {item.slots > 1 ? (
+                <Text
+                  style={[
+                    NumberType.value,
+                    {
+                      color:
+                        item.source === "official"
+                          ? colors.text
+                          : colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {item.points}
+                </Text>
+              ) : (
+                <PointsBadge
+                  points={item.points}
+                  source={item.source}
+                  size="small"
+                />
+              )}
             </View>
           ))}
         </View>
