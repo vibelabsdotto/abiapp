@@ -22,7 +22,7 @@ import {
   type ContextMenuRowAction,
 } from "@components/common/ContextMenuRow";
 import { useThemeStore } from "@stores/themeStore";
-import { Type } from "@constants/typography";
+import { FontScale, Type } from "@constants/typography";
 
 import { Icon } from "./Icon";
 
@@ -104,6 +104,8 @@ export const ListRow = ({
     trailing ??
     (value !== undefined ? (
       <Text
+        // Same cap as the title so the value never outgrows it.
+        maxFontSizeMultiplier={FontScale.heading}
         style={[
           Type.body,
           styles.value,
@@ -158,6 +160,8 @@ export const ListRow = ({
       <View style={styles.text}>
         <View style={styles.titleRow}>
           <Text
+            // Long German titles ("Abiturjahrgang") break mid-word beyond.
+            maxFontSizeMultiplier={FontScale.heading}
             style={[
               Type.body,
               styles.title,
@@ -172,8 +176,9 @@ export const ListRow = ({
         {subtitle !== undefined && subtitle !== null && subtitle !== "" ? (
           subtitleIsText ? (
             <Text
+              maxFontSizeMultiplier={FontScale.heading}
               style={[Type.footnote, { color: colors.textSecondary }]}
-              numberOfLines={2}
+              numberOfLines={stacked ? 4 : 2}
             >
               {subtitle}
             </Text>
