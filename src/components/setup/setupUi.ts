@@ -9,7 +9,9 @@ import Toast from "react-native-toast-message";
 import type { Issue, RulesetSummary } from "@domain/model";
 import type { SubjectsSaveResult } from "@hooks/useSetupFlows";
 import { t, type LanguageCode } from "@locales/index";
-import { errorMessage } from "@stores/domainAccess";
+import { getRulesetSummary } from "@domain/index";
+import { useCourseStore } from "@stores/courseStore";
+import { errorMessage, tryDomain } from "@stores/domainAccess";
 import {
   changeRules,
   startSetup,
@@ -86,6 +88,47 @@ export const showIssues = (issues: Issue[]) => {
   });
 };
 
+/** One sentence for all half-year losses instead of one line per course. */
+const dataLossText = (blocking: Issue[], nextRulesetId: string): string => {
+  const losses = blocking.filter(
+    (issue) => issue.code === "rules.halfYears.dataLoss",
+  );
+  const others = blocking.filter(
+    (issue) => issue.code !== "rules.halfYears.dataLoss",
+  );
+  if (losses.length === 0) return issueLines(blocking);
+  const profile = useProfileStore.getState().profile;
+  const current = profile
+    ? tryDomain(() => getRulesetSummary(profile.rulesetId)).value
+    : null;
+  const next = tryDomain(() => getRulesetSummary(nextRulesetId)).value;
+  const halfYears = [...new Set(losses.map((issue) => issue.halfYear ?? -1))]
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b)
+    .map((index) => current?.halfYears[index] ?? String(index + 1));
+  const names = [
+    ...new Set(
+      losses.map(
+        (issue) =>
+          useCourseStore
+            .getState()
+            .subjects.find((subject) => subject.id === issue.subjectId)?.name,
+      ),
+    ),
+  ].filter((name): name is string => Boolean(name));
+  const shown = names.slice(0, 4).join(", ");
+  const subjects =
+    names.length > 4
+      ? `${shown} ${t("setup.rulesChange.more", { count: names.length - 4 })}`
+      : shown;
+  const sentence = t("setup.rulesChange.lossMessage", {
+    ruleset: next?.label ?? nextRulesetId,
+    halfYears: halfYears.join(", "),
+    subjects,
+  });
+  return others.length > 0 ? `${sentence}\n${issueLines(others)}` : sentence;
+};
+
 /**
  * Creates the profile or changes state/year/version. If the change would
  * delete entries, the user confirms natively first; then the change runs
@@ -102,7 +145,7 @@ export async function applyRulesChange(
   const confirmed = await confirmAsync({
     title: t("setup.rulesChange.confirmTitle"),
     message: t("setup.rulesChange.confirmMessage", {
-      issues: issueLines(blocking),
+      issues: dataLossText(blocking, first.rulesetId),
     }),
     confirm: t("setup.rulesChange.confirm"),
     destructive: true,

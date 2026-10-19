@@ -45,7 +45,7 @@ export const OnboardingSummary = () => {
   return (
     <>
       <Section title={t("onboarding.done.summary")}>
-        <ListRow title={t("settings.state")} value={ruleset.stateName} />
+        <ListRow title={t("settings.state")} subtitle={ruleset.stateName} />
         <ListRow
           title={t("settings.abiturYear")}
           value={String(profile.abiturYear)}

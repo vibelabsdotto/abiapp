@@ -132,7 +132,7 @@ export const setupDE = {
     discardMessage: "Deine Änderungen werden nicht gespeichert.",
     discard: "Verwerfen",
     keepEditing: "Weiter bearbeiten",
-    profileTitle: "Bundesland und Jahrgang",
+    profileTitle: "Profil",
     state: "Bundesland",
     abiturYear: "Abiturjahrgang",
     yearLater: "{{year}} oder später",
@@ -156,6 +156,8 @@ export const setupDE = {
       confirmTitle: "Einträge würden gelöscht",
       confirmMessage: "{{issues}}\n\nTrotzdem ändern?",
       confirm: "Ändern und löschen",
+      lossMessage:
+        "In {{ruleset}} gibt es {{halfYears}} nicht. Noten, Halbjahresergebnisse und Ziele aus diesen Halbjahren werden gelöscht: {{subjects}}.",
       doneTitle: "Regeln geändert",
       more: "und {{count}} weitere",
     },

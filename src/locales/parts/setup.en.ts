@@ -132,7 +132,7 @@ export const setupEN = {
     discardMessage: "Your changes will not be saved.",
     discard: "Discard",
     keepEditing: "Keep editing",
-    profileTitle: "State and year",
+    profileTitle: "Profile",
     state: "State",
     abiturYear: "Abitur year",
     yearLater: "{{year}} or later",
@@ -156,6 +156,8 @@ export const setupEN = {
       confirmTitle: "Entries would be deleted",
       confirmMessage: "{{issues}}\n\nChange anyway?",
       confirm: "Change and delete",
+      lossMessage:
+        "{{ruleset}} has no {{halfYears}}. Grades, half-year results and goals from these half-years will be deleted: {{subjects}}.",
       doneTitle: "Rules changed",
       more: "and {{count}} more",
     },

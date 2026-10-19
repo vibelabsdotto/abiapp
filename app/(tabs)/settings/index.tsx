@@ -126,6 +126,19 @@ const TILE = {
   developer: SubjectColors.brown,
 } as const;
 
+/** Trailing value with more room than ListRow's default (long state names). */
+const RowValue = ({ text }: { text: string }) => {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <Text
+      style={[styles.rowValue, { color: colors.textSecondary }]}
+      numberOfLines={1}
+    >
+      {text}
+    </Text>
+  );
+};
+
 export default function SettingsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -348,7 +361,7 @@ export default function SettingsScreen() {
         <Section title={t("settings.profile")} separatorInset={58}>
           <ListRow
             title={t("settings.state")}
-            value={stateName}
+            trailing={<RowValue text={stateName} />}
             leading={
               <SettingsIcon sf="map" fallback={MapIcon} color={TILE.profile} />
             }
@@ -706,6 +719,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     maxWidth: "55%",
+  },
+  rowValue: {
+    fontSize: 17,
+    maxWidth: "62%",
+    flexShrink: 1,
+    textAlign: "right",
   },
   valueText: {
     fontSize: 17,
