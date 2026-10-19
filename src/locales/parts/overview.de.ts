@@ -116,6 +116,8 @@ export const overviewDE = {
         mandatory: "Pflicht",
         manual: "von dir festgelegt",
         notTaken: "nicht belegt",
+        official: "amtlich",
+        estimate: "geschätzt",
         prognosis: "Prognose",
       },
       manualCount: {

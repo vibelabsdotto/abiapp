@@ -292,9 +292,21 @@ export const MatrixLegend = () => {
         </Text>
       </View>
       <View style={styles.legendItem}>
+        <PointsBadge points={11} source="official" size="mini" />
+        <Text style={[Type.caption1, { color: colors.textSecondary }]}>
+          {t("abitur.blockI.legend.official")}
+        </Text>
+      </View>
+      <View style={styles.legendItem}>
         <PointsBadge points={11} exact={11.4} source="grades" size="mini" />
         <Text style={[Type.caption1, { color: colors.textSecondary }]}>
           {t("abitur.blockI.legend.prognosis")}
+        </Text>
+      </View>
+      <View style={styles.legendItem}>
+        <PointsBadge points={11} source="estimate" size="mini" />
+        <Text style={[Type.caption1, { color: colors.textSecondary }]}>
+          {t("abitur.blockI.legend.estimate")}
         </Text>
       </View>
       <View style={styles.legendItem}>

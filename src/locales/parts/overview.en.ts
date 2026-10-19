@@ -114,6 +114,8 @@ export const overviewEN = {
         mandatory: "mandatory",
         manual: "set by you",
         notTaken: "not taken",
+        official: "official",
+        estimate: "estimated",
         prognosis: "prognosis",
       },
       manualCount: {
