@@ -107,6 +107,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "./plugins/withAndroidAccent.js",
     // 3-button navigation bar follows the in-app light/dark choice.
     "./plugins/withAndroidNavigationBarTheme.js",
+    // Material drawables for native menu icons (src/constants/menuIcons.ts).
+    "./plugins/withAndroidMenuIcons.js",
     ...firebasePlugins,
   ],
   experiments: {

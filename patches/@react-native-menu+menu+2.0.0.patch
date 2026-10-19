@@ -1,3 +1,17 @@
+diff --git a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
+index c45f5cc..d97bd2c 100644
+--- a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
++++ b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
+@@ -126,7 +126,8 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+     if (imageName != null) {
+       val resourceId: Int = getDrawableIdWithName(imageName)
+       if (resourceId != 0) {
+-        val icon = resources.getDrawable(resourceId, context.theme)
++        // mutate(): items sharing a drawable keep their own tint (disabled, destructive)
++        val icon = resources.getDrawable(resourceId, context.theme).mutate()
+         if (imageColor != null) {
+           icon.setTintList(ColorStateList.valueOf(imageColor))
+         }
 diff --git a/node_modules/@react-native-menu/menu/ios/MenuViewManager.mm b/node_modules/@react-native-menu/menu/ios/MenuViewManager.mm
 index 3d149b3..6816e94 100644
 --- a/node_modules/@react-native-menu/menu/ios/MenuViewManager.mm

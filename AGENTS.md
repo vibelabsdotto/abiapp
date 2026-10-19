@@ -47,6 +47,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 
 - Jeder Screen hat einen nativen Header. Modals nutzen `src/components/common/ModalHeader.tsx` (`Stack.Toolbar`, „Abbrechen“ links, „Sichern“ bzw. „Fertig“ rechts).
 - Menüs nur über `src/components/common/NativeMenu.tsx` bzw. `ContextMenuRow`/`ListRow menu`. **Jede Menüaktion hat ein Icon** (`image`, SF Symbol auf iOS). Der Adapter setzt `imageColor`, sonst sind Icons unter Fabric unsichtbar. SF-Symbole müssen auf iOS 16.4 existieren.
+- Android-Menüicons: Der Adapter übersetzt das SF Symbol über `src/constants/menuIcons.ts` in ein Material-Drawable (`assets/android-menu-icons/`, beim Prebuild per `plugins/withAndroidMenuIcons.js` nach `res/drawable`). Neues Symbol in einem Menü: dort eintragen, `node scripts/generate-android-menu-icons.mjs`, Prebuild und nativer Android-Build. Fehlt der Eintrag, bleibt die Zeile auf Android ohne Icon.
 - UI-Bausteine aus `src/components/ui/` verwenden (PointsBadge, GradeHero, ListRow, SegmentedControl, PointsPicker, CheckRow, …), Farben nur über Tokens aus `src/constants/colors.ts`, Typografie aus `src/constants/typography.ts`.
 - Prognosen sind immer als Prognose erkennbar (`CourseValue.source`), offene Bedingungen (`passed = null`) als „offen“, nie als nicht erfüllt.
 
@@ -54,7 +55,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 
 - `expo-build-properties` `ios.usePrecompiledModules: false`: Die vorkompilierten Expo-Module von SDK 58 passten nicht zu `expo-modules-core` (dyld „Symbol missing“ beim Start). Entfernen, sobald Expo passende Artefakte liefert, und dann per Simulator-Start prüfen.
 - `plugins/withFirebaseIos.js`: setzt `use_modular_headers!` und ruft `FirebaseApp.configure()` im AppDelegate auf (das RNFB-Plugin findet den Einfügepunkt unter SDK 58 nicht mehr). `@react-native-firebase/app` läuft mit `ios.disableSPM: true`.
-- `patches/`: `@react-native-menu/menu` (Imports für RN 0.88) und `@vibelabsdotto/featurama-rn-expo` (Kotlin `getCurrentActivity()`). `@vibelabsdotto/vibeupdate` per `overrides` an SDK 58 angepasst. Patches entfernen, sobald die Pakete upstream passen.
+- `patches/`: `@react-native-menu/menu` (Imports für RN 0.88; Android: `mutate()` am Menü-Icon, damit geteilte Drawables ihre eigene Tönung behalten) und `@vibelabsdotto/featurama-rn-expo` (Kotlin `getCurrentActivity()`). `@vibelabsdotto/vibeupdate` per `overrides` an SDK 58 angepasst. Patches entfernen, sobald die Pakete upstream passen.
 - Xcode 27 Simulator: Taps nur mit `axe tap … --tap-style physical` zuverlässig.
 
 ## Environment

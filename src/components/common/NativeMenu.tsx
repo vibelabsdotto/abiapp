@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { MenuView, type MenuAction } from "@react-native-menu/menu";
 
+import { androidMenuIcon } from "@constants/menuIcons";
 import { useThemeStore } from "@stores/themeStore";
 
 export interface NativeMenuAction {
@@ -23,7 +24,8 @@ export interface NativeMenuAction {
   state?: "on" | "off" | "none";
   /** SF Symbol name. Passed to the library on iOS only. */
   image?: string;
-  /** Android drawable resource name. Passed on Android only. */
+  /** Android drawable resource name. Defaults to the Material drawable for
+   * `image` (src/constants/menuIcons.ts). Passed on Android only. */
   androidImage?: string;
   destructive?: boolean;
   disabled?: boolean;
@@ -46,8 +48,12 @@ interface NativeMenuProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// Android resolves `image` as a drawable resource: SF Symbol names go through
+// the central Material mapping (unknown drawables would log a stack trace).
 const platformImage = (action: NativeMenuAction): string | undefined =>
-  Platform.OS === "ios" ? action.image : action.androidImage;
+  Platform.OS === "ios"
+    ? action.image
+    : (action.androidImage ?? androidMenuIcon(action.image));
 
 /**
  * Maps the flat action shape onto MenuView's MenuAction:
