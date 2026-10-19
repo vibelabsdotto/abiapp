@@ -43,8 +43,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.max.mannstein.abisax",
-    // iOS 18+/26 home-screen appearances; dark and tinted are transparent
-    // marks, the system supplies the backdrop.
+    // iOS 18+/26 home-screen appearances: opaque night background (dark)
+    // and grayscale on black (tinted, the system applies the tint).
     icon: {
       light: "./assets/images/icon.png",
       dark: "./assets/images/icon-dark.png",
@@ -86,7 +86,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         imageWidth: 128,
         backgroundColor: BRAND_INK,
         dark: {
-          image: "./assets/images/splash-icon.png",
+          image: "./assets/images/splash-icon-dark.png",
           backgroundColor: BRAND_NIGHT,
         },
       },
