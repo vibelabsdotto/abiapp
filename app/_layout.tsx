@@ -191,6 +191,10 @@ function RootLayoutNav() {
           options={{ presentation: "modal", headerShown: true }}
         />
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+        {/* Design-system gallery, development builds only (abiapp://dev-gallery). */}
+        {__DEV__ ? (
+          <Stack.Screen name="dev-gallery" options={{ headerShown: true }} />
+        ) : null}
       </Stack>
       {VIBEUPDATE_APP_ID ? (
         <VibeUpdate
