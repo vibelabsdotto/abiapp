@@ -5,6 +5,12 @@
 
 import { create } from "zustand";
 
+import {
+  ANALYTICS_EVENTS,
+  track,
+  trackProfile,
+} from "@services/analytics/appEvents";
+
 import type { StateCode } from "@domain/model";
 import {
   assertTargetTenths,
@@ -57,7 +63,9 @@ export const useProfileStore = create<ProfileState>()((set, get) => {
     isLoaded: false,
 
     load: async () => {
-      set({ profile: await readProfile(), isLoaded: true });
+      const profile = await readProfile();
+      set({ profile, isLoaded: true });
+      if (profile) trackProfile(profile);
     },
 
     createProfile: async (input) => {
@@ -84,6 +92,9 @@ export const useProfileStore = create<ProfileState>()((set, get) => {
     setTarget: async (targetTenths) => {
       assertTargetTenths(targetTenths);
       await patchProfile({ targetTenths });
+      if (targetTenths !== null) {
+        track(ANALYTICS_EVENTS.goalSet, { target_tenths: targetTenths });
+      }
     },
 
     setExamVariant: async (variantId) => {

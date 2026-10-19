@@ -6,6 +6,7 @@ import { create } from "zustand";
 
 import { getRulesetSummary } from "@domain/index";
 import type { ExamSlot } from "@domain/model";
+import { ANALYTICS_EVENTS, track } from "@services/analytics/appEvents";
 import {
   assertExamSlot,
   assertOptionalPoints,
@@ -102,6 +103,12 @@ export const useExamStore = create<ExamState>()((set, get) => ({
       saveExamResult(db, slot, mainPoints, oralPoints),
     );
     set(await readAll());
+    if (mainPoints !== null) {
+      track(ANALYTICS_EVENTS.examResultSet, {
+        slot,
+        with_oral: oralPoints !== null,
+      });
+    }
   },
 
   clearExamResult: async (slot) => {

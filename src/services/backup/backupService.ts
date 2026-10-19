@@ -13,6 +13,7 @@ import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 import { getRulesetSummary } from "@domain/index";
+import { ANALYTICS_EVENTS, track } from "@services/analytics/appEvents";
 import {
   clearAllTables,
   getDatabase,
@@ -119,6 +120,7 @@ export async function exportBackup(): Promise<{
     UTI: "public.json",
     dialogTitle: "AbiApp-Backup",
   });
+  track(ANALYTICS_EVENTS.backupExported);
   return { uri, fileName, shared: true };
 }
 
@@ -207,6 +209,7 @@ export async function restoreBackup(backup: BackupFile): Promise<void> {
     await insertAllTables(db, backup.data);
   });
   await loadAllStores();
+  track(ANALYTICS_EVENTS.backupRestored);
 }
 
 // ---------------------------------------------------------------------------
@@ -220,4 +223,5 @@ export async function restoreBackup(backup: BackupFile): Promise<void> {
 export async function deleteAllData(): Promise<void> {
   await writeTransaction((db) => clearAllTables(db));
   resetAllStores();
+  track(ANALYTICS_EVENTS.dataDeleted);
 }

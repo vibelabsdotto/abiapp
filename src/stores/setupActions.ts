@@ -22,6 +22,12 @@ import {
   type SubjectRecord,
 } from "@services/database";
 
+import {
+  ANALYTICS_EVENTS,
+  track,
+  trackProfile,
+} from "@services/analytics/appEvents";
+
 import { useCourseStore } from "./courseStore";
 import {
   defaultHalfYearsOf,
@@ -212,8 +218,22 @@ export async function assignExamSlots(
 }
 
 /** Onboarding step "Fertig". */
-export const completeOnboarding = () =>
-  useProfileStore.getState().completeOnboarding();
+export async function completeOnboarding(): Promise<void> {
+  await useProfileStore.getState().completeOnboarding();
+  const profile = useProfileStore.getState().profile;
+  const { subjects } = useCourseStore.getState();
+  if (profile) {
+    trackProfile(profile);
+    track(ANALYTICS_EVENTS.onboardingCompleted, {
+      state: profile.state,
+      ruleset_id: profile.rulesetId,
+      abitur_year: profile.abiturYear,
+      subject_count: subjects.length,
+      elevated_count: subjects.filter((s) => s.level === "elevated").length,
+      exam_slots_set: subjects.filter((s) => s.examSlot !== null).length,
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Ruleset change (settings: Bundesland, Jahrgang, Regelversion)
@@ -426,5 +446,10 @@ export async function changeRules(
     for (const { id, patch } of renames) await updateSubject(db, id, patch);
   });
   await loadAllStores();
+  track(ANALYTICS_EVENTS.rulesChanged, {
+    state,
+    ruleset_id: next.id,
+    abitur_year: abiturYear,
+  });
   return { applied: true, rulesetId: next.id, issues };
 }

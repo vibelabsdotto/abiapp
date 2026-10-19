@@ -5,6 +5,12 @@
 
 import { create } from "zustand";
 
+import {
+  ANALYTICS_EVENTS,
+  track,
+  trackGradeAdded,
+} from "@services/analytics/appEvents";
+
 import type { ExamSlot } from "@domain/model";
 import {
   assertExamSlot,
@@ -218,6 +224,10 @@ export const useCourseStore = create<CourseState>()((set, get) => {
         return created;
       });
       await refresh(["subjects", "courses"]);
+      track(ANALYTICS_EVENTS.subjectAdded, {
+        source: input.catalogKey ? "catalog" : "custom",
+        count: 1,
+      });
       return subject;
     },
 
@@ -258,6 +268,14 @@ export const useCourseStore = create<CourseState>()((set, get) => {
         return result;
       });
       await refresh(["subjects", "courses"]);
+      if (created.length > 0 && get().subjects.length > created.length) {
+        // Additions after onboarding; the initial catalog sync is covered
+        // by onboarding_completed.
+        track(ANALYTICS_EVENTS.subjectAdded, {
+          source: "catalog",
+          count: created.length,
+        });
+      }
       return created;
     },
 
@@ -327,9 +345,12 @@ export const useCourseStore = create<CourseState>()((set, get) => {
     setCourseTaken: (subjectId, halfYear, taken) =>
       writeCourse(subjectId, halfYear, { taken }),
 
-    setOfficialPoints: (subjectId, halfYear, points) => {
+    setOfficialPoints: async (subjectId, halfYear, points) => {
       assertOptionalPoints(points, "Das Halbjahresergebnis");
-      return writeCourse(subjectId, halfYear, { officialPoints: points });
+      await writeCourse(subjectId, halfYear, { officialPoints: points });
+      if (points !== null) {
+        track(ANALYTICS_EVENTS.officialResultSet, { half_year: halfYear });
+      }
     },
 
     setInclusion: (subjectId, halfYear, inclusion) => {
@@ -347,6 +368,7 @@ export const useCourseStore = create<CourseState>()((set, get) => {
       validateGrade(input, halfYearCount());
       const grade = await writeTransaction((db) => insertGrade(db, input));
       await refresh(["grades"]);
+      trackGradeAdded(input.kind);
       return grade;
     },
 
