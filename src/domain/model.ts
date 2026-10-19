@@ -87,6 +87,11 @@ export interface CatalogSubject {
   canBeExam: boolean;
   /** SF Symbol name for iOS (must exist on the app's iOS deployment target). */
   sfSymbol: string;
+  /**
+   * Half-years (0-based) in which the subject is usually taken, e.g. [0, 1]
+   * for the Bavarian W-Seminar. Omitted = all half-years.
+   */
+  defaultHalfYears?: number[];
 }
 
 export interface ExamComponentInfo {
@@ -99,6 +104,16 @@ export interface ExamComponentInfo {
   supplementaryOral: boolean;
   /** German label, e.g. "P1 · schriftlich (LK)". */
   label: string;
+  /**
+   * German labels of the two inputs if they mean something else than
+   * "Prüfung" / "zusätzliche mündliche Prüfung", e.g. a Besondere
+   * Lernleistung with { main: "Schriftlicher Teil", oral: "Kolloquium" }.
+   */
+  partLabels?: { main: string; oral: string | null };
+  /** Component takes its value from EngineInput.extras[extraId] instead of exams. */
+  extraId?: string;
+  /** True if the component needs an assigned exam subject (default true, false for BLL). */
+  requiresSubject?: boolean;
 }
 
 export interface ExamVariantInfo {
@@ -247,6 +262,13 @@ export interface IncludedCourse {
   /** Id of the mandatory rule that forced the inclusion, if any. */
   mandatoryRuleId: string | null;
   manual: boolean;
+  /**
+   * Set for ruleset extras that count in Block I (e.g. Bavarian Seminararbeit,
+   * BW Seminarkurs). Then halfYear is -1 and subjectId is "extra:<id>".
+   */
+  extraId?: string | null;
+  /** Number of Block I places this entry occupies (default 1, Seminararbeit 2). */
+  slots?: number;
 }
 
 export type IssueSeverity = "error" | "warning" | "info";
@@ -293,6 +315,8 @@ export interface BlockIResult {
   admitted: boolean | null;
   /** True if any included course is a prediction. */
   predicted: boolean;
+  /** German notes on choices the engine made on the student's behalf. */
+  assumptions?: string[];
 }
 
 export interface ExamComponentResult {
@@ -318,6 +342,8 @@ export interface BlockIIResult {
   checks: RuleCheck[];
   passed: boolean | null;
   predicted: boolean;
+  /** German notes on assumptions (e.g. unregulated rounding). */
+  assumptions?: string[];
 }
 
 export interface TotalResult {
@@ -327,6 +353,8 @@ export interface TotalResult {
   gradeTenths: number | null;
   passed: boolean | null;
   predicted: boolean;
+  /** Checks on the total (e.g. "Mindestens 300 Punkte gesamt"). */
+  checks?: RuleCheck[];
 }
 
 export interface AbiturEvaluation {

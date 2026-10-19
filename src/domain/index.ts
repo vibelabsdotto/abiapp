@@ -1,8 +1,6 @@
 // Public API of the domain layer. Data layer and UI import ONLY from here
-// (`@domain/index`) and from `@domain/model`.
-//
-// PLACEHOLDER: the engine lane replaces these stubs with the real
-// implementation. Signatures are binding (see .hermes/plans/plan-abiapp-v1-2026-10-19.md §3.2).
+// (`@domain/index`) and from `@domain/model`. Pure TypeScript, no React
+// Native imports (runs in Node for verification).
 
 import type {
   AbiturEvaluation,
@@ -13,42 +11,55 @@ import type {
   RulesetSummary,
   StateCode,
 } from "./model";
+import {
+  evaluateWithRuleset,
+  targetAnalysisWithRuleset,
+  validateWithRuleset,
+  type TargetAnalysis,
+} from "./engine/evaluate";
+import { gradeTenthsFromPoints, minPointsForTenths } from "./engine/math";
+import {
+  halfYearPrognosis as prognosis,
+  requiredNextGrade as nextGrade,
+  type RequiredGradeStatus,
+} from "./engine/prognosis";
+import {
+  STATES,
+  defaultRulesetOf,
+  getRuleset,
+  rulesetsOf,
+  toSummary,
+} from "./rulesets/registry";
 
 export type * from "./model";
+export type { RequiredGradeStatus, TargetAnalysis };
 
-const notImplemented = (name: string): never => {
-  throw new Error(`[domain] ${name} is not implemented yet`);
-};
-
+/** Full evaluation (Block I optimization, Block II, total, checks, issues). */
 export function evaluate(input: EngineInput): AbiturEvaluation {
-  return notImplemented(`evaluate(${input.rulesetId})`);
+  return evaluateWithRuleset(input, getRuleset(input.rulesetId));
 }
 
+/** Setup validation: subject choice, elevated level, exam subjects. */
 export function validateSetup(input: EngineInput): Issue[] {
-  return notImplemented(`validateSetup(${input.rulesetId})`);
+  return validateWithRuleset(input, getRuleset(input.rulesetId));
 }
 
+/** Prognosis of a half-year from single grades (rounded once, half up). */
 export function halfYearPrognosis(
   grades: EngineGrade[],
   examWeightPercent: number,
 ): { exact: number | null; points: number | null } {
-  return notImplemented(
-    `halfYearPrognosis(${grades.length}, ${examWeightPercent})`,
-  );
+  return prognosis(grades, examWeightPercent);
 }
 
-export type RequiredGradeStatus =
-  "reachable" | "reached" | "impossible" | "no_data";
-
+/** Minimum points of the next grade of `kind` so the half-year reaches `targetPoints`. */
 export function requiredNextGrade(
   grades: EngineGrade[],
   examWeightPercent: number,
   kind: GradeKind,
   targetPoints: number,
 ): { points: number | null; status: RequiredGradeStatus } {
-  return notImplemented(
-    `requiredNextGrade(${grades.length}, ${examWeightPercent}, ${kind}, ${targetPoints})`,
-  );
+  return nextGrade(grades, examWeightPercent, kind, targetPoints);
 }
 
 /** Grade in tenths (10 = 1,0 … 40 = 4,0); null below 300 points. */
@@ -56,44 +67,41 @@ export function gradeFromPoints(total: number): {
   tenths: number | null;
   passedThreshold: boolean;
 } {
-  return notImplemented(`gradeFromPoints(${total})`);
+  const tenths = gradeTenthsFromPoints(total);
+  return { tenths, passedThreshold: tenths !== null };
 }
 
+/** Smallest total points for a grade (e.g. 17 → 697). */
 export function minPointsForGrade(tenths: number): number {
-  return notImplemented(`minPointsForGrade(${tenths})`);
-}
-
-export interface TargetAnalysis {
-  targetTenths: number;
-  requiredTotal: number;
-  missingPoints: number | null;
-  /** Uniform points needed in all open (non-official) courses/exams. */
-  requiredAverageOpen: number | null;
-  reachable: boolean | null;
+  return minPointsForTenths(tenths);
 }
 
 export function targetAnalysis(
   input: EngineInput,
   targetTenths: number,
 ): TargetAnalysis {
-  return notImplemented(`targetAnalysis(${input.rulesetId}, ${targetTenths})`);
+  return targetAnalysisWithRuleset(
+    input,
+    getRuleset(input.rulesetId),
+    targetTenths,
+  );
 }
 
 export function listStates(): { code: StateCode; name: string }[] {
-  return notImplemented("listStates()");
+  return STATES.map((s) => ({ ...s }));
 }
 
 export function rulesetsForState(state: StateCode): RulesetSummary[] {
-  return notImplemented(`rulesetsForState(${state})`);
+  return rulesetsOf(state).map(toSummary);
 }
 
 export function defaultRulesetFor(
   state: StateCode,
   abiturYear: number,
 ): RulesetSummary {
-  return notImplemented(`defaultRulesetFor(${state}, ${abiturYear})`);
+  return toSummary(defaultRulesetOf(state, abiturYear));
 }
 
 export function getRulesetSummary(id: string): RulesetSummary {
-  return notImplemented(`getRulesetSummary(${id})`);
+  return toSummary(getRuleset(id));
 }
