@@ -2,7 +2,7 @@
 // grouped Section, a text input row, a switch row, toggle chips and the
 // native iOS date picker (SwiftUI via @expo/ui; null on Android).
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Platform,
   Pressable,
@@ -15,6 +15,7 @@ import {
   type TextInputProps,
 } from "react-native";
 import { DatePicker, Host } from "@expo/ui/swift-ui";
+import AndroidDateTimePicker from "@expo/ui/community/datetime-picker";
 import {
   datePickerStyle,
   environment,
@@ -22,6 +23,7 @@ import {
   tint,
 } from "@expo/ui/swift-ui/modifiers";
 
+import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 import { FontScale, Radius, Type } from "@constants/typography";
@@ -140,20 +142,73 @@ export const ChoiceChips = ({
 export const EditorScroll = ({ children }: { children: React.ReactNode }) => {
   const colors = useThemeStore((state) => state.colors);
   return (
-    <ScrollView
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="interactive"
-      automaticallyAdjustKeyboardInsets
-      contentContainerStyle={styles.scroll}
-    >
-      {children}
-    </ScrollView>
+    <AndroidKeyboardAvoider>
+      <ScrollView
+        style={[styles.flex, { backgroundColor: colors.background }]}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={styles.scroll}
+      >
+        {children}
+      </ScrollView>
+    </AndroidKeyboardAvoider>
   );
 };
 
-/** Compact native date picker (iOS). Android: null, callers keep the date. */
+/**
+ * Android date row: shows the date and opens the Material date picker dialog
+ * on tap (the iOS compact picker has no Android counterpart inside a row).
+ */
+export const AndroidDateRow = ({
+  label,
+  value,
+  displayValue,
+  onChange,
+  maximumDate,
+}: {
+  label: string;
+  value: Date;
+  displayValue: string;
+  onChange: (date: Date) => void;
+  maximumDate?: Date;
+}) => {
+  const colors = useThemeStore((state) => state.colors);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${displayValue}`}
+        android_ripple={{ color: colors.ripple }}
+      >
+        <FormRow label={label}>
+          <Text style={[Type.body, { color: colors.accent }]}>
+            {displayValue}
+          </Text>
+        </FormRow>
+      </Pressable>
+      {open ? (
+        <AndroidDateTimePicker
+          value={value}
+          mode="date"
+          presentation="dialog"
+          maximumDate={maximumDate}
+          accentColor={colors.accent}
+          onValueChange={(_event, date) => {
+            setOpen(false);
+            onChange(date);
+          }}
+          onDismiss={() => setOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+};
+
+/** Compact native date picker (iOS). Android: null, use AndroidDateRow. */
 export const NativeDatePicker = ({
   value,
   onChange,

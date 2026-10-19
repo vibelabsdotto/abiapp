@@ -3,10 +3,11 @@
 // button. Selection marks live in ListRow (`selected`).
 
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { Button } from "@components/common/Button";
 import { FontScale, NumberType, Radius, Type } from "@constants/typography";
 import { useTranslation } from "@locales/index";
@@ -103,33 +104,40 @@ export const OnboardingStep = ({
   return (
     <>
       <Stack.Screen options={{ title }} />
-      <ScrollView
-        style={[styles.flex, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets={keyboardAware}
-        contentContainerStyle={styles.content}
-      >
-        {step !== undefined || intro ? (
-          <View style={styles.head}>
-            {step !== undefined && totalSteps ? (
-              <Text
-                style={[Type.footnote, styles.step, { color: colors.accent }]}
-              >
-                {t("onboarding.step", { step, total: totalSteps })}
-              </Text>
-            ) : null}
-            {intro ? <IntroText text={intro} /> : null}
-          </View>
-        ) : null}
-        {children}
-      </ScrollView>
+      <AndroidKeyboardAvoider enabled={keyboardAware}>
+        <ScrollView
+          style={[styles.flex, { backgroundColor: colors.background }]}
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets={keyboardAware}
+          contentContainerStyle={styles.content}
+        >
+          {step !== undefined || intro ? (
+            <View style={styles.head}>
+              {step !== undefined && totalSteps ? (
+                <Text
+                  style={[Type.footnote, styles.step, { color: colors.accent }]}
+                >
+                  {t("onboarding.step", { step, total: totalSteps })}
+                </Text>
+              ) : null}
+              {intro ? <IntroText text={intro} /> : null}
+            </View>
+          ) : null}
+          {children}
+        </ScrollView>
+      </AndroidKeyboardAvoider>
       <View
         style={[
           styles.footer,
           {
-            paddingBottom: Math.max(insets.bottom, 16),
+            // Android's navigation bar is a hard inset (3-button bar): keep
+            // space above it instead of sitting flush on it.
+            paddingBottom:
+              Platform.OS === "android"
+                ? insets.bottom + 12
+                : Math.max(insets.bottom, 16),
             backgroundColor: colors.background,
             borderTopColor: colors.separator,
           },

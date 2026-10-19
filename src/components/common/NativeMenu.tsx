@@ -73,21 +73,29 @@ const toMenuAction = (
   } = action;
   const image = platformImage(action);
 
+  const isAndroid = Platform.OS === "android";
   const attributes: NonNullable<MenuAction["attributes"]> = {};
-  if (destructive) attributes.destructive = true;
+  // Android's PopupMenu paints `destructive` in pure red; the app's
+  // destructive color goes through `titleColor` there instead.
+  if (destructive && !isAndroid) attributes.destructive = true;
   if (disabled) attributes.disabled = true;
-  const hasAttributes = destructive === true || disabled === true;
+  const hasAttributes = Object.keys(attributes).length > 0;
 
   return {
     id,
-    title,
-    ...(subtitle !== undefined ? { subtitle } : {}),
+    // PopupMenu has no subtitle row: append it so the reason (e.g. why an
+    // item is disabled) stays visible on Android.
+    title: isAndroid && subtitle ? `${title} · ${subtitle}` : title,
+    ...(subtitle !== undefined && !isAndroid ? { subtitle } : {}),
+    ...(destructive && isAndroid ? { titleColor: destructiveIconColor } : {}),
     // Fabric defaults an omitted imageColor to transparent (0), which hides
     // the icon. Always send an opaque color, including for subactions.
     ...(image !== undefined
       ? { image, imageColor: destructive ? destructiveIconColor : iconColor }
       : {}),
-    ...(state === "on" || state === "off" ? { state } : {}),
+    // Android turns "off" into an empty checkbox on every row; only the
+    // selected row gets its checkmark there.
+    ...(state === "on" || (state === "off" && !isAndroid) ? { state } : {}),
     ...(hasAttributes ? { attributes } : {}),
     ...(displayInline ? { displayInline: true } : {}),
     ...(subactions

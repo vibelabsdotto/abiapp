@@ -26,6 +26,7 @@ import {
   EditorScroll,
   FormRow,
   FormTextInput,
+  AndroidDateRow,
   NativeDatePicker,
 } from "@components/subjects/form";
 import {
@@ -340,9 +341,12 @@ export default function GradeEditorScreen() {
               />
             </FormRow>
           ) : (
-            <FormRow
+            <AndroidDateRow
               label={t("subjects.gradeEditor.date")}
-              detail={formatDate(draft.date, locale) ?? undefined}
+              value={dateValue}
+              displayValue={formatDate(draft.date, locale) ?? ""}
+              onChange={(date) => update({ date: toIsoDate(date) })}
+              maximumDate={new Date()}
             />
           )}
           <View style={styles.weightRow}>
