@@ -38,6 +38,7 @@ import type {
   WeightingOption,
 } from "../rulesets/types";
 import { courseKey } from "./context";
+import { shortRuleLabel } from "./labels";
 import { roundHalfUpFrac } from "./math";
 
 const MAX_CONFIGS = 20000;
@@ -54,6 +55,8 @@ interface BaseCourse {
 interface Chosen {
   item: BlockItem;
   ruleId: string | null;
+  /** Short reason for IncludedCourse.mandatoryLabel. */
+  label: string | null;
 }
 
 interface Candidate {
@@ -197,11 +200,6 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     }
     return n;
   };
-  const groupAvail = (g: GroupMin, withExcluded = false): number =>
-    g.subjectIds.reduce(
-      (n, sid) => n + availCount(sid, g.halfYears, withExcluded),
-      0,
-    );
   const relaxations: (Relaxation | null)[] = [
     null,
     ...(rules.relaxations?.(ctx) ?? []),
@@ -210,40 +208,75 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     relaxations.some(
       (r) => !!r && r.subjectId === sid && r.requirementIds.includes(reqId),
     );
+  /** Taken courses without any value yet (nothing entered anywhere). */
+  const pendingCount = (sid: string, hys?: number[]): number => {
+    let n = 0;
+    for (const hy of ctx.takenHalfYears(sid)) {
+      if (hys && !hys.includes(hy)) continue;
+      if (ctx.values.get(courseKey(sid, hy))?.points === null) n++;
+    }
+    return n;
+  };
   const optionFeasible = (
     req: Requirement,
     o: RequirementOption,
     withExcluded = false,
-  ): boolean =>
-    o.picks.every(
-      (p) =>
-        availCount(p.subjectId, p.halfYears, withExcluded) >=
-        p.count - (relaxable(req.id, p.subjectId) ? 1 : 0),
-    ) &&
-    (o.groupMins ?? []).every((g) => groupAvail(g, withExcluded) >= g.count);
+    withPending = false,
+  ): boolean => {
+    const have = (sid: string, hys?: number[]) =>
+      availCount(sid, hys, withExcluded) +
+      (withPending ? pendingCount(sid, hys) : 0);
+    return (
+      o.picks.every(
+        (p) =>
+          have(p.subjectId, p.halfYears) >=
+          p.count - (relaxable(req.id, p.subjectId) ? 1 : 0),
+      ) &&
+      (o.groupMins ?? []).every(
+        (g) =>
+          g.subjectIds.reduce((n, sid) => n + have(sid, g.halfYears), 0) >=
+          g.count,
+      )
+    );
+  };
 
   // ---- requirements --------------------------------------------------------
+  // A requirement nobody can satisfy yet because a subject is missing in the
+  // setup or no value is entered is open (check passed = null), not violated.
   const requirements = rules.requirements(ctx);
   const unmet: Requirement[] = [];
+  const open: string[] = [];
   const active: { req: Requirement; options: RequirementOption[] }[] = [];
   for (const req of requirements) {
     const feasible = req.options.filter((o) => optionFeasible(req, o));
-    if (feasible.length === 0) {
-      unmet.push(req);
-      const blockedByUser = req.options.some((o) =>
-        optionFeasible(req, o, true),
-      );
-      issues.push({
-        code: blockedByUser
-          ? "block1.manual.conflict"
-          : `block1.requirement.${req.id}`,
-        severity: "error",
-        message: blockedByUser
-          ? `Dein Ausschluss verletzt eine Pflichteinbringung: ${req.label}.`
-          : `Pflichteinbringung nicht erfüllbar: ${req.label}.`,
-      });
-    } else {
+    if (feasible.length > 0) {
       active.push({ req, options: feasible });
+      continue;
+    }
+    const blockedByUser = req.options.some((o) => optionFeasible(req, o, true));
+    if (blockedByUser) {
+      unmet.push(req);
+      issues.push({
+        code: "block1.manual.conflict",
+        severity: "error",
+        message: `Dein Ausschluss verletzt eine Pflichteinbringung: ${req.label}.`,
+      });
+    } else if (req.options.length === 0) {
+      open.push(req.label);
+      issues.push({
+        code: `block1.requirement.missingSubject`,
+        severity: "warning",
+        message: `Für diese Pflichteinbringung fehlt noch ein Fach: ${req.label}.`,
+      });
+    } else if (req.options.some((o) => optionFeasible(req, o, true, true))) {
+      open.push(req.label);
+    } else {
+      unmet.push(req);
+      issues.push({
+        code: `block1.requirement.${req.id}`,
+        severity: "error",
+        message: `Zu wenig belegt für die Pflichteinbringung: ${req.label}.`,
+      });
     }
   }
 
@@ -253,11 +286,10 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     variants: (ExtraVariant | null)[];
     predicted: boolean;
   }[] = [];
-  const extraViolations: string[] = [];
   for (const def of rules.extras ?? []) {
     const val = def.value(ctx);
     if (!val) {
-      if (def.required) extraViolations.push(`${def.label} fehlt`);
+      if (def.required) open.push(`${def.label} fehlt noch`);
       continue;
     }
     const vars: (ExtraVariant | null)[] = def.variants(val.points, ctx);
@@ -421,19 +453,20 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   ): void {
     const selected = new Map<string, Chosen>();
     const countBySubject = new Map<string, number>();
-    const violations: string[] = [
-      ...extraViolations,
-      ...unmet.map((r) => r.label),
-    ];
-    const add = (item: BlockItem, ruleId: string | null) => {
-      selected.set(item.key, { item, ruleId });
+    const violations: string[] = unmet.map((r) => r.label);
+    const add = (
+      item: BlockItem,
+      ruleId: string | null,
+      label: string | null = null,
+    ) => {
+      selected.set(item.key, { item, ruleId, label });
       if (item.subjectId)
         countBySubject.set(
           item.subjectId,
           (countBySubject.get(item.subjectId) ?? 0) + 1,
         );
     };
-    for (const m of manualItems) add(m, null);
+    for (const m of manualItems) add(m, null, null);
 
     const extraVariants: Candidate["extraVariants"] = [];
     extraChoices.forEach((e, i) => {
@@ -461,6 +494,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
             manual: false,
           },
           e.def.id,
+          e.def.short ?? e.def.label,
         );
       });
     });
@@ -471,7 +505,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     }));
     const lower = new Map<
       string,
-      { count: number; ruleId: string; label: string }
+      { count: number; ruleId: string; label: string; short: string }
     >();
     const restricted: {
       subjectId: string;
@@ -479,6 +513,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       halfYears: number[];
       ruleId: string;
       label: string;
+      short: string;
     }[] = [];
     const groupMins: GroupMin[] = [];
     const picked = new Set<string>();
@@ -493,6 +528,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
           count = Math.max(0, count - 1);
         }
         if (count > 0) picked.add(p.subjectId);
+        const short = p.label ?? req.short ?? shortRuleLabel(req.label);
         if (p.halfYears)
           restricted.push({
             subjectId: p.subjectId,
@@ -500,11 +536,17 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
             halfYears: p.halfYears,
             ruleId: req.id,
             label: req.label,
+            short,
           });
         else {
           const cur = lower.get(p.subjectId);
           if (!cur || count > cur.count)
-            lower.set(p.subjectId, { count, ruleId: req.id, label: req.label });
+            lower.set(p.subjectId, {
+              count,
+              ruleId: req.id,
+              label: req.label,
+              short,
+            });
         }
       }
       for (const g of option.groupMins ?? []) groupMins.push(g);
@@ -515,7 +557,8 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         (x) => x.halfYear === imp.halfYear,
       );
       if (!it) violations.push(imp.label);
-      else if (!selected.has(it.key)) add(it, imp.id);
+      else if (!selected.has(it.key))
+        add(it, imp.id, imp.short ?? shortRuleLabel(imp.label));
     };
     for (const imp of implications) {
       if (
@@ -533,7 +576,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         if (have >= r.count) break;
         if (!r.halfYears.includes(it.halfYear) || selected.has(it.key))
           continue;
-        add(it, r.ruleId);
+        add(it, r.ruleId, r.short);
         have++;
       }
       if (have < r.count) violations.push(r.label);
@@ -544,7 +587,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       for (const it of list) {
         if (have >= l.count) break;
         if (selected.has(it.key)) continue;
-        add(it, l.ruleId);
+        add(it, l.ruleId, l.short);
         have++;
       }
       if (have < l.count) violations.push(l.label);
@@ -777,14 +820,17 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         for (let k = 0; k < (st.pick[li] ?? 0); k++) {
           const it = list.items[k];
           let ruleId: string | null = null;
+          let label: string | null = null;
           for (let gi = 0; gi < groupMins.length; gi++) {
-            if (groupLeft[gi] > 0 && inGroup(groupMins[gi], it)) {
+            const g = groupMins[gi];
+            if (groupLeft[gi] > 0 && inGroup(g, it)) {
               groupLeft[gi]--;
-              ruleId = groupMins[gi].id;
+              ruleId = g.id;
+              label = g.short ?? shortRuleLabel(g.label);
               break;
             }
           }
-          chosen.push({ item: it, ruleId });
+          chosen.push({ item: it, ruleId, label });
         }
       });
       const perSubject = new Map<string, number>();
@@ -899,6 +945,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       weight: c.item.weight,
       source: c.item.source,
       mandatoryRuleId: c.ruleId,
+      mandatoryLabel: c.label,
       manual: c.item.manual,
       extraId: c.item.extraId,
       slots: c.item.slots,
@@ -945,10 +992,12 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
   checks.push({
     id: "block1.mandatory",
     label: `Pflichteinbringungen erfüllt (${countLabel} Kurse)`,
-    passed: structural.length === 0,
+    passed: structural.length > 0 ? false : open.length > 0 ? null : true,
     detail: structural.length
       ? structural.join("; ")
-      : `${b.N} Kurse eingebracht`,
+      : open.length
+        ? `Offen: ${open.join("; ")}`
+        : `${b.N} Kurse eingebracht`,
     predicted,
   });
   if (rules.checks) {

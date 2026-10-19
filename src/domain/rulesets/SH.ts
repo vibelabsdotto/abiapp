@@ -83,14 +83,15 @@ function requirements(ctx: RuleContext): Requirement[] {
   const sem = byKey(ctx, "sem");
   if (sem.length > 0)
     reqs.push(oneOf("sem", "1 Ergebnis aus dem Profilseminar", sem, 1));
-  reqs.push(
-    oneOf(
+  reqs.push({
+    ...oneOf(
       "arts",
       "1 Ergebnis aus Kunst, Musik oder Darstellendem Spiel",
       byKey(ctx, ...ARTS),
       1,
     ),
-  );
+    short: "künstlerisches Fach",
+  });
   for (const s of taken(ctx, isNewFs)) {
     reqs.push({
       id: `newFs.${s.id}`,

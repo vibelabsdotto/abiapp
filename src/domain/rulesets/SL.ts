@@ -29,6 +29,7 @@ import {
   oneOf,
   requireFieldsCovered,
   taken,
+  requireCoreElevated,
 } from "./helpers";
 
 const NWS = ["bio", "ch", "ph"];
@@ -513,27 +514,29 @@ export const SL_2030: Ruleset = {
       "Annahme: Prüfungsblock und Rundung nach KMK-Rahmen, weil die saarländische Verordnung noch nicht verkündet ist.",
     ],
   },
-  validate: (ctx) => {
-    const out: Issue[] = [];
-    const ex = examSubjects(ctx);
-    const slots = ctx.variant.components.filter(
-      (c) => c.requiresSubject ?? c.kind !== "bll",
-    ).length;
-    if (ex.length >= slots) {
-      const core = ex.filter(
-        (s) => hasKey(s, "de", "ma") || hasTag(s, "foreign_language"),
-      ).length;
-      if (core < 2) {
-        out.push(
-          issue(
-            "exam.core",
-            "error",
-            "Mindestens zwei der Fächer Deutsch, Mathematik und Fremdsprache müssen Prüfungsfach sein.",
-          ),
-        );
-      }
-      out.push(...requireFieldsCovered(ctx));
-    }
-    return out;
-  },
+  validate: (ctx) => [...validate2030(ctx), ...requireCoreElevated(ctx)],
 };
+
+function validate2030(ctx: RuleContext): Issue[] {
+  const out: Issue[] = [];
+  const ex = examSubjects(ctx);
+  const slots = ctx.variant.components.filter(
+    (c) => c.requiresSubject ?? c.kind !== "bll",
+  ).length;
+  if (ex.length >= slots) {
+    const core = ex.filter(
+      (s) => hasKey(s, "de", "ma") || hasTag(s, "foreign_language"),
+    ).length;
+    if (core < 2) {
+      out.push(
+        issue(
+          "exam.core",
+          "error",
+          "Mindestens zwei der Fächer Deutsch, Mathematik und Fremdsprache müssen Prüfungsfach sein.",
+        ),
+      );
+    }
+    out.push(...requireFieldsCovered(ctx));
+  }
+  return out;
+}

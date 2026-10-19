@@ -30,6 +30,7 @@ import {
   oneOf,
   requireFieldsCovered,
   taken,
+  requireCoreElevated,
 } from "./helpers";
 import { floorDiv } from "../engine/math";
 
@@ -126,14 +127,15 @@ function requirements(ctx: RuleContext): Requirement[] {
         : {},
     ),
   );
-  reqs.push(
-    oneOf(
+  reqs.push({
+    ...oneOf(
       "arts",
       "4 Ergebnisse im belegten künstlerischen Fach",
       byKey(ctx, ...ARTS),
       4,
     ),
-  );
+    short: "künstlerisches Fach",
+  });
   reqs.push(
     oneOf(
       "gw",
@@ -540,5 +542,5 @@ export const HH_2030: Ruleset = {
     ],
     checks: (c) => [checkBlockIIMin(c), checkTwoFive(c, 5)],
   },
-  validate: examRules,
+  validate: (ctx) => [...examRules(ctx), ...requireCoreElevated(ctx)],
 };

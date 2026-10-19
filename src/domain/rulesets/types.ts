@@ -53,6 +53,8 @@ export interface Pick {
   subjectId: string;
   count: number;
   halfYears?: number[];
+  /** Short German reason shown at the included courses (IncludedCourse.mandatoryLabel). */
+  label?: string;
 }
 
 /** At least `count` courses from the union of `subjectIds` (sum rule). */
@@ -62,6 +64,8 @@ export interface GroupMin {
   subjectIds: string[];
   count: number;
   halfYears?: number[];
+  /** Short German reason for the included courses (default: derived from label). */
+  short?: string;
 }
 
 export interface RequirementOption {
@@ -88,6 +92,12 @@ export interface Requirement {
   id: string;
   /** German, e.g. "4 Halbjahre einer fortgeführten Fremdsprache". */
   label: string;
+  /**
+   * Short German reason shown at the included courses, e.g. "eine
+   * Fremdsprache" (IncludedCourse.mandatoryLabel). Pick.label wins; default
+   * is derived from `label`.
+   */
+  short?: string;
   options: RequirementOption[];
 }
 
@@ -108,6 +118,8 @@ export interface Implication {
   label: string;
   subjectId: string;
   halfYear: number;
+  /** Short German reason for the included course (default: derived from label). */
+  short?: string;
 }
 
 /** Item of a Block I variant of an extra (Seminararbeit, Facharbeit …). */
@@ -136,6 +148,8 @@ export interface BlockIExtraDef {
   /** Ways to include the extra. The engine also tries "not included" unless `required`. */
   variants(points: number, ctx: RuleContext): ExtraVariant[];
   required?: boolean;
+  /** Short German reason for the included item (default: label). */
+  short?: string;
 }
 
 export interface WeightingOption {

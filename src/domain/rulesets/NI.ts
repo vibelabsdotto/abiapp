@@ -32,6 +32,10 @@ import {
   partsCombine,
   requireFieldsCovered,
   taken,
+  FS_LABEL,
+  NW_LABEL,
+  secondLabel,
+  requireCoreElevated,
 } from "./helpers";
 
 const NWS = ["bio", "ch", "ph"];
@@ -45,7 +49,11 @@ const niField = (s: EngineSubject): SubjectField =>
 const isFs = (s: EngineSubject): boolean => hasTag(s, "foreign_language");
 const isNewFs = (s: EngineSubject): boolean =>
   hasTag(s, "new_foreign_language");
-const four = (s: EngineSubject) => ({ subjectId: s.id, count: 4 });
+const four = (s: EngineSubject, label?: string) => ({
+  subjectId: s.id,
+  count: 4,
+  label,
+});
 
 // ---------------------------------------------------------------------------
 // Shared building blocks
@@ -54,10 +62,14 @@ const four = (s: EngineSubject) => ({ subjectId: s.id, count: 4 });
 /** Every foreign language may fulfil the duty; a newly started one adds 2 results (Anlage 3 Fn. 2). */
 function fsPicks(f: EngineSubject, allFs: EngineSubject[]) {
   return [
-    four(f),
+    four(f, FS_LABEL),
     ...allFs
       .filter((x) => x !== f && isNewFs(x))
-      .map((x) => ({ subjectId: x.id, count: 2 })),
+      .map((x) => ({
+        subjectId: x.id,
+        count: 2,
+        label: "neu begonnene Fremdsprache",
+      })),
   ];
 }
 
@@ -164,7 +176,7 @@ function fsNw2027(ctx: RuleContext, focus: Focus | null): Requirement {
   const options: RequirementOption[] = [];
   for (const f of allFs) {
     for (const n of nws) {
-      const base = [...fsPicks(f, allFs), four(n)];
+      const base = [...fsPicks(f, allFs), four(n, NW_LABEL)];
       let extra: { s: EngineSubject; count: number }[] | null = null;
       if (focus === "lang")
         extra = allFs.filter((x) => x !== f).map((s) => ({ s, count: 4 }));
@@ -186,7 +198,10 @@ function fsNw2027(ctx: RuleContext, focus: Focus | null): Requirement {
       for (const x of extra) {
         options.push({
           label: `${f.name}, ${n.name}, ${x.s.name}`,
-          picks: [...base, { subjectId: x.s.id, count: x.count }],
+          picks: [
+            ...base,
+            { subjectId: x.s.id, count: x.count, label: secondLabel(x.s) },
+          ],
         });
       }
     }
@@ -261,8 +276,8 @@ function requirements2027(ctx: RuleContext): Requirement[] {
   reqs.push(oneOf("ge", "2 Ergebnisse Geschichte", byKey(ctx, "ge"), 2));
   reqs.push(religionRequirement(ctx));
   const sem = byKey(ctx, "sem");
-  reqs.push(
-    oneOf(
+  reqs.push({
+    ...oneOf(
       "sem",
       "2 Ergebnisse Seminarfach, darunter das Halbjahr mit der Facharbeit",
       sem,
@@ -274,7 +289,8 @@ function requirements2027(ctx: RuleContext): Requirement[] {
           }
         : {},
     ),
-  );
+    short: "Seminarfach",
+  });
   return reqs;
 }
 
@@ -486,7 +502,7 @@ export const NI_2027: Ruleset = {
       }),
     ],
   },
-  validate: validate2027,
+  validate: (ctx) => [...validate2027(ctx), ...requireCoreElevated(ctx)],
 };
 
 // ---------------------------------------------------------------------------
@@ -533,6 +549,7 @@ function requirements2030(ctx: RuleContext): Requirement[] {
   }
   reqs.push({
     id: "relGw",
+    short: "Religion/Philosophie oder Gesellschaftswissenschaft",
     label:
       "Je 2 Ergebnisse Religion, Werte und Normen oder Philosophie und eines weiteren gesellschaftswissenschaftlichen Fachs",
     options,

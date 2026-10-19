@@ -31,6 +31,7 @@ import {
   oneOf,
   partsCombine,
   requireFieldsCovered,
+  NW_LABEL,
 } from "./helpers";
 
 const NW = ["bio", "ch", "ph"];
@@ -89,6 +90,7 @@ function requirements(ctx: RuleContext, v2028: boolean): Requirement[] {
     id: "nw",
     label:
       "4 Halbjahre einer Naturwissenschaft oder je 2 in zwei Naturwissenschaften",
+    short: NW_LABEL,
     options: nwOptions,
   });
   reqs.push(

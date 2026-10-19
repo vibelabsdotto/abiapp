@@ -261,6 +261,12 @@ export interface IncludedCourse {
   source: ValueSource;
   /** Id of the mandatory rule that forced the inclusion, if any. */
   mandatoryRuleId: string | null;
+  /**
+   * Short German reason of a forced inclusion for display, e.g.
+   * "Prüfungsfach", "Deutsch", "eine Fremdsprache", "W-Seminar".
+   * null if the course was chosen freely or manually.
+   */
+  mandatoryLabel?: string | null;
   manual: boolean;
   /**
    * Set for ruleset extras that count in Block I (e.g. Bavarian Seminararbeit,

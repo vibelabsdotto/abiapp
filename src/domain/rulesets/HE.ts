@@ -34,6 +34,9 @@ import {
   requireExamSubject,
   requireFieldsCovered,
   taken,
+  FS_LABEL,
+  NW_LABEL,
+  secondLabel,
 } from "./helpers";
 
 const NWS = ["bio", "ch", "ph"];
@@ -121,9 +124,9 @@ function requirements2027(ctx: RuleContext): Requirement[] {
         options.push({
           label: `${f.name}, ${n.name}, ${x.name} (2)`,
           picks: [
-            { subjectId: f.id, count: 4 },
-            { subjectId: n.id, count: 4 },
-            { subjectId: x.id, count: 2 },
+            { subjectId: f.id, count: 4, label: FS_LABEL },
+            { subjectId: n.id, count: 4, label: NW_LABEL },
+            { subjectId: x.id, count: 2, label: secondLabel(x) },
           ],
         });
       }
@@ -171,6 +174,7 @@ function requirements2027(ctx: RuleContext): Requirement[] {
   }
   reqs.push({
     id: "gw",
+    short: "Gesellschaftswissenschaften",
     label:
       "6 Kurse im gesellschaftswissenschaftlichen Feld, darunter 2 Geschichte und 2 Politik und Wirtschaft, Wirtschaftswissenschaften oder Geographie",
     options: gw,

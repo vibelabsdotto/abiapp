@@ -91,6 +91,7 @@ function requirements(ctx: RuleContext, v: Version): Requirement[] {
     reqs.push({
       id: "p5ref",
       label: `Abschlusskurs im Referenzfach ${ref.name}`,
+      short: "Referenzfach P5",
       options: [{ picks: [{ subjectId: ref.id, count: 1, halfYears: [3] }] }],
     });
   }

@@ -69,7 +69,10 @@ function requirements(ctx: RuleContext): Requirement[] {
   ];
   const four = new Set([...el, ...dm, ...ex].map((s) => s.id));
   const others = taken(ctx, (s) => !four.has(s.id));
-  const exempt = Math.min(2, Math.max(0, taken(ctx).length - REGULAR_SUBJECTS));
+  const exempt = Math.min(
+    others.length,
+    Math.max(0, taken(ctx).length - REGULAR_SUBJECTS),
+  );
   const two = (subs: EngineSubject[]) =>
     subs.map((s) => ({ subjectId: s.id, count: 2 }));
   const options: RequirementOption[] =
@@ -85,6 +88,7 @@ function requirements(ctx: RuleContext): Requirement[] {
         });
   reqs.push({
     id: "rest2",
+    short: "weiteres Pflichtfach",
     label:
       "Mindestens 2 Halbjahre in jedem weiteren Pflicht- und Wahlpflichtfach",
     options,

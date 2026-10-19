@@ -27,6 +27,10 @@ import {
   limit,
   oneOf,
   taken,
+  FS_LABEL,
+  NW_LABEL,
+  secondLabel,
+  requireCoreElevated,
 } from "./helpers";
 
 const NWS = ["bio", "ch", "ph"];
@@ -103,9 +107,9 @@ function requirements(ctx: RuleContext): Requirement[] {
         options.push({
           label: `${f.name}, ${n.name}, ${x.name} (1)`,
           picks: [
-            { subjectId: f.id, count: 4 },
-            { subjectId: n.id, count: 4 },
-            { subjectId: x.id, count: 1 },
+            { subjectId: f.id, count: 4, label: FS_LABEL },
+            { subjectId: n.id, count: 4, label: NW_LABEL },
+            { subjectId: x.id, count: 1, label: secondLabel(x) },
           ],
         });
       }
@@ -141,6 +145,7 @@ function requirements(ctx: RuleContext): Requirement[] {
   reqs.push({
     id: "arts",
     label: "2 Kurse eines künstlerischen Fachs",
+    short: "künstlerisches Fach",
     options: arts,
   });
   return reqs;
@@ -369,6 +374,7 @@ function rp(
         ).map((s) => ({
           id: `examHalfYear.${s.id}`,
           label: `Kurs ${ctx.ruleset.halfYears[EXAM_HY]} in ${s.name} (Prüfungshalbjahr)`,
+          short: "Prüfungshalbjahr",
           subjectId: s.id,
           halfYear: EXAM_HY,
         })),
@@ -423,7 +429,7 @@ function rp(
         ];
       },
     },
-    validate,
+    validate: (ctx) => [...validate(ctx), ...requireCoreElevated(ctx)],
   };
 }
 

@@ -2,6 +2,7 @@
 // State-specific rules come from Ruleset.validate.
 
 import type { Issue } from "../model";
+import { levelNoun } from "../rulesets/helpers";
 import type { RuleContext } from "../rulesets/types";
 
 export function validateContext(ctx: RuleContext): Issue[] {
@@ -15,7 +16,7 @@ export function validateContext(ctx: RuleContext): Issue[] {
     issues.push({
       code: "setup.elevated.count",
       severity: elevated.length > max ? "error" : "warning",
-      message: `Du brauchst ${want} ${el.short}-Fächer (${el.name}), gewählt: ${elevated.length}.`,
+      message: `Du brauchst ${want} ${levelNoun(el, true)}, gewählt sind ${elevated.length}.`,
     });
   }
   const catalog = new Map(r.catalog.map((c) => [c.key, c]));
@@ -25,7 +26,7 @@ export function validateContext(ctx: RuleContext): Issue[] {
       issues.push({
         code: "setup.elevated.notAllowed",
         severity: "warning",
-        message: `${s.name} kann hier in der Regel nicht als ${el.short} belegt werden.`,
+        message: `${s.name} gibt es hier in der Regel nicht als ${levelNoun(el)}.`,
         subjectId: s.id,
       });
     }
@@ -38,6 +39,20 @@ export function validateContext(ctx: RuleContext): Issue[] {
         slot: s.examSlot,
       });
     }
+  }
+  const bySlot = new Map<string, string[]>();
+  for (const s of ctx.subjects) {
+    if (!s.examSlot) continue;
+    bySlot.set(s.examSlot, [...(bySlot.get(s.examSlot) ?? []), s.name]);
+  }
+  for (const [slot, names] of bySlot) {
+    if (names.length < 2) continue;
+    issues.push({
+      code: "exam.slot.duplicate",
+      severity: "error",
+      message: `${slot} ist mehrfach vergeben: ${names.join(", ")}.`,
+      slot: slot as Issue["slot"],
+    });
   }
   const slots = new Set(ctx.variant.components.map((c) => c.slot));
   for (const s of ctx.subjects) {
@@ -59,7 +74,7 @@ export function validateContext(ctx: RuleContext): Issue[] {
       issues.push({
         code: "exam.slot.level",
         severity: "error",
-        message: `${comp.slot} muss ein ${need.short}-Fach sein (${need.name}).`,
+        message: `${comp.slot} muss ein ${levelNoun(need)} sein.`,
         subjectId: s.id,
         slot: comp.slot,
       });

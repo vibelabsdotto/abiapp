@@ -30,6 +30,8 @@ import {
   oneOf,
   requireFieldsCovered,
   taken,
+  FS_LABEL,
+  NW_LABEL,
 } from "./helpers";
 
 const NWS = ["bio", "ch", "ph"];
@@ -60,8 +62,8 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
   for (const f of fs) {
     for (const n of nws) {
       const base = [
-        { subjectId: f.id, count: 4 },
-        { subjectId: n.id, count: 4 },
+        { subjectId: f.id, count: 4, label: FS_LABEL },
+        { subjectId: n.id, count: 4, label: NW_LABEL },
       ];
       const ninth = [
         ...allFs.filter((x) => x !== f),
@@ -72,7 +74,15 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
       for (const x of ninth) {
         options.push({
           label: `${f.name}, ${n.name}, ${x.name} (Q2)`,
-          picks: [...base, { subjectId: x.id, count: 2, halfYears: [2, 3] }],
+          picks: [
+            ...base,
+            {
+              subjectId: x.id,
+              count: 2,
+              halfYears: [2, 3],
+              label: "neuntes Pflichtfach",
+            },
+          ],
           ...(ninth.length > 1
             ? {
                 assumption: `Annahme: ${x.name} gilt als neuntes Pflichtfach (Q2-Kurse eingebracht).`,
@@ -120,6 +130,7 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
   }
   reqs.push({
     id: "gw",
+    short: "Gesellschaftswissenschaften",
     label:
       "Fortgeführtes gesellschaftswissenschaftliches Fach (4) und Zusatzkurse Geschichte/Sozialwissenschaften (2)",
     options: gw,
@@ -136,6 +147,7 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
     reqs.push({
       id: "projekt",
       label: "Projektkurs Q2.1 und Q2.2",
+      short: "Projektkurs",
       options: byKey(ctx, "projekt").map((s) => ({
         picks: [{ subjectId: s.id, count: 2, halfYears: [2, 3] }],
       })),

@@ -29,6 +29,9 @@ import {
   oneOf,
   requireExamSubject,
   requireFieldsCovered,
+  FS_LABEL,
+  NW_LABEL,
+  secondLabel,
 } from "./helpers";
 
 const NW = ["bio", "ch", "ph"];
@@ -177,13 +180,21 @@ function bw(
         const nws = byKey(ctx, ...NW);
         const nwt = byKey(ctx, "nwt");
         const options: RequirementOption[] = [];
-        const four = (s: EngineSubject) => ({ subjectId: s.id, count: 4 });
+        const four = (s: EngineSubject, label: string) => ({
+          subjectId: s.id,
+          count: 4,
+          label,
+        });
         for (const n of nws) {
           for (let i = 0; i < fs.length; i++) {
             for (let j = i + 1; j < fs.length; j++) {
               options.push({
                 label: `${fs[i].name}, ${fs[j].name}, ${n.name}`,
-                picks: [four(fs[i]), four(fs[j]), four(n)],
+                picks: [
+                  four(fs[i], FS_LABEL),
+                  four(fs[j], "zweite Fremdsprache"),
+                  four(n, NW_LABEL),
+                ],
               });
             }
           }
@@ -191,7 +202,11 @@ function bw(
             for (const n2 of [...nws.filter((x) => x.id > n.id), ...nwt]) {
               options.push({
                 label: `${f.name}, ${n.name}, ${n2.name}`,
-                picks: [four(f), four(n), four(n2)],
+                picks: [
+                  four(f, FS_LABEL),
+                  four(n, NW_LABEL),
+                  four(n2, secondLabel(n2)),
+                ],
               });
             }
           }
@@ -215,7 +230,7 @@ function bw(
         reqs.push(
           oneOf(
             "geo",
-            "Belegpflichtige Kurse Geographie",
+            wiLf ? "1 Kurs Geographie" : "2 Kurse Geographie",
             byKey(ctx, "geo"),
             wiLf ? 1 : 2,
           ),
@@ -223,7 +238,7 @@ function bw(
         reqs.push(
           oneOf(
             "gk",
-            "Belegpflichtige Kurse Gemeinschaftskunde",
+            wiLf ? "1 Kurs Gemeinschaftskunde" : "2 Kurse Gemeinschaftskunde",
             byKey(ctx, "pol"),
             wiLf ? 1 : 2,
           ),

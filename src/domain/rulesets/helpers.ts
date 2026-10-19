@@ -167,6 +167,17 @@ export function each(
   }));
 }
 
+/** Short reasons for picks of combined requirements (IncludedCourse.mandatoryLabel). */
+export const FS_LABEL = "eine Fremdsprache";
+export const NW_LABEL = "eine Naturwissenschaft";
+
+/** "zweite Fremdsprache", "zweite Naturwissenschaft" or the subject name (Informatik …). */
+export function secondLabel(s: EngineSubject): string {
+  if (hasTag(s, "foreign_language")) return "zweite Fremdsprache";
+  if (hasTag(s, "natural_science")) return "zweite Naturwissenschaft";
+  return s.name;
+}
+
 /** All exam subjects of the selected variant with all their half-years. */
 export function examSubjectRequirements(
   ctx: RuleContext,
@@ -177,7 +188,7 @@ export function examSubjectRequirements(
     (s) => `${count} Halbjahre im Prüfungsfach ${s.name}`,
     examSubjects(ctx),
     count,
-  );
+  ).map((r) => ({ ...r, short: "Prüfungsfach" }));
 }
 
 /** At least one included course from every taken subject. */
@@ -190,7 +201,7 @@ export function oneFromEachTaken(
     (s) => `Mindestens 1 Halbjahr ${s.name}`,
     taken(ctx, (s) => !except(s)),
     1,
-  );
+  ).map((r) => ({ ...r, short: "jedes Fach einmal" }));
 }
 
 // ---------------------------------------------------------------------------
@@ -486,6 +497,28 @@ export function requireExamSubject(
   ];
 }
 
+/**
+ * KMK Ziff. 7.2: at least one elevated subject is German, mathematics, a
+ * foreign language or a natural science (checked once all are chosen).
+ */
+export function requireCoreElevated(ctx: RuleContext): Issue[] {
+  const el = elevatedSubjects(ctx);
+  if (el.length < ctx.ruleset.elevatedSubjects.min) return [];
+  const ok = el.some(
+    (s) =>
+      hasKey(s, "de", "ma") || hasTag(s, "foreign_language", "natural_science"),
+  );
+  if (ok) return [];
+  const noun = levelNoun(ctx.ruleset.levelNames.elevated);
+  return [
+    issue(
+      "setup.elevated.core",
+      "error",
+      `Mindestens ein ${noun} muss Deutsch, Mathematik, eine Fremdsprache oder eine Naturwissenschaft sein.`,
+    ),
+  ];
+}
+
 const FIELD_NAMES: Partial<Record<SubjectField, string>> = {
   language: "sprachlich-literarisch-künstlerische",
   social: "gesellschaftswissenschaftliche",
@@ -517,4 +550,20 @@ export function requireFieldsCovered(
 
 export function levelName(ctx: RuleContext, level: CourseLevel): string {
   return ctx.ruleset.levelNames[level].short;
+}
+
+/**
+ * Noun for a level in messages: "Leistungskurs", "Leistungsfach",
+ * "Grundkurs" for one-word names, otherwise "eA-Fach" / "gA-Fach".
+ */
+export function levelNoun(
+  n: { name: string; short: string },
+  plural = false,
+): string {
+  const name = n.name.replace(/\s*\(.*\)$/, "");
+  if (name.includes(" ")) return `${n.short}-${plural ? "Fächer" : "Fach"}`;
+  if (!plural) return name;
+  if (name.endsWith("fach")) return `${name.slice(0, -4)}fächer`;
+  if (name.endsWith("kurs")) return `${name}e`;
+  return name;
 }

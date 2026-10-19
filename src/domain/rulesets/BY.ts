@@ -29,6 +29,9 @@ import {
   requireFieldsCovered,
   sumOfCourses,
   taken,
+  FS_LABEL,
+  NW_LABEL,
+  secondLabel,
 } from "./helpers";
 import { roundHalfUpBig, roundHalfUpFrac } from "../engine/math";
 
@@ -296,8 +299,16 @@ export const BY_G9_2027: Ruleset = {
       for (const f of fsList) {
         for (const n of nws) {
           const base = [
-            { subjectId: f.id, count: allFs.length === 1 ? 4 : 3 },
-            { subjectId: n.id, count: nws.length === 1 ? 4 : 3 },
+            {
+              subjectId: f.id,
+              count: allFs.length === 1 ? 4 : 3,
+              label: FS_LABEL,
+            },
+            {
+              subjectId: n.id,
+              count: nws.length === 1 ? 4 : 3,
+              label: NW_LABEL,
+            },
           ];
           const w9 = [
             ...nws.filter((x) => x !== n),
@@ -309,7 +320,10 @@ export const BY_G9_2027: Ruleset = {
           for (const w of w9) {
             options.push({
               label: `${f.name}, ${n.name}, ${w.name}`,
-              picks: [...base, { subjectId: w.id, count: 3 }],
+              picks: [
+                ...base,
+                { subjectId: w.id, count: 3, label: secondLabel(w) },
+              ],
             });
           }
         }
@@ -376,6 +390,7 @@ export const BY_G9_2027: Ruleset = {
       }
       reqs.push({
         id: "gsw",
+        short: "Gesellschaftswissenschaften",
         label:
           "4 Halbjahre aus Politik und Gesellschaft, Geographie bzw. Wirtschaft und Recht",
         options: gsw,
@@ -391,6 +406,7 @@ export const BY_G9_2027: Ruleset = {
       reqs.push({
         id: "wsem",
         label: "W-Seminar 12/1 und 12/2",
+        short: "W-Seminar",
         options: byKey(ctx, "w_seminar").map((s) => ({
           picks: [{ subjectId: s.id, count: 2, halfYears: [0, 1] }],
         })),
@@ -425,10 +441,8 @@ export const BY_G9_2027: Ruleset = {
         id: "seminar_paper",
         label: "Seminararbeit",
         required: true,
-        value: (ctx) =>
-          byKey(ctx, "w_seminar").length || ctx.extra("seminar_paper") !== null
-            ? seminarValue(ctx)
-            : null,
+        short: "Seminararbeit",
+        value: seminarValue,
         variants: (points) => [
           {
             id: "sa",
