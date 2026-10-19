@@ -1,33 +1,61 @@
-# AbiApp – free, offline Abitur grade calculator for all German states
+# AbiApp
 
-AbiApp calculates Abitur grades for all 16 German federal states. Everything
-runs locally on the device (SQLite): no account, no cloud, no AI. It replaces
-the earlier AbiSax app (.NET MAUI) and ships under the same store listing.
+Free, offline Abitur grade calculator for all 16 German states.
 
-Built with Expo SDK 58, React Native 0.88, Expo Router (native tabs) and
-Zustand.
+AbiApp tracks grades per half-year, predicts half-year results, picks the best possible course selection for Block I, calculates Block II and the final Abitur grade, and checks admission and pass conditions according to each state's official regulation. Everything stays on the device: no account, no cloud sync, no ads, no AI.
 
-## Setup
+AbiApp replaces the earlier AbiSax app and ships under the same store listing.
+
+## Features
+
+- Grades per subject and half-year (exams and other grades, adjustable exam share), predictions with one decimal, official half-year results
+- Exact Block I optimizer: mandatory inclusions, weighting variants, course count ranges and deficit limits per state, manual overrides
+- Block II with state-specific exam variants, supplementary oral exams and rounding rules
+- Final grade, admission and pass checklist, goal planning ("what do I need in my next exam?", "what average do I need for 1,5?")
+- Onboarding without an account, JSON backup and restore, light and dark mode, German and English UI
+- Native iOS and Android UI (Expo Router native tabs, native headers and context menus)
+
+## Supported states
+
+Rules cover the Abitur years 2027 to 2030. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
+
+| State                  | Rule versions                      | Confidence                  |
+| ---------------------- | ---------------------------------- | --------------------------- |
+| Baden-Württemberg      | BW-2027, BW-2030                   | high / medium               |
+| Bayern                 | BY-G9-2027                         | high                        |
+| Berlin                 | BE-2027, BE-2028, BE-2029, BE-2030 | high / high / high / medium |
+| Brandenburg            | BB-2027, BB-2028                   | medium / medium             |
+| Bremen                 | HB-2027, HB-2030 (draft)           | high / low                  |
+| Hamburg                | HH-2027, HH-2030 (draft)           | high / low                  |
+| Hessen                 | HE-2027, HE-2030 (draft)           | high / low                  |
+| Mecklenburg-Vorpommern | MV-2027, MV-2028                   | medium / high               |
+| Niedersachsen          | NI-2027, NI-2030 (draft)           | high / low                  |
+| Nordrhein-Westfalen    | NW-2027, NW-2030                   | high / high                 |
+| Rheinland-Pfalz        | RP-2027, RP-2030                   | high / medium               |
+| Saarland               | SL-2027, SL-2030 (draft)           | high / low                  |
+| Sachsen                | SN-2027                            | high                        |
+| Sachsen-Anhalt         | ST-2027                            | medium                      |
+| Schleswig-Holstein     | SH-2027, SH-2028                   | high / high                 |
+| Thüringen              | TH-2027                            | high                        |
+
+Results are calculated with care but without guarantee. Your school and the state regulation are authoritative. Found a rule that is wrong or outdated? Please open an issue with the regulation and paragraph. See [docs/rulesets.md](docs/rulesets.md) for how rules are modeled.
+
+## Tech stack
+
+Expo SDK 58, React Native 0.88, Expo Router (native tabs), Zustand, expo-sqlite, i18n-js. The rules engine in `src/domain/` is plain TypeScript without React Native dependencies.
+
+## Getting started
 
 ```bash
 npm install
 cp .env.example .env.local   # optional: VibeUpdate app ID, Featurama key
 npx expo prebuild --clean    # generates ios/ and android/ (not committed)
+npm run ios                  # dev client on the iOS simulator, Metro on port 8090
+npm run android              # same for Android
+npm start                    # Metro only (dev client), port 8090
 ```
 
-Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or
-`google-services.json` exist in the repo root at prebuild time. Without them
-the app builds normally and analytics calls are no-ops.
-
-## Run
-
-```bash
-npm run ios        # build + install dev client, Metro on port 8090
-npm run android    # same for Android
-npm start          # Metro only (dev client), port 8090
-```
-
-## Checks
+Checks:
 
 ```bash
 npm run type-check
@@ -36,9 +64,14 @@ npm run format:check
 npx expo-doctor
 ```
 
-`ios/` and `android/` are generated (Continuous Native Generation). Make
-native changes through `app.config.ts` and config plugins only.
+`ios/` and `android/` are generated (Continuous Native Generation). Make native changes through `app.config.ts` and the config plugins in `plugins/`.
+
+Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist in the repo root at prebuild time. Without them the app builds normally and analytics calls are no-ops.
+
+## Privacy
+
+All grades and settings are stored locally in SQLite on the device. The app sends no grades or personal data anywhere. Optional services in the official builds: anonymous usage statistics (Firebase Analytics), update notes (VibeUpdate) and feature requests that you submit yourself (Featurama). Privacy policy: https://vibelabs.to/de/privacy
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). Built by [VibeLabs](https://vibelabs.to).
