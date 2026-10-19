@@ -105,6 +105,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     // Brand accent for native Android widgets (alerts, menus, cursor).
     "./plugins/withAndroidAccent.js",
+    // 3-button navigation bar follows the in-app light/dark choice.
+    "./plugins/withAndroidNavigationBarTheme.js",
     ...firebasePlugins,
   ],
   experiments: {
