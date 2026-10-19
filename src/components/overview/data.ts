@@ -30,6 +30,12 @@ export function allChecks(evaluation: AbiturEvaluation): RuleCheck[] {
   ];
 }
 
+/** Engine warning: a mandatory inclusion has no matching subject yet. */
+export const MISSING_SUBJECT_CODE = "block1.requirement.missingSubject";
+
+export const isMissingSubjectIssue = (issue: Issue): boolean =>
+  issue.code === MISSING_SUBJECT_CODE;
+
 /** Issues worth showing to the student (assumptions live on /rules). */
 export function visibleIssues(evaluation: AbiturEvaluation): Issue[] {
   return evaluation.issues.filter(

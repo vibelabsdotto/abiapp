@@ -121,6 +121,7 @@ export const setupEN = {
       examsLater:
         "Your exam subjects are still open. You find them in Settings.",
       summary: "Summary",
+      addSubject: "Add subject",
     },
   },
   setup: {

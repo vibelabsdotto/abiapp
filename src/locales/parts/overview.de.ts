@@ -50,6 +50,7 @@ export const overviewDE = {
       allPassed: "Alle Bedingungen erfüllt",
       allPassedPredicted: "Nach Prognose alle Bedingungen erfüllt",
       count: "{{passed}} von {{total}} Bedingungen erfüllt",
+      addSubject: "Fach hinzufügen",
     },
     current: {
       title: "Aktuelles Halbjahr {{name}}",

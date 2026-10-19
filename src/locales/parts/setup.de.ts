@@ -121,6 +121,7 @@ export const setupDE = {
       examsLater:
         "Die Prüfungsfächer fehlen noch. Du findest sie in den Einstellungen.",
       summary: "Zusammenfassung",
+      addSubject: "Fach hinzufügen",
     },
   },
   setup: {

@@ -18,7 +18,10 @@ import {
   RulesLink,
 } from "@components/abitur/MoreSections";
 import { TotalCard } from "@components/abitur/parts";
-import { visibleIssues } from "@components/overview/data";
+import {
+  isMissingSubjectIssue,
+  visibleIssues,
+} from "@components/overview/data";
 import { RulesetBanner } from "@components/overview/RulesetBanner";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import { useTranslation } from "@locales/index";
@@ -102,6 +105,16 @@ export default function AbiturScreen() {
                 key={`${issue.code}-${index}`}
                 severity={issue.severity}
                 message={issue.message}
+                title={
+                  isMissingSubjectIssue(issue)
+                    ? t("home.status.addSubject")
+                    : undefined
+                }
+                onPress={
+                  isMissingSubjectIssue(issue)
+                    ? () => router.push("/setup/subjects" as Href)
+                    : undefined
+                }
               />
             ))}
           </View>

@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 import {
   BadgeCheck,
   ChevronRight,
@@ -18,9 +18,10 @@ import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
 
-import { allChecks, statusItems } from "./data";
+import { allChecks, isMissingSubjectIssue, statusItems } from "./data";
 
 const openAbitur = () => router.navigate("/abitur");
+const openSubjectSetup = () => router.push("/setup/subjects" as Href);
 
 export const StatusCard = ({
   evaluation,
@@ -91,7 +92,11 @@ export const StatusCard = ({
       {items.map((item, index) => (
         <Pressable
           key={index}
-          onPress={openAbitur}
+          onPress={
+            item.kind === "issue" && isMissingSubjectIssue(item.issue)
+              ? openSubjectSetup
+              : openAbitur
+          }
           style={({ pressed }) => pressed && { backgroundColor: colors.fill }}
         >
           {item.kind === "check" ? (
@@ -107,9 +112,19 @@ export const StatusCard = ({
 
 const IssueRow = ({ issue }: { issue: Issue }) => {
   const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
   const error = issue.severity === "error";
+  // Missing subject: the row opens the subject choice, say so.
+  const action = isMissingSubjectIssue(issue)
+    ? t("home.status.addSubject")
+    : null;
   return (
-    <View accessible accessibilityLabel={issue.message} style={styles.issue}>
+    <View
+      accessible
+      accessibilityRole={action ? "button" : undefined}
+      accessibilityLabel={action ? `${issue.message} ${action}` : issue.message}
+      style={styles.issue}
+    >
       <Icon
         sf={
           error
@@ -120,9 +135,16 @@ const IssueRow = ({ issue }: { issue: Issue }) => {
         size={22}
         color={error ? colors.error : colors.warning}
       />
-      <Text style={[Type.body, styles.issueText, { color: colors.text }]}>
-        {issue.message}
-      </Text>
+      <View style={styles.issueText}>
+        <Text style={[Type.body, { color: colors.text }]}>{issue.message}</Text>
+        {action ? (
+          <Text
+            style={[Type.body, styles.issueAction, { color: colors.accent }]}
+          >
+            {action}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 };
@@ -148,5 +170,9 @@ const styles = StyleSheet.create({
   },
   issueText: {
     flex: 1,
+    gap: 4,
+  },
+  issueAction: {
+    fontWeight: "600",
   },
 });

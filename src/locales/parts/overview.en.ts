@@ -49,6 +49,7 @@ export const overviewEN = {
       allPassed: "All conditions met",
       allPassedPredicted: "All conditions met by prognosis",
       count: "{{passed}} of {{total}} conditions met",
+      addSubject: "Add subject",
     },
     current: {
       title: "Current half-year {{name}}",
