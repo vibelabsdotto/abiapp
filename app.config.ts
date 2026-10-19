@@ -14,7 +14,9 @@ const hasIosFirebase = fileExists(IOS_GOOGLE_SERVICES_FILE);
 const hasAndroidFirebase = fileExists(ANDROID_GOOGLE_SERVICES_FILE);
 const hasFirebase = hasIosFirebase || hasAndroidFirebase;
 
-const SPLASH_BACKGROUND = "#1F2937";
+// Brand ink (light) and ink night (dark); see src/constants/colors.ts Brand.
+const BRAND_INK = "#3B3FD8";
+const BRAND_NIGHT = "#0E0F33";
 
 type PluginList = NonNullable<ExpoConfig["plugins"]>;
 
@@ -41,6 +43,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.max.mannstein.abisax",
+    // iOS 18+/26 home-screen appearances; dark and tinted are transparent
+    // marks, the system supplies the backdrop.
+    icon: {
+      light: "./assets/images/icon.png",
+      dark: "./assets/images/icon-dark.png",
+      tinted: "./assets/images/icon-tinted.png",
+    },
     ...(hasIosFirebase ? { googleServicesFile: IOS_GOOGLE_SERVICES_FILE } : {}),
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -51,7 +60,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: "com.max.mannstein.abisax",
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
-      backgroundColor: SPLASH_BACKGROUND,
+      monochromeImage: "./assets/images/adaptive-icon-monochrome.png",
+      backgroundColor: BRAND_INK,
     },
     ...(hasAndroidFirebase
       ? { googleServicesFile: ANDROID_GOOGLE_SERVICES_FILE }
@@ -73,11 +83,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 160,
-        backgroundColor: SPLASH_BACKGROUND,
+        imageWidth: 128,
+        backgroundColor: BRAND_INK,
         dark: {
           image: "./assets/images/splash-icon.png",
-          backgroundColor: SPLASH_BACKGROUND,
+          backgroundColor: BRAND_NIGHT,
         },
       },
     ],
