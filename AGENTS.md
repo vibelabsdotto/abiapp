@@ -15,6 +15,7 @@ npm run ios                 # Dev-Client bauen + starten, Metro auf Port 8090
 npm run android
 npm start                   # nur Metro (Dev-Client), Port 8090
 npm run type-check
+npm test                    # Vitest, nur src/domain
 npm run lint
 npm run format:check
 ```
@@ -23,7 +24,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 
 ## Harte Regeln
 
-- Keine Testdateien und kein Test-Setup. Verifikation über Type-Check, Lint, Node-Probes außerhalb des Repos und echte Simulator-/Emulator-Durchläufe.
+- Tests nur für die reine Domain-Schicht (`src/domain/**/*.test.ts`, Vitest, `npm test`): je Ruleset durchgerechnete Beispiele mit exakter Gleichheit von E_I, E_II, Gesamt und Note. Keine UI-, Snapshot- oder Coverage-Tests. UI wird über Type-Check, Lint und echte Simulator-/Emulator-Durchläufe verifiziert.
 - Kein Login, keine Cloud-Synchronisation, keine Bezahlfunktionen, keine KI-Funktionen.
 - `ios/` und `android/` sind generiert (Continuous Native Generation). Native Änderungen nur über `app.config.ts` und `plugins/`. `prebuild --clean` verwirft alles Generierte.
 - Bundle-ID/Paket nicht ändern (Store-Update der bestehenden App).

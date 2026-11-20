@@ -67,13 +67,6 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 3. **Block I:** `count`, `weightings`, `requirements` (mit `short` bzw. `Pick.label` für `IncludedCourse.mandatoryLabel`), Helfer `examSubjectRequirements`, `oneOf`, `each`, `combinations`, `consecutiveWindows`; `groupMins` für Summenregeln, `implications`, `extras`, `relaxations`, `deficitLimits`, `zero`, `checks`. Eine Requirement = genau eine Option muss gelten.
 4. **Block II:** Varianten mit `component(...)`, Faktor je Variante, `rounding`, `combine`/`partsCombine`, `assumptions`, Checks `checkBlockIIMin`, `checkMinComponents`, `checkNoneBelow`, `checkNoZeroExam`.
 5. **Validierung:** `validate(ctx)` für eA-Kombinationen und Prüfungsfachwahl; `error` nur, wenn die Wahl vollständig und eindeutig falsch ist.
-6. **Prüfen:** Ein amtliches oder vollständig durchgerechnetes Beispiel als Eingabe nachbauen und exakte Gleichheit von E_I, E_II, Gesamt und Note verlangen. Probe außerhalb des Repos bündeln und ausführen:
-
-   ```bash
-   npx esbuild src/domain/index.ts --bundle --platform=node --format=esm --outfile=$TMPDIR/domain.mjs
-   node --input-type=module -e "const d = await import('$TMPDIR/domain.mjs'); console.log(d.evaluate(input).total)"
-   ```
-
-   Danach `npm run type-check`, `npm run lint`.
+6. **Prüfen:** Ein amtliches oder vollständig durchgerechnetes Beispiel als Test in `src/domain/rulesets/__tests__/<LAND>.test.ts` nachbauen und exakte Gleichheit von E_I, E_II, Gesamt und Note verlangen. Quelle des Beispiels (Verordnung, Paragraph, URL) im Test nennen. Danach `npm test`, `npm run type-check`, `npm run lint`.
 
 7. Engine nur erweitern, wenn Daten und Hooks nicht reichen. Neue Felder in `model.ts` optional halten.
