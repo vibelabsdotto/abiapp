@@ -10,7 +10,6 @@ interface PreferencesState {
   showPredictions: boolean;
   /** Last half-year picked in the subjects tab; null = current half-year. */
   selectedHalfYear: number | null;
-  hasHydrated: boolean;
   setShowPredictions: (value: boolean) => void;
   setSelectedHalfYear: (halfYear: number | null) => void;
   /** Back to defaults (part of "delete all data"). */
@@ -23,7 +22,6 @@ export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
       ...DEFAULTS,
-      hasHydrated: false,
       setShowPredictions: (showPredictions) => set({ showPredictions }),
       setSelectedHalfYear: (selectedHalfYear) => set({ selectedHalfYear }),
       reset: () => set(DEFAULTS),
@@ -49,10 +47,6 @@ export const usePreferencesStore = create<PreferencesState>()(
               ? stored.selectedHalfYear
               : null,
         };
-      },
-      // Publish through setState (never mutate) so subscribers are notified.
-      onRehydrateStorage: () => () => {
-        usePreferencesStore.setState({ hasHydrated: true });
       },
     },
   ),

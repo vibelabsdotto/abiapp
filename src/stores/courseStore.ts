@@ -168,6 +168,21 @@ const validateGrade = (
   assertOptionalDate(input.date);
 };
 
+/** Ids of subjects with grades, an official result or a goal. */
+export function subjectsWithData(data: {
+  courses: readonly CourseRecord[];
+  grades: readonly GradeRecord[];
+}): Set<string> {
+  const ids = new Set<string>();
+  for (const grade of data.grades) ids.add(grade.subjectId);
+  for (const course of data.courses) {
+    if (course.officialPoints !== null || course.targetPoints !== null) {
+      ids.add(course.subjectId);
+    }
+  }
+  return ids;
+}
+
 export const useCourseStore = create<CourseState>()((set, get) => {
   const refresh = async (parts: readonly Part[] = ALL_PARTS) => {
     set(await readParts(parts));
