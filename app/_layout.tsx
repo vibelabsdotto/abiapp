@@ -260,7 +260,7 @@ function RootLayoutNav() {
     presentation: "formSheet",
     sheetAllowedDetents: "fitToContents",
     sheetGrabberVisible: true,
-    contentStyle: { backgroundColor: colors.background },
+    contentStyle: { backgroundColor: colors.sheet },
   } as const;
 
   return (

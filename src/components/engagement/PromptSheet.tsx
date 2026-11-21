@@ -1,6 +1,6 @@
 // Layout of the prompt form sheets (review request, clipping offer): sized
 // by its content (sheetAllowedDetents "fitToContents", so no flex here),
-// page background, actions at the bottom above the home indicator.
+// `sheet` surface, actions at the bottom above the home indicator.
 
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -22,7 +22,7 @@ export const PromptSheet = ({ children, actions }: PromptSheetProps) => {
       style={[
         styles.sheet,
         {
-          backgroundColor: colors.background,
+          backgroundColor: colors.sheet,
           paddingBottom: insets.bottom + 12,
         },
       ]}

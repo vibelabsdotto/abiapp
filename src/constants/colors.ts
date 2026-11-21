@@ -98,6 +98,11 @@ export const Colors = {
     ripple: "#0000001F",
     /** Max's handwritten signature (review sheet): his dark blue ink. */
     signatureInk: "#2B2A73",
+    /**
+     * Prompt sheets (rating, clipping): the page in light; raised in dark so
+     * the sheet reads as a surface over the dimmed black page.
+     */
+    sheet: "#FFFFFF",
   },
   dark: {
     background: "#000000",
@@ -152,6 +157,7 @@ export const Colors = {
     tabIndicator: "#2E2E2E",
     ripple: "#FFFFFF29",
     signatureInk: "#9CC4FF",
+    sheet: "#1C1C1C",
   },
 } as const;
 

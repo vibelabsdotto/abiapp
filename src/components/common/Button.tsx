@@ -1,6 +1,7 @@
 // Button - primary/secondary/ghost/destructive actions with optional icon.
 // Primary is ink-filled (black, inverted in dark), secondary grey-filled,
-// ghost is plain ink text; destructive is the signal red.
+// ghost is plain ink text, subtle plain secondary text (the weakest choice
+// next to a ghost button); destructive is the signal red.
 
 import React from "react";
 import {
@@ -16,7 +17,8 @@ import * as Haptics from "expo-haptics";
 import { useThemeStore } from "@stores/themeStore";
 import { Radius } from "@constants/typography";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+type ButtonVariant =
+  "primary" | "secondary" | "ghost" | "subtle" | "destructive";
 type ButtonSize = "small" | "medium" | "large";
 
 interface ButtonProps {
@@ -59,6 +61,7 @@ export const Button = ({
     primary: { background: colors.accent, text: colors.accentForeground },
     secondary: { background: colors.accentLight, text: colors.text },
     ghost: { background: "transparent", text: colors.text },
+    subtle: { background: "transparent", text: colors.textSecondary },
     destructive: {
       background: colors.destructive,
       text: colors.pointsLowOnSolid,

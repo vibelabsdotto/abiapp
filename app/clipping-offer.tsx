@@ -78,7 +78,7 @@ export default function ClippingOffer() {
           />
           <Button
             title={t("engagement.clipping.dismiss")}
-            variant="ghost"
+            variant="subtle"
             fullWidth
             onPress={dismiss}
           />

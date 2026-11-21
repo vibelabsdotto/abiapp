@@ -98,13 +98,15 @@ for (const mode of ["light", "dark"] as const) {
   }
   // Non-text: the ink tiers must stay apart from the card (3:1 for top).
   expect(`${mode}.pointsTopSolid on card`, c.pointsTopSolid, c.card, 3);
-  // The signature is read like text on the review sheet (page background).
-  expect(
-    `${mode}.signatureInk on background`,
-    c.signatureInk,
-    c.background,
-    4.5,
-  );
+  // Prompt sheets: text, link (accent) and signature sit on `sheet`.
+  for (const token of [
+    "text",
+    "textSecondary",
+    "accent",
+    "signatureInk",
+  ] as const) {
+    expect(`${mode}.${token} on sheet`, c[token], c.sheet, 4.5);
+  }
   expect(`${mode}.tabBarInactive on tabBar`, c.tabBarInactive, c.tabBar, 4.5);
 
   for (const [key, value] of Object.entries(AccentPalette)) {
@@ -113,6 +115,7 @@ for (const mode of ["light", "dark"] as const) {
       expect(`${mode}.accent.${key} on ${name}`, accent, surface, 4.5);
     }
     expect(`${mode}.accent.${key} on accentLight`, accent, c.accentLight, 4.5);
+    expect(`${mode}.accent.${key} on sheet`, accent, c.sheet, 4.5);
     expect(
       `${mode}.accentForeground on accent.${key}`,
       AccentForeground[mode],
