@@ -46,7 +46,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt.
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5. Informatik ersetzt die zweite Naturwissenschaft nur im Schulversuch (Leitfaden, nicht in der AGVO). Welche Geographie-/Gemeinschaftskunde-Kurse belegpflichtig sind, legt die Schule fest; die 0-Punkte-Prüfung zählt nur, ob genug Kurse ohne 0 Punkte da sind.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
-- **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation (amtlich nicht geregelt).
+- **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation, Besondere Lernleistung (Arbeit + Kolloquium) × 2 ohne Zwischenrundung (beides amtlich nicht geregelt; § 11 Abs. 4 und Formblatt 10 lassen auch eine Gesamtbewertung in ganzen Punkten zu). Für die 0-Punkte-Belegpflicht zählt das weitere Fach aus Aufgabenfeld II/III nicht mit.
 - **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
 - **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben; die Gesamtbewertung der Besonderen Lernleistung rundet die App kaufmännisch. Eine später begonnene Fremdsprache gilt als in der Einführungsphase begonnene zweite Fremdsprache (§ 10 Abs. 3, § 25 Abs. 2). Drei Leistungskurse (§ 24) und ein BLL-Referenzfach, das schon Prüfungsfach ist, sind nicht abbildbar.
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
