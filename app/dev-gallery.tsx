@@ -126,6 +126,30 @@ export default function DevGalleryScreen() {
         }}
       />
       <ScreenLayout contentContainerStyle={styles.content}>
+        <Section title="Bogen: amtlich, Prognose, Schätzung" variant="plain">
+          {(["official", "prognosis", "estimate"] as const).map((basis) => (
+            <GradeHero
+              key={basis}
+              gradeTenths={16}
+              totalPoints={720}
+              predicted={basis !== "official"}
+              basis={basis}
+              passed
+              goalTenths={18}
+              goalPoints={679}
+            />
+          ))}
+        </Section>
+
+        <Section
+          title="Punkteskala im Raster"
+          footer="Oben Tintendichte (13–15 schwarz, 10–12 grau, 5–9 hell, 0–4 rot), unten alles neutral und nur Defizite rot. Gefüllt = amtlich, Umriss = Prognose, gestrichelt = Schätzung."
+          variant="plain"
+        >
+          <ScaleGrid scale="ink" title="Tintendichte" />
+          <ScaleGrid scale="neutral" title="Neutral, nur Defizit rot" />
+        </Section>
+
         <Section title="Übersicht" variant="plain">
           <GradeHero
             gradeTenths={18}
@@ -185,7 +209,7 @@ export default function DevGalleryScreen() {
               <>
                 <Chip
                   label="LK"
-                  tone="accent"
+                  tone="neutral"
                   accessibilityLabel="Leistungskurs"
                 />
                 <Chip label="P1" />
@@ -204,7 +228,7 @@ export default function DevGalleryScreen() {
               <>
                 <Chip
                   label="LK"
-                  tone="accent"
+                  tone="neutral"
                   accessibilityLabel="Leistungskurs"
                 />
                 <Chip label="P2" />
@@ -396,8 +420,8 @@ export default function DevGalleryScreen() {
               { backgroundColor: colors.card },
             ]}
           >
-            <Chip label="LK" tone="accent" />
-            <Chip label="eA" tone="accent" />
+            <Chip label="LK" />
+            <Chip label="eA" />
             <Chip label="P1" />
             <Chip label="×2" tone="outline" />
             <Chip label="Pflicht" />
@@ -478,6 +502,118 @@ export default function DevGalleryScreen() {
   );
 }
 
+/** Block I sample: 8 subjects x 4 half-years with mixed sources. */
+const GRID: [string, [number, ValueSource][]][] = [
+  [
+    "Deutsch",
+    [
+      [10, "official"],
+      [11, "official"],
+      [10, "grades"],
+      [10, "estimate"],
+    ],
+  ],
+  [
+    "Mathematik",
+    [
+      [12, "official"],
+      [13, "official"],
+      [12, "grades"],
+      [12, "estimate"],
+    ],
+  ],
+  [
+    "Englisch",
+    [
+      [11, "official"],
+      [10, "official"],
+      [12, "grades"],
+      [11, "estimate"],
+    ],
+  ],
+  [
+    "Französisch",
+    [
+      [7, "official"],
+      [8, "official"],
+      [4, "grades"],
+      [6, "estimate"],
+    ],
+  ],
+  [
+    "Biologie",
+    [
+      [13, "official"],
+      [12, "official"],
+      [13, "grades"],
+      [13, "estimate"],
+    ],
+  ],
+  [
+    "Chemie",
+    [
+      [8, "official"],
+      [4, "official"],
+      [9, "grades"],
+      [7, "estimate"],
+    ],
+  ],
+  [
+    "Physik",
+    [
+      [11, "official"],
+      [10, "official"],
+      [11, "grades"],
+      [11, "estimate"],
+    ],
+  ],
+  [
+    "Geschichte",
+    [
+      [14, "official"],
+      [15, "official"],
+      [13, "grades"],
+      [3, "estimate"],
+    ],
+  ],
+];
+
+const ScaleGrid = ({
+  scale,
+  title,
+}: {
+  scale: "ink" | "neutral";
+  title: string;
+}) => {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <View style={[styles.card, styles.grid, { backgroundColor: colors.card }]}>
+      <Text style={[Type.headline, { color: colors.text }]}>{title}</Text>
+      {GRID.map(([name, values]) => (
+        <View key={name} style={styles.gridRow}>
+          <Text
+            style={[Type.subhead, styles.gridName, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {name}
+          </Text>
+          {values.map(([value, source], index) => (
+            <PointsBadge
+              key={index}
+              points={value}
+              exact={source === "grades" ? value + 0.3 : null}
+              source={source}
+              showDecimal={false}
+              size="small"
+              scale={scale}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+};
+
 const Variant = ({
   label,
   children,
@@ -497,6 +633,17 @@ const Variant = ({
 };
 
 const styles = StyleSheet.create({
+  grid: {
+    gap: 8,
+  },
+  gridRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  gridName: {
+    flex: 1,
+  },
   content: {
     gap: 28,
     paddingBottom: 48,

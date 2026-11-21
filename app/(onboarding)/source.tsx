@@ -5,10 +5,7 @@ import React, { useState } from "react";
 import { Platform } from "react-native";
 import { useRouter } from "expo-router";
 
-import {
-  shuffledSources,
-  type AcquisitionSource,
-} from "@components/onboarding/sources";
+import { shuffledSources } from "@components/onboarding/sources";
 import {
   ONBOARDING_STEPS,
   ONBOARDING_TOTAL_STEPS,
@@ -16,7 +13,10 @@ import {
 import { OnboardingStep } from "@components/setup";
 import { ListRow, Section } from "@components/ui";
 import { useTranslation } from "@locales/index";
-import { trackAcquisitionSource } from "@services/analytics/appEvents";
+import {
+  trackAcquisitionSource,
+  type AcquisitionSource,
+} from "@services/analytics/appEvents";
 
 /** One answer per onboarding run, even when someone goes back. */
 let answered = false;

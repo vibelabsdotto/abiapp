@@ -19,6 +19,7 @@ android/
 *.key
 *.mobileprovision
 *.pem
+!certs/certificate.pem
 *.ipa
 *.aab
 *.apk

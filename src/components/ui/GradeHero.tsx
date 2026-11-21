@@ -1,8 +1,9 @@
 // GradeHero - the Abitur average as the signature element of the overview:
 // big black grade inside a thin AbiApp arch on the page (no card), total
 // points, status label and the two thresholds of the scale (pass at 300,
-// 1,0 at 823) as scale ticks. A prognosis is told apart from the official
-// result by shape and label: dashed arch, "Prognose" above the grade. A goal shows
+// 1,0 at 823) as scale ticks. Official, prognosis and estimate are told
+// apart by shape and label, like PointsBadge: filled band, hollow band,
+// hollow band with dashed contour, over a hairline track. A goal shows
 // only as a dot on the arch; the goal text belongs to the card below the
 // hero (one place for "Ziel 1,8 · noch 54 Punkte"). Without a pass there is
 // no grade, so the goal dot is hidden then.
@@ -36,6 +37,11 @@ export interface GradeHeroProps {
   topPoints?: number;
   /** True if any value is a prognosis: label "Prognose" instead of "Ergebnis". */
   predicted: boolean;
+  /**
+   * Shape of the arch: defaults to "prognosis" when `predicted`, else
+   * "official". "estimate" when the total rests on estimates only.
+   */
+  basis?: "official" | "prognosis" | "estimate";
   /** false shows "Nicht bestanden" instead of a grade. */
   passed?: boolean | null;
   /**
@@ -56,6 +62,7 @@ export const GradeHero = ({
   passPoints = 300,
   topPoints = 823,
   predicted,
+  basis,
   passed = null,
   goalTenths = null,
   goalPoints = null,
@@ -74,7 +81,13 @@ export const GradeHero = ({
   const grade = hasGrade ? formatGrade(gradeTenths, locale) : null;
   const progress = totalPoints !== null ? totalPoints / maxPoints : 0;
 
-  const statusLabel = predicted ? t("ui.hero.prognosis") : t("ui.hero.result");
+  const shape = basis ?? (predicted ? "prognosis" : "official");
+  const statusLabel =
+    shape === "estimate"
+      ? t("ui.source.estimate")
+      : shape === "prognosis"
+        ? t("ui.hero.prognosis")
+        : t("ui.hero.result");
   const pointsLine =
     totalPoints !== null
       ? t("ui.hero.totalOf", { points: totalPoints, max: maxPoints })
@@ -120,12 +133,19 @@ export const GradeHero = ({
             width={gaugeWidth}
             progress={progress}
             color={failed ? colors.error : colors.text}
-            trackColor={colors.gaugeTrack}
+            trackColor={colors.separator}
             surfaceColor={colors.background}
             markers={markers}
-            strokeRatio={0.05}
+            strokeRatio={0.055}
             legRatio={0.42}
-            dashed={predicted}
+            trackWidth={1}
+            fill={
+              shape === "official"
+                ? "solid"
+                : shape === "prognosis"
+                  ? "outline"
+                  : "dashed"
+            }
           >
             <Text
               maxFontSizeMultiplier={FontScale.heading}
@@ -180,14 +200,14 @@ export const GradeHero = ({
           kind="tick"
           label={t("ui.hero.passMarker", { points: passPoints })}
           textColor={colors.textSecondary}
-          arcColor={colors.gaugeTrack}
+          arcColor={colors.separator}
           markColor={colors.textSecondary}
         />
         <LegendItem
           kind="tick"
           label={t("ui.hero.topMarker", { points: topPoints })}
           textColor={colors.textSecondary}
-          arcColor={colors.gaugeTrack}
+          arcColor={colors.separator}
           markColor={colors.textSecondary}
         />
         {showGoal ? (
@@ -195,7 +215,7 @@ export const GradeHero = ({
             kind="dot"
             label={t("ui.hero.goalMarker")}
             textColor={colors.textSecondary}
-            arcColor={colors.gaugeTrack}
+            arcColor={colors.separator}
             markColor={colors.text}
             ringColor={colors.background}
           />
@@ -248,7 +268,7 @@ const LegendItem = ({
       <Path
         d="M 2.82 9.4 A 16 16 0 0 1 21.18 9.4"
         stroke={arcColor}
-        strokeWidth={2}
+        strokeWidth={1}
         fill="none"
       />
       {kind === "tick" ? (

@@ -57,7 +57,7 @@ export type BackupParseResult =
       ok: true;
       backup: BackupFile;
       summary: BackupSummary;
-      /** Non-blocking hints, e.g. unknown ruleset version. */
+      /** Non-blocking hints, e.g. a backup without profile. */
       warnings: BackupIssue[];
     }
   | { ok: false; errors: BackupIssue[] };
@@ -149,9 +149,12 @@ export function checkBackup(value: unknown): BackupParseResult {
   const { errors, warnings } = validateBackup(value, {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
-    halfYearCount: (rulesetId) =>
-      tryDomain(() => getRulesetSummary(rulesetId)).value?.halfYears.length ??
-      null,
+    ruleset: (rulesetId) => {
+      const summary = tryDomain(() => getRulesetSummary(rulesetId)).value;
+      return summary
+        ? { state: summary.state, halfYearCount: summary.halfYears.length }
+        : null;
+    },
   });
   if (errors.length > 0) return { ok: false, errors };
   const backup = value as BackupFile;

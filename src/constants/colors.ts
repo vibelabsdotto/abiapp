@@ -22,7 +22,7 @@ export const Brand = {
   inkTop: "#0A0A0A",
   inkBottom: "#0A0A0A",
   inkLight: "#F5F5F5",
-  night: "#000000",
+  night: "#0A0A0A",
   paper: "#FFFFFF",
 } as const;
 
@@ -58,8 +58,10 @@ export const Colors = {
     info: "#0A0A0A",
     infoFill: "#E6E6E6",
 
-    // Points scale as ink density: 13-15 full ink, 10-12 mid grey,
-    // 5-9 light grey, 0-4 red (Unterkurs), none outline only.
+    // Points scale. The app draws every value neutral and only 0-4 red
+    // (POINTS_SCALE "neutral" in src/components/ui/points.ts); the Mid/Good/
+    // Top solids are the ink-density variant (13-15 full ink, 10-12 mid
+    // grey, 5-9 light grey), kept for the dev-gallery comparison.
     pointsLowText: "#C8102E",
     pointsLowFill: "#FBE8EA",
     pointsLowSolid: "#C8102E",

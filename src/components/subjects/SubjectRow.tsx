@@ -6,12 +6,10 @@
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { CircleCheck } from "lucide-react-native";
 
 import {
   Chip,
   HalfYearStrip,
-  Icon,
   ListRow,
   PointsBadge,
   SubjectAvatar,
@@ -103,14 +101,14 @@ export const SubjectRow = ({
       />
       {status ? (
         <View style={styles.status}>
-          {status.tone === "in" ? (
-            <Icon icon={CircleCheck} size={16} color={colors.success} />
-          ) : null}
           <Text
             style={[
               Type.caption1,
               styles.statusText,
-              { color: colors.textSecondary },
+              {
+                color:
+                  status.tone === "in" ? colors.text : colors.textSecondary,
+              },
             ]}
             numberOfLines={1}
           >
@@ -139,7 +137,7 @@ export const SubjectRow = ({
             {subject.level === "elevated" ? (
               <Chip
                 label={elevatedShort}
-                tone="accent"
+                tone="neutral"
                 accessibilityLabel={elevatedName}
               />
             ) : null}

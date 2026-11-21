@@ -15,7 +15,11 @@ import { AddRow } from "@components/subjects/AddRow";
 import { confirmRemoveSubject, showError } from "@components/subjects/actions";
 import { CourseHistory } from "@components/subjects/CourseHistory";
 import { GradeRow } from "@components/subjects/GradeRow";
-import { HalfYearPicker, toolbarIcon } from "@components/subjects/headers";
+import {
+  HalfYearPicker,
+  SubjectHeader,
+  toolbarIcon,
+} from "@components/subjects/headers";
 import { InclusionNote } from "@components/subjects/InclusionNote";
 import { ResultCard } from "@components/subjects/ResultCard";
 import {
@@ -169,6 +173,10 @@ export default function SubjectDetailScreen() {
       </Stack.Toolbar>
 
       <ScreenLayout>
+        <SubjectHeader
+          subject={subject}
+          levelName={ruleset?.levelNames[subject.level]?.name ?? null}
+        />
         <HalfYearPicker
           labels={labels}
           value={halfYear}

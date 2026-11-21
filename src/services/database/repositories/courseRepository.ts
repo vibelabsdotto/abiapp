@@ -35,19 +35,6 @@ export async function ensureCourses(
   }
 }
 
-/** Creates missing course rows for every subject. */
-export async function ensureCoursesForAllSubjects(
-  db: SQLiteDatabase,
-  halfYearCount: number,
-): Promise<void> {
-  const subjects = await db.getAllAsync<{ id: string }>(
-    "SELECT id FROM subjects",
-  );
-  for (const { id } of subjects) {
-    await ensureCourses(db, id, halfYearCount);
-  }
-}
-
 const COURSE_COLUMNS: Record<keyof CoursePatch, string> = {
   taken: "taken",
   officialPoints: "official_points",

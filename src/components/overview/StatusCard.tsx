@@ -44,12 +44,12 @@ export const StatusCard = ({
       : t("home.status.allPassed")
     : t("home.status.count", { passed, total: checks.length });
   const summaryIcon = allPassed
-    ? { sf: "checkmark.seal.fill" as const, fallback: BadgeCheck }
+    ? BadgeCheck
     : failed
-      ? { sf: "xmark.octagon.fill" as const, fallback: OctagonAlert }
-      : { sf: "circle.dashed" as const, fallback: CircleDashed };
+      ? OctagonAlert
+      : CircleDashed;
   const summaryColor = allPassed
-    ? colors.success
+    ? colors.text
     : failed
       ? colors.error
       : colors.textSecondary;
@@ -69,7 +69,7 @@ export const StatusCard = ({
           pressed && { backgroundColor: colors.fill },
         ]}
       >
-        <Icon icon={summaryIcon.fallback} size={24} color={summaryColor} />
+        <Icon icon={summaryIcon} size={24} color={summaryColor} />
         <Text style={[Type.body, styles.summaryText, { color: colors.text }]}>
           {summary}
         </Text>
@@ -119,7 +119,7 @@ const IssueRow = ({ issue }: { issue: Issue }) => {
       <Icon
         icon={error ? OctagonAlert : TriangleAlert}
         size={24}
-        color={error ? colors.error : colors.warning}
+        color={error ? colors.error : colors.text}
       />
       <View style={styles.issueText}>
         <Text style={[Type.body, { color: colors.text }]}>{issue.message}</Text>

@@ -64,7 +64,7 @@ export const ResultCard = ({
 
   const chip =
     value.source === "official" ? (
-      <Chip label={t("ui.source.official")} tone="success" size="medium" />
+      <Chip label={t("ui.source.official")} tone="neutral" size="medium" />
     ) : value.source === "grades" ? (
       <Chip label={t("ui.source.grades")} tone="accent" size="medium" />
     ) : value.source === "estimate" ? (

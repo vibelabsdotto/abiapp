@@ -27,6 +27,7 @@ import {
   STATES,
   defaultRulesetOf,
   getRuleset,
+  hasRuleset,
   rulesetsOf,
   toSummary,
 } from "./rulesets/registry";
@@ -44,12 +45,25 @@ export function validateSetup(input: EngineInput): Issue[] {
   return validateWithRuleset(input, getRuleset(input.rulesetId));
 }
 
-/** Prognosis of a half-year from single grades (rounded once, half up). */
+/** Half-year rounding of the ruleset (e.g. BY: never rounded up to 1 point). */
+function halfYearRounding(
+  rulesetId: string | null | undefined,
+): ((num: bigint, den: bigint) => number) | undefined {
+  return rulesetId && hasRuleset(rulesetId)
+    ? getRuleset(rulesetId).roundHalfYear
+    : undefined;
+}
+
+/**
+ * Prognosis of a half-year from single grades, rounded once like the engine
+ * does for the ruleset (default half up). Pass the profile's ruleset id.
+ */
 export function halfYearPrognosis(
   grades: EngineGrade[],
   examWeightPercent: number,
+  rulesetId?: string | null,
 ): { exact: number | null; points: number | null } {
-  return prognosis(grades, examWeightPercent);
+  return prognosis(grades, examWeightPercent, halfYearRounding(rulesetId));
 }
 
 /** Minimum points of the next grade of `kind` so the half-year reaches `targetPoints`. */
@@ -58,8 +72,15 @@ export function requiredNextGrade(
   examWeightPercent: number,
   kind: GradeKind,
   targetPoints: number,
+  rulesetId?: string | null,
 ): { points: number | null; status: RequiredGradeStatus } {
-  return nextGrade(grades, examWeightPercent, kind, targetPoints);
+  return nextGrade(
+    grades,
+    examWeightPercent,
+    kind,
+    targetPoints,
+    halfYearRounding(rulesetId),
+  );
 }
 
 /** Grade in tenths (10 = 1,0 … 40 = 4,0); null below 300 points. */

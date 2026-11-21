@@ -17,7 +17,7 @@ AbiApp replaces the earlier AbiSax app and ships under the same store listing.
 
 ## Supported states
 
-Rules cover the Abitur years 2027 to 2030. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
+Rules cover the Abitur years from 2027; later years use the newest version of each state. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
 
 | State                  | Rule versions                      | Confidence                  |
 | ---------------------- | ---------------------------------- | --------------------------- |
@@ -50,27 +50,36 @@ Expo SDK 58, React Native 0.88, Expo Router (native tabs), Zustand, expo-sqlite,
 npm install
 cp .env.example .env.local   # optional: VibeUpdate app ID, Featurama key
 npx expo prebuild --clean    # generates ios/ and android/ (not committed)
-npm run ios                  # dev client on the iOS simulator, Metro on port 8090
+npm start                    # Metro (dev client), port 8090; keep it running
+npm run ios                  # build + launch the dev client on the iOS simulator
 npm run android              # same for Android
-npm start                    # Metro only (dev client), port 8090
 ```
+
+OTA updates are code-signed (`certs/certificate.pem`), so Metro signs the development manifest with the matching private key (`ABIAPP_OTA_PRIVATE_KEY`, default `~/.config/vibeupdate/keys/abiapp/private-key.pem`). Without that key, generate your own pair locally and do not commit the new certificate: `npx expo-updates codesigning:generate --key-output-directory ~/.config/vibeupdate/keys/abiapp --certificate-output-directory certs --certificate-validity-duration-years 10 --certificate-common-name dev`.
 
 Checks:
 
 ```bash
 npm run type-check
 npm run lint
+npm test                     # Vitest, rules engine in src/domain only
 npm run format:check
 npx expo-doctor
 ```
 
 `ios/` and `android/` are generated (Continuous Native Generation). Make native changes through `app.config.ts` and the config plugins in `plugins/`.
 
-Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist in the repo root at prebuild time. Without them the app builds normally and analytics calls are no-ops.
+Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist at prebuild time (repo root, or the absolute paths in `GOOGLE_SERVICE_INFO_PLIST` / `GOOGLE_SERVICES_JSON`). Without them the app builds normally and analytics calls are no-ops.
 
 ## Privacy
 
-All grades and settings are stored locally in SQLite on the device. The app sends no grades or personal data anywhere. Optional services in the official builds: anonymous usage statistics (Firebase Analytics), update notes (VibeUpdate) and feature requests that you submit yourself (Featurama). Privacy policy: https://vibelabs.to/de/privacy
+All grades and settings are stored locally on the device (SQLite and AsyncStorage). The app sends no grades, subject names or other personal data anywhere. The official builds use three services:
+
+- Firebase Analytics: anonymous usage events and screen views with state, ruleset id, Abitur year, counts and enum values only (`src/services/analytics/appEvents.ts`), plus the device data Firebase collects itself.
+- VibeUpdate: on start and on return to the app, asks whether a newer version or release notes exist (platform, app id, version, build number, device language).
+- Featurama: only when you open "Feature requests"; loads the list and sends requests, votes and comments you write yourself, with a random voter id and device info (model, OS, screen, language, app version).
+
+Privacy policy: https://vibelabs.to/de/privacy
 
 ## License
 

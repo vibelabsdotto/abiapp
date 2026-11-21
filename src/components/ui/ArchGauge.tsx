@@ -2,9 +2,11 @@
 // left foot over the top. Same geometry as the app icon. Used by GradeHero
 // (thin, with markers) and as the brand mark (EmptyState, onboarding).
 //
-// `dashed` draws the fill as dashes: a prognosis reads differently from an
-// official result by its shape, not by colour. The fill animates once on
-// mount unless the user prefers reduced motion.
+// `fill` gives the progress the shape language of PointsBadge: "solid" for
+// an official result, "outline" (hollow band, fine contour) for a
+// prognosis, "dashed" (hollow band, dashed contour) for an estimate. A
+// prognosis reads differently by its shape, not by colour. The fill
+// animates once on mount unless the user prefers reduced motion.
 
 import React, { useEffect, useId } from "react";
 import { StyleSheet, View } from "react-native";
@@ -18,7 +20,6 @@ import Animated, {
 } from "react-native-reanimated";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export interface ArchMarker {
   /** Position along the arch, 0 (left foot) to 1 (right foot). */
@@ -44,8 +45,12 @@ export interface ArchGaugeProps {
   markers?: ArchMarker[];
   /** Horizontal bar between the legs: turns the arch into the "A" mark. */
   crossbar?: boolean;
-  /** Draw the fill as dashes (prognosis). */
-  dashed?: boolean;
+  /** Shape of the progress band (see header). */
+  fill?: "solid" | "outline" | "dashed";
+  /** Track width in pt; defaults to the band width (icon mark). */
+  trackWidth?: number;
+  /** Contour width of outline/dashed fills. */
+  contourWidth?: number;
   /** Background behind the gauge; notches and dot rings use this colour. */
   surfaceColor?: string;
   animated?: boolean;
@@ -98,7 +103,9 @@ export const ArchGauge = ({
   legRatio = 0.62,
   markers = [],
   crossbar = false,
-  dashed = false,
+  fill = "solid",
+  trackWidth,
+  contourWidth = 1.5,
   surfaceColor = "transparent",
   animated = true,
   children,
@@ -133,27 +140,68 @@ export const ArchGauge = ({
 
   const d = `M ${g.cx - r} ${g.cy + leg} L ${g.cx - r} ${g.cy} A ${r} ${r} 0 0 1 ${g.cx + r} ${g.cy} L ${g.cx + r} ${g.cy + leg}`;
 
-  const fillProps = useAnimatedProps(() => ({
-    strokeDashoffset: g.total * (1 - shown.value),
-  }));
-  const capProps = useAnimatedProps(() => {
-    const p = pointAt(g, g.total * shown.value);
-    return {
-      cx: p.x,
-      cy: p.y,
-      r: shown.value > 0.001 && shown.value < 0.999 ? stroke / 2 : 0,
-    };
-  });
+  // Each animated path needs its own animated props object.
+  const progressProps = () => {
+    "worklet";
+    return { strokeDashoffset: g.total * (1 - shown.value) };
+  };
+  const fillProps = useAnimatedProps(progressProps);
+  const innerProps = useAnimatedProps(progressProps);
+  const maskProps = useAnimatedProps(progressProps);
+  const coverProps = useAnimatedProps(progressProps);
 
   const inner = r - stroke / 2;
-  // Fine rhythm: short dashes with equal gaps read as "not final yet".
-  const dash = Math.max(2, stroke * 0.45);
+  /** Centerline path shifted outwards (+) or inwards (-) by `offset`. */
+  const shifted = (offset: number) => {
+    const rr = r + offset;
+    return `M ${g.cx - rr} ${g.cy + leg} L ${g.cx - rr} ${g.cy} A ${rr} ${rr} 0 0 1 ${g.cx + rr} ${g.cy} L ${g.cx + rr} ${g.cy + leg}`;
+  };
+  const edge = stroke / 2 - contourWidth / 2;
+  const dash = Math.max(3, stroke * 0.6);
+  const progressDash = [g.total, g.total];
 
   return (
     <View style={{ width, height }}>
       <Svg width={width} height={height}>
-        <Path d={d} stroke={trackColor} strokeWidth={stroke} fill="none" />
-        {dashed ? (
+        <Path
+          d={d}
+          stroke={trackColor}
+          strokeWidth={trackWidth ?? stroke}
+          fill="none"
+        />
+        {fill === "solid" ? (
+          <AnimatedPath
+            d={d}
+            stroke={color}
+            strokeWidth={stroke}
+            strokeLinecap={trackWidth === undefined ? "butt" : "round"}
+            fill="none"
+            strokeDasharray={progressDash}
+            animatedProps={fillProps}
+          />
+        ) : fill === "outline" ? (
+          <>
+            {/* Hollow band: the band in ink, its inside in the surface. */}
+            <AnimatedPath
+              d={d}
+              stroke={color}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              fill="none"
+              strokeDasharray={progressDash}
+              animatedProps={fillProps}
+            />
+            <AnimatedPath
+              d={d}
+              stroke={surfaceColor}
+              strokeWidth={Math.max(0, stroke - 2 * contourWidth)}
+              strokeLinecap="round"
+              fill="none"
+              strokeDasharray={progressDash}
+              animatedProps={innerProps}
+            />
+          </>
+        ) : (
           <>
             <Defs>
               <Mask
@@ -169,31 +217,31 @@ export const ArchGauge = ({
                   stroke="white"
                   strokeWidth={stroke + 2}
                   fill="none"
-                  strokeDasharray={[g.total, g.total]}
-                  animatedProps={fillProps}
+                  strokeDasharray={progressDash}
+                  animatedProps={maskProps}
                 />
               </Mask>
             </Defs>
-            <Path
-              d={d}
-              stroke={color}
-              strokeWidth={stroke}
-              fill="none"
-              strokeDasharray={[dash, dash]}
-              mask={`url(#${maskId})`}
-            />
-          </>
-        ) : (
-          <>
+            {/* Hollow band with dashed edges; the inside hides the track. */}
             <AnimatedPath
               d={d}
-              stroke={color}
+              stroke={surfaceColor}
               strokeWidth={stroke}
               fill="none"
-              strokeDasharray={[g.total, g.total]}
-              animatedProps={fillProps}
+              strokeDasharray={progressDash}
+              animatedProps={coverProps}
             />
-            <AnimatedCircle fill={color} animatedProps={capProps} />
+            {[edge, -edge].map((offset) => (
+              <Path
+                key={offset}
+                d={shifted(offset)}
+                stroke={color}
+                strokeWidth={contourWidth}
+                strokeDasharray={[dash, dash * 0.8]}
+                fill="none"
+                mask={`url(#${maskId})`}
+              />
+            ))}
           </>
         )}
         {crossbar ? (
@@ -223,14 +271,17 @@ export const ArchGauge = ({
             );
           }
           if (marker.kind === "tick") {
-            const from = stroke / 2 + 2;
+            // Crosses the track: from the band's inner edge to just outside
+            // it, so the mark sits on the arch on legs and arc alike.
+            const from = -stroke / 2;
+            const to = stroke / 2 + TICK - 2;
             return (
               <Line
                 key={`tick-${marker.at}`}
                 x1={p.x + n.x * from}
                 y1={p.y + n.y * from}
-                x2={p.x + n.x * (from + TICK)}
-                y2={p.y + n.y * (from + TICK)}
+                x2={p.x + n.x * to}
+                y2={p.y + n.y * to}
                 stroke={marker.color}
                 strokeWidth={1.5}
               />

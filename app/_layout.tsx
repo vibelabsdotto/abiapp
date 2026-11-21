@@ -113,11 +113,13 @@ function useToastConfig(): ToastConfig {
   const colors = useThemeStore((state) => state.colors);
   return useMemo(
     () => ({
+      // Toasts are inverted ink (black pill, white text; flipped in dark);
+      // errors keep the signal red on its light fill.
       success: ({ text1, text2 }) => (
         <ToastBody
-          icon={<CircleCheck size={20} color={colors.success} />}
-          color={colors.text}
-          background={colors.card}
+          icon={<CircleCheck size={20} color={colors.background} />}
+          color={colors.background}
+          background={colors.text}
           text1={text1}
           text2={text2}
         />
@@ -126,25 +128,25 @@ function useToastConfig(): ToastConfig {
         <ToastBody
           icon={<CircleX size={20} color={colors.error} />}
           color={colors.text}
-          background={colors.card}
+          background={colors.errorFill}
           text1={text1}
           text2={text2}
         />
       ),
       info: ({ text1, text2 }) => (
         <ToastBody
-          icon={<Info size={20} color={colors.accent} />}
-          color={colors.text}
-          background={colors.card}
+          icon={<Info size={20} color={colors.background} />}
+          color={colors.background}
+          background={colors.text}
           text1={text1}
           text2={text2}
         />
       ),
       warning: ({ text1, text2 }) => (
         <ToastBody
-          icon={<TriangleAlert size={20} color={colors.warning} />}
-          color={colors.text}
-          background={colors.card}
+          icon={<TriangleAlert size={20} color={colors.background} />}
+          color={colors.background}
+          background={colors.text}
           text1={text1}
           text2={text2}
         />
@@ -154,22 +156,22 @@ function useToastConfig(): ToastConfig {
         const { actionLabel, onAction, icon } = props as ActionToastProps;
         const iconNode =
           icon === "trash" ? (
-            <Trash2 size={20} color={colors.textSecondary} />
+            <Trash2 size={20} color={colors.background} />
           ) : icon === "success" ? (
-            <CircleCheck size={20} color={colors.success} />
+            <CircleCheck size={20} color={colors.background} />
           ) : (
-            <Info size={20} color={colors.accent} />
+            <Info size={20} color={colors.background} />
           );
         return (
           <ToastBody
             icon={iconNode}
-            color={colors.text}
-            background={colors.card}
+            color={colors.background}
+            background={colors.text}
             text1={text1}
             text2={text2}
             action={{
               label: actionLabel,
-              color: colors.accent,
+              color: colors.background,
               onPress: () => {
                 hide();
                 onAction();
@@ -381,7 +383,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-    boxShadow: "0 6px 20px rgba(18, 19, 43, 0.18)",
+    boxShadow: "0 6px 20px rgba(0, 0, 0, 0.16)",
   },
   toastText: {
     flex: 1,

@@ -1,7 +1,8 @@
 // Brandenburg: BB-2027 (GOSTV i. d. F. vom 29.04.2021, nur Abitur 2027) und
 // BB-2028 (GOSTV i. d. F. der 8. Änderungsverordnung vom 16.06.2025, ab Abitur 2028).
+// Übergang: § 37 GOSTV n. F. (wer 2025/2026 in der Qualifikationsphase ist).
 
-import type { EngineSubject, Issue } from "../model";
+import type { EngineSubject, Issue, RuleCheck } from "../model";
 import type {
   ExamComponentDef,
   Requirement,
@@ -31,8 +32,10 @@ import {
   oneOf,
   partsCombine,
   requireFieldsCovered,
+  taken,
   NW_LABEL,
 } from "./helpers";
+import { courseKey } from "../engine/context";
 
 const NW = ["bio", "ch", "ph"];
 
@@ -107,6 +110,62 @@ function requirements(ctx: RuleContext, v2028: boolean): Requirement[] {
     );
   }
   return reqs;
+}
+
+/**
+ * § 9 Abs. 4: a course with 0 points counts as not taken, so a 0 in a
+ * belegpflichtiger course breaks the Belegverpflichtung (§ 9 Abs. 1, § 8
+ * Abs. 1) and with it the admission (§ 19 Abs. 1), even if the course is
+ * not included. Belegpflichtig: LK and exam subjects, Deutsch, Mathematik,
+ * Geschichte, Sport, Seminarkurs, two foreign languages, one natural
+ * science and one of Kunst, Musik, Darstellendes Spiel. The further subject
+ * of Aufgabenfeld II or III is left out (the choice is open).
+ */
+function zeroBelegCheck(ctx: RuleContext, predicted: boolean): RuleCheck {
+  const zeros = (s: EngineSubject) =>
+    ctx.takenHalfYears(s.id).filter((hy) => ctx.points(s.id, hy) === 0);
+  const zeroFree = (s: EngineSubject) => zeros(s).length === 0;
+  const bad = new Set<EngineSubject>();
+  const exam = new Set(examSubjectsWithSlot(ctx).map((s) => s.id));
+  for (const s of taken(
+    ctx,
+    (x) =>
+      x.level === "elevated" ||
+      exam.has(x.id) ||
+      hasKey(x, "de", "ma", "ge", "sp", "sem"),
+  )) {
+    if (!zeroFree(s)) bad.add(s);
+  }
+  const groups: [EngineSubject[], number][] = [
+    [taken(ctx, (x) => hasTag(x, "foreign_language")), 2],
+    [byKey(ctx, ...NW), 1],
+    [byKey(ctx, "ku", "mu", "ds"), 1],
+  ];
+  for (const [group, n] of groups) {
+    const need = Math.min(n, group.length);
+    if (group.filter(zeroFree).length < need)
+      for (const x of group) if (!zeroFree(x)) bad.add(x);
+  }
+  const courses = [...bad].flatMap((x) => zeros(x).map((hy) => ({ x, hy })));
+  const known = ctx.subjects.some((x) =>
+    ctx.takenHalfYears(x.id).some((hy) => ctx.points(x.id, hy) !== null),
+  );
+  return {
+    id: "block1.zeroTaken",
+    label: "Kein Pflichtkurs mit 0 Punkten (gilt als nicht belegt)",
+    passed: known ? courses.length === 0 : null,
+    detail: courses.length
+      ? courses
+          .map(({ x, hy }) => `${x.name} ${ctx.ruleset.halfYears[hy]}`)
+          .join(", ")
+      : null,
+    predicted:
+      predicted ||
+      courses.some(
+        ({ x, hy }) =>
+          ctx.values.get(courseKey(x.id, hy))?.source !== "official",
+      ),
+  };
 }
 
 function validate(ctx: RuleContext): Issue[] {
@@ -234,12 +293,12 @@ function bb(v2028: boolean): Ruleset {
       "Qualifikationsphase mit vier Schulhalbjahren und zwei Leistungskursen. Einer davon ist Deutsch, Mathematik oder eine fortgeführte Fremdsprache.",
       `Block I: alle 8 LK-Halbjahre doppelt und genau ${gk} Grundkurs-Halbjahre. Punkte = Summe / ${divisor} × 40, ab 0,5 aufgerundet.`,
       v2028
-        ? "Pflicht: LK und Prüfungsfächer, Deutsch, Mathematik und eine fortgeführte Fremdsprache je 4, eine Naturwissenschaft 4 (oder zwei je 2), Kunst, Musik oder Darstellendes Spiel 2, eine neu einsetzende Fremdsprache 2."
-        : "Pflicht: LK und Prüfungsfächer, Deutsch, Mathematik und eine fortgeführte Fremdsprache je 4, eine Naturwissenschaft 4 (oder zwei je 2), eine neu einsetzende Fremdsprache 2.",
-      "Der Seminarkurs kann als Grundkurs eingebracht werden.",
-      "Zulassung: mindestens 200 Punkte, höchstens 3 LK- und 4 GK-Halbjahre unter 5 Punkten. Kurse mit 0 Punkten gelten als nicht belegt und zählen nicht.",
-      "Block II: P1 und P2 (LK) und P3 schriftlich, P4 mündlich, alle fünffach. Mit Besonderer Lernleistung als 5. Prüfung zählen alle fünf vierfach.",
-      "Zusatzprüfung: (2 × Prüfung + Zusatzprüfung)/3. Die Rundung ist nicht geregelt. Die App rundet kaufmännisch nach der Multiplikation.",
+        ? "Pflicht: alle Kurse der vier Prüfungsfächer, je 4 Kurse Deutsch, Mathematik und einer fortgeführten Fremdsprache, 4 Kurse einer Naturwissenschaft (oder je 2 in zwei), 2 Kurse Kunst, Musik oder Darstellendes Spiel und 2 Kurse einer neu einsetzenden Fremdsprache, falls du eine hast."
+        : "Pflicht: alle Kurse der vier Prüfungsfächer, je 4 Kurse Deutsch, Mathematik und einer fortgeführten Fremdsprache, 4 Kurse einer Naturwissenschaft (oder je 2 in zwei) und 2 Kurse einer neu einsetzenden Fremdsprache, falls du eine hast.",
+      "Der Seminarkurs kann wie ein Grundkurs eingebracht werden.",
+      "Zulassung: mindestens 200 Punkte, höchstens 3 LK- und 4 GK-Halbjahre unter 5 Punkten. Kurse mit 0 Punkten gelten als nicht belegt: Sie zählen nicht, und in einem Pflichtfach (auch Geschichte, Sport, Seminarkurs) verhindern sie die Zulassung.",
+      "Block II: P1 und P2 (LK) und P3 schriftlich, P4 mündlich, alle fünffach. Mit Besonderer Lernleistung (Arbeit und Kolloquium zählen gleich) als 5. Prüfung zählen alle fünf vierfach.",
+      "Mit Zusatzprüfung zählt (2 × Prüfung + Zusatzprüfung) ÷ 3, dann fünf- bzw. vierfach. Die Rundung regelt die GOSTV nicht; die App rundet erst am Ende kaufmännisch.",
       v2028
         ? "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 5 Punkten (einfach), jede Prüfung mindestens 1 Punkt."
         : "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 5 Punkten (einfach), keine Prüfung mit 0 Punkten.",
@@ -313,13 +372,14 @@ function bb(v2028: boolean): Ruleset {
         ),
       ],
       zero: { includable: false, failIfTaken: false },
+      checks: (ctx, _sel, predicted) => [zeroBelegCheck(ctx, predicted)],
     },
     blockII: {
       maxPoints: 300,
       minPoints: 100,
       rounding: "halfUp",
       assumptions: [
-        "Annahme: Die 2:1-Bewertung mit Zusatzprüfung wird nach der Multiplikation mit 5 bzw. 4 kaufmännisch gerundet (nicht geregelt).",
+        "Annahme: Die 2:1-Bewertung mit Zusatzprüfung (§ 25 Abs. 5) wird erst nach der Multiplikation mit 5 bzw. 4 kaufmännisch gerundet, die Besondere Lernleistung zählt (Arbeit + Kolloquium) × 2 ohne Zwischenrundung. Die GOSTV regelt die Rundung nicht; rundet die Schule die Gesamtbewertung zuerst auf ganze Punkte, kann das Ergebnis um wenige Punkte abweichen.",
       ],
       variants: [
         {

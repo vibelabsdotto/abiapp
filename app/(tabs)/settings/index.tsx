@@ -42,6 +42,7 @@ import {
 } from "@components/common/NativeMenu";
 import { ScreenLayout } from "@components/common/ScreenLayout";
 import { SettingsIcon } from "@components/settings/SettingsIcon";
+import type { MenuSymbol } from "@constants/menuIcons";
 import {
   confirmAsync,
   elevatedPlural,
@@ -88,7 +89,7 @@ const APP_STORE_REVIEW_URL =
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.max.mannstein.abisax";
 
-const THEME_ICONS: Record<ThemeMode, string> = {
+const THEME_ICONS: Record<ThemeMode, MenuSymbol> = {
   [ThemeMode.System]: "circle.lefthalf.filled",
   [ThemeMode.Light]: "sun.max",
   [ThemeMode.Dark]: "moon",
@@ -100,7 +101,7 @@ const THEME_LABEL_KEYS: Record<ThemeMode, string> = {
   [ThemeMode.Dark]: "settings.themeDark",
 };
 
-const LANGUAGE_ICONS: Record<LanguageMode, string> = {
+const LANGUAGE_ICONS: Record<LanguageMode, MenuSymbol> = {
   system: "globe",
   de: "d.circle",
   en: "e.circle",
@@ -305,7 +306,7 @@ export default function SettingsScreen() {
   return (
     <ScreenLayout contentContainerStyle={styles.content}>
       {profile ? (
-        <Section title={t("settings.profile")} separatorInset={58}>
+        <Section title={t("settings.profile")} separatorInset={48}>
           <ListRow
             title={t("settings.state")}
             value={stateName}
@@ -391,7 +392,7 @@ export default function SettingsScreen() {
         <Section
           title={t("settings.goal")}
           footer={t("settings.goalFooter")}
-          separatorInset={58}
+          separatorInset={48}
         >
           <ListRow
             title={t("settings.goalRow")}
@@ -407,7 +408,7 @@ export default function SettingsScreen() {
         </Section>
       ) : null}
 
-      <Section title={t("settings.appearance")} separatorInset={58}>
+      <Section title={t("settings.appearance")} separatorInset={48}>
         <NativeMenu
           title={t("settings.chooseTheme")}
           actions={themeActions}
@@ -445,7 +446,7 @@ export default function SettingsScreen() {
       <Section
         title={t("settings.data")}
         footer={t("settings.dataFooter")}
-        separatorInset={58}
+        separatorInset={48}
       >
         <ListRow
           title={t("settings.exportBackup")}
@@ -465,7 +466,7 @@ export default function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t("settings.feedback")} separatorInset={58}>
+      <Section title={t("settings.feedback")} separatorInset={48}>
         {isFeaturamaConfigured ? (
           <ListRow
             title={t("settings.featureRequests")}
@@ -481,7 +482,7 @@ export default function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t("settings.join")} separatorInset={58}>
+      <Section title={t("settings.join")} separatorInset={48}>
         <ListRow
           title={t("settings.clipping")}
           subtitle={t("settings.clippingSubtitle")}
@@ -491,7 +492,7 @@ export default function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t("settings.about")} separatorInset={58}>
+      <Section title={t("settings.about")} separatorInset={48}>
         <ListRow
           title={t("settings.openSource")}
           leading={<SettingsIcon icon={CodeXml} />}
@@ -521,7 +522,7 @@ export default function SettingsScreen() {
         <Section
           title={t("settings.developer")}
           footer={t("settings.developerFooter")}
-          separatorInset={58}
+          separatorInset={48}
         >
           <NativeMenu
             title={t("settings.seedDemoFor")}

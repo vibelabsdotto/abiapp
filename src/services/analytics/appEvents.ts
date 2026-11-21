@@ -1,8 +1,9 @@
-// Product analytics events (GA4). Parameters never contain grades, names,
-// free text or anything else personal: only states, ruleset ids, counts and
-// enum values. Tracking must never delay or fail the action it describes.
+// Product analytics events (GA4). Tracking must never delay or fail the
+// action it describes.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import type { ExamSlot, GradeKind, StateCode } from "@domain/model";
 
 import { setUserProperty, trackEvent } from "./analyticsService";
 
@@ -24,21 +25,75 @@ export const ANALYTICS_EVENTS = {
   clippingDismissed: "clipping_dismissed",
 } as const;
 
+type EventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
+
+/**
+ * Answers of "Woher kennst du AbiApp?" (onboarding_source.source, user
+ * property acquisition_source). Enum values: never rename.
+ */
+export const ACQUISITION_SOURCES = [
+  "tiktok",
+  "instagram",
+  "friends",
+  "school",
+  "store",
+  "google",
+  "other",
+] as const;
+export type AcquisitionSource = (typeof ACQUISITION_SOURCES)[number];
+
+/** Where the clipping hint sits. */
+export type ClippingPlacement = "overview" | "settings";
+
+/**
+ * The only parameters each event may send. Allowed: states, ruleset ids,
+ * Abitur years, counts, half-year indices and enum values. Never points,
+ * grades, goals, subject names or free text: these end up in Google
+ * Analytics and in the store privacy labels.
+ */
+interface EventParams {
+  onboarding_completed: {
+    state: StateCode;
+    ruleset_id: string;
+    abitur_year: number;
+    subject_count: number;
+    elevated_count: number;
+    exam_slots_set: number;
+    has_goal: boolean;
+  };
+  subject_added: { source: "catalog" | "custom"; count: number };
+  grade_added: { kind: GradeKind };
+  first_grade_added: { kind: GradeKind };
+  official_result_set: { half_year: number };
+  exam_result_set: { slot: ExamSlot; with_oral: boolean };
+  goal_set: undefined;
+  rules_changed: { state: StateCode; ruleset_id: string; abitur_year: number };
+  backup_exported: undefined;
+  backup_restored: undefined;
+  data_deleted: undefined;
+  onboarding_source: { source: AcquisitionSource | "skipped" };
+  clipping_shown: { placement: ClippingPlacement };
+  clipping_opened: { placement: ClippingPlacement };
+  clipping_dismissed: { placement: ClippingPlacement };
+}
+
+type ParamArgs<E extends EventName> = EventParams[E] extends undefined
+  ? []
+  : [params: EventParams[E]];
+
 const FIRST_GRADE_KEY = "abiapp.analytics.firstGradeTracked";
 
-type Params = Record<string, string | number | boolean | null | undefined>;
-
 /** Fire-and-forget: errors are swallowed inside the analytics service. */
-export function track(
-  event: (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS],
-  params?: Params,
+export function track<E extends EventName>(
+  event: E,
+  ...[params]: ParamArgs<E>
 ): void {
   void trackEvent(event, params).catch(() => undefined);
 }
 
 /** Profile-level user properties for segmenting reports. */
 export function trackProfile(profile: {
-  state: string;
+  state: StateCode;
   rulesetId: string;
   abiturYear: number;
 }): void {
@@ -50,13 +105,12 @@ export function trackProfile(profile: {
 }
 
 /** Answer of the onboarding question "Woher kennst du AbiApp?". */
-export function trackAcquisitionSource(source: string): void {
+export function trackAcquisitionSource(
+  source: AcquisitionSource | "skipped",
+): void {
   track(ANALYTICS_EVENTS.onboardingSource, { source });
   void setUserProperty("acquisition_source", source).catch(() => undefined);
 }
-
-/** Where the clipping hint sits. */
-export type ClippingPlacement = "overview" | "settings";
 
 const clippingShownThisSession = new Set<ClippingPlacement>();
 
@@ -68,7 +122,7 @@ export function trackClippingShown(placement: ClippingPlacement): void {
 }
 
 /** grade_added on every grade, first_grade_added once per installation. */
-export function trackGradeAdded(kind: string): void {
+export function trackGradeAdded(kind: GradeKind): void {
   track(ANALYTICS_EVENTS.gradeAdded, { kind });
   void (async () => {
     if ((await AsyncStorage.getItem(FIRST_GRADE_KEY)) !== null) return;

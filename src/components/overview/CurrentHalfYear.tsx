@@ -82,7 +82,7 @@ export const CurrentHalfYear = ({
                   {subject.level === "elevated" ? (
                     <Chip
                       label={ruleset.levelNames.elevated.short}
-                      tone="accent"
+                      tone="neutral"
                       accessibilityLabel={ruleset.levelNames.elevated.name}
                     />
                   ) : null}

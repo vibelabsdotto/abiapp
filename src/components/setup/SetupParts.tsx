@@ -14,7 +14,13 @@ import {
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
 import { ProgressBar } from "@components/ui/ProgressBar";
-import { FontScale, NumberType, Radius, Type } from "@constants/typography";
+import {
+  FontScale,
+  NumberType,
+  Radius,
+  Type,
+  readableContent,
+} from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 
@@ -133,6 +139,7 @@ export const OnboardingStep = ({
           automaticallyAdjustKeyboardInsets={keyboardAware}
           contentContainerStyle={[
             styles.content,
+            readableContent,
             // Without a footer the list runs to the bottom edge (Android
             // draws edge-to-edge; iOS adds the inset automatically).
             !hasFooter && Platform.OS === "android"

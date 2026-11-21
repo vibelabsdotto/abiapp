@@ -54,7 +54,9 @@ const IosModalHeader = ({
       {onSave ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button
-            variant="done"
+            // Prominent ink only when it can act; disabled is plain grey
+            // text, never a grey filled button that looks active.
+            variant={saveDisabled ? "plain" : "done"}
             disabled={saveDisabled}
             onPress={onSave}
           >

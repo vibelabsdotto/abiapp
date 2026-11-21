@@ -8,9 +8,8 @@
 // (graphite) unless the student picked an accent in the subject editor; the
 // stored value is a palette key (`SubjectPalette`) or `null`.
 
-import type { SFSymbol } from "sf-symbols-typescript";
-
 import type { SubjectTag } from "@domain/model";
+import { isMenuSymbol, type MenuSymbol } from "@constants/menuIcons";
 import {
   Atom,
   BookOpen,
@@ -63,8 +62,8 @@ export const resolveSubjectColor = (
 };
 
 export interface SubjectVisual {
-  /** SF Symbol for iOS native menus only. */
-  sf: SFSymbol;
+  /** SF Symbol for native menus only (has an Android drawable). */
+  sf: MenuSymbol;
   /** Lucide icon for everything drawn in the app. */
   icon: LucideIcon;
 }
@@ -110,7 +109,7 @@ const DEFAULT_VISUAL: SubjectVisual = {
 };
 
 /** Symbol by subject tag for keys outside VISUALS (first match wins). */
-const BY_TAG: { tag: SubjectTag; sf: SFSymbol; icon: LucideIcon }[] = [
+const BY_TAG: { tag: SubjectTag; sf: MenuSymbol; icon: LucideIcon }[] = [
   { tag: "foreign_language", sf: "character.bubble", icon: Languages },
   { tag: "natural_science", sf: "atom", icon: Atom },
   {
@@ -149,9 +148,12 @@ export const subjectVisual = (
   const known = catalogKey ? VISUALS[catalogKey] : undefined;
   if (known) return known;
   const byTag = BY_TAG.find((item) => hints.tags?.includes(item.tag));
+  // Catalog symbols are runtime strings (src/domain); only those with an
+  // Android icon are used (scripts/check-menu-icons.mts keeps them covered).
   const catalogSymbol =
-    hints.catalogSymbol && hints.catalogSymbol !== DEFAULT_VISUAL.sf
-      ? (hints.catalogSymbol as SFSymbol)
+    isMenuSymbol(hints.catalogSymbol) &&
+    hints.catalogSymbol !== DEFAULT_VISUAL.sf
+      ? hints.catalogSymbol
       : undefined;
   return {
     sf: catalogSymbol ?? byTag?.sf ?? DEFAULT_VISUAL.sf,

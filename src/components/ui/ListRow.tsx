@@ -29,8 +29,8 @@ import { Icon } from "./Icon";
 export interface ListRowMenu {
   /** Menu header, e.g. the subject name. */
   title?: string;
-  /** Every action needs an SF Symbol (`image`). */
-  actions: (ContextMenuRowAction & { image: string })[];
+  /** Every action needs an icon (`image`, typed by MenuSymbol). */
+  actions: ContextMenuRowAction[];
 }
 
 export interface ListRowProps {

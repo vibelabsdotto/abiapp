@@ -18,7 +18,6 @@ interface PreferencesState {
   lastActiveDay: string | null;
   /** The clipping card on the overview was closed for good. */
   clippingDismissed: boolean;
-  hasHydrated: boolean;
   setShowPredictions: (value: boolean) => void;
   setSelectedHalfYear: (halfYear: number | null) => void;
   /** Counts `today` once (call on start and when the app becomes active). */
@@ -40,7 +39,6 @@ export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set, get) => ({
       ...DEFAULTS,
-      hasHydrated: false,
       setShowPredictions: (showPredictions) => set({ showPredictions }),
       setSelectedHalfYear: (selectedHalfYear) => set({ selectedHalfYear }),
       recordActiveDay: (today) => {
@@ -82,10 +80,6 @@ export const usePreferencesStore = create<PreferencesState>()(
               : null,
           clippingDismissed: stored.clippingDismissed === true,
         };
-      },
-      // Publish through setState (never mutate) so subscribers are notified.
-      onRehydrateStorage: () => () => {
-        usePreferencesStore.setState({ hasHydrated: true });
       },
     },
   ),
