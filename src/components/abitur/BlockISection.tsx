@@ -261,12 +261,7 @@ export const BlockISection = ({
               pressed && styles.pressed,
             ]}
           >
-            <Icon
-              sf="arrow.counterclockwise"
-              fallback={RotateCcw}
-              size={15}
-              color={colors.destructive}
-            />
+            <Icon icon={RotateCcw} size={16} color={colors.destructive} />
             <Text style={[Type.subhead, { color: colors.destructive }]}>
               {t("abitur.blockI.reset")}
             </Text>

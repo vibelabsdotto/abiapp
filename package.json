@@ -9,14 +9,16 @@
     "ios": "expo run:ios --port 8090",
     "android": "expo run:android --port 8090",
     "prebuild": "expo prebuild --clean",
-    "lint": "expo lint",
+    "lint": "expo lint && npm run check:contrast",
     "lint:fix": "expo lint --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "type-check": "tsc --noEmit",
     "postinstall": "patch-package",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mts",
+    "icons:tabs": "node scripts/generate-tab-icons.mjs"
   },
   "dependencies": {
     "@expo/ui": "~58.0.21",

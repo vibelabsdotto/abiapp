@@ -65,7 +65,7 @@ export default function SubjectDetailScreen() {
         <Stack.Screen options={{ title: "" }} />
         <EmptyState
           fill
-          icon={{ sf: "books.vertical", fallback: BookOpen }}
+          icon={BookOpen}
           title={t("subjects.detail.notFoundTitle")}
           message={t("subjects.detail.notFoundMessage")}
           action={{

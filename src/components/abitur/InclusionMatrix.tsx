@@ -1,13 +1,12 @@
 // InclusionMatrix - Block I as subjects x half-years. Counted courses sit on
-// an ink tint, others are dimmed; a lock marks mandatory courses, a pin the
-// student's own choice. Tap a cell: native menu Automatisch / Immer / Nie.
+// a grey fill, others are dimmed; a small square marks mandatory courses,
+// an ink dot the student's own choice. Tap a cell: native menu Automatisch / Immer / Nie.
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Lock, Pin, PinOff } from "lucide-react-native";
 
 import { NativeMenu, type NativeMenuAction } from "@components/common";
-import { Chip, Icon, PointsBadge, formatDecimal } from "@components/ui";
+import { Chip, PointsBadge, formatDecimal } from "@components/ui";
 import type { RulesetSummary } from "@domain/model";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
@@ -220,14 +219,12 @@ const MatrixCell = ({ cell, subjectName, halfYearLabel }: MatrixCellProps) => {
             dimmed={!isIncluded}
           />
           {mandatory ? (
-            <View style={styles.markerRight}>
-              <Icon
-                sf="lock.fill"
-                fallback={Lock}
-                size={8}
-                color={colors.textSecondary}
-              />
-            </View>
+            <View
+              style={[
+                styles.markerRight,
+                { backgroundColor: colors.textSecondary },
+              ]}
+            />
           ) : null}
           {inclusion !== "auto" ? (
             <View
@@ -235,14 +232,7 @@ const MatrixCell = ({ cell, subjectName, halfYearLabel }: MatrixCellProps) => {
                 styles.markerLeft,
                 { backgroundColor: colors.accent, borderColor: colors.card },
               ]}
-            >
-              <Icon
-                sf={inclusion === "include" ? "pin.fill" : "pin.slash.fill"}
-                fallback={inclusion === "include" ? Pin : PinOff}
-                size={8}
-                color={colors.accentForeground}
-              />
-            </View>
+            />
           ) : null}
         </View>
       }
@@ -265,11 +255,12 @@ export const MatrixLegend = () => {
         </Text>
       </View>
       <View style={styles.legendItem}>
-        <Icon
-          sf="lock.fill"
-          fallback={Lock}
-          size={10}
-          color={colors.textSecondary}
+        <View
+          style={[
+            styles.markerRight,
+            styles.legendMark,
+            { backgroundColor: colors.textSecondary },
+          ]}
         />
         <Text style={[Type.caption1, { color: colors.textSecondary }]}>
           {t("abitur.blockI.legend.mandatory")}
@@ -281,14 +272,7 @@ export const MatrixLegend = () => {
             styles.legendPin,
             { backgroundColor: colors.accent, borderColor: colors.card },
           ]}
-        >
-          <Icon
-            sf="pin.fill"
-            fallback={Pin}
-            size={8}
-            color={colors.accentForeground}
-          />
-        </View>
+        />
         <Text style={[Type.caption1, { color: colors.textSecondary }]}>
           {t("abitur.blockI.legend.manual")}
         </Text>
@@ -381,21 +365,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderRadius: 1,
   },
+  /** Pflicht: a small square in the corner (no icon at this size). */
   markerRight: {
     position: "absolute",
     top: 3,
     right: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 1,
   },
+  /** Manually set: a solid ink dot on the cell corner. */
   markerLeft: {
     position: "absolute",
-    top: -3,
-    left: -1,
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
+    top: -2,
+    left: 0,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
     borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  legendMark: {
+    position: "relative",
+    top: 0,
+    right: 0,
+    width: 7,
+    height: 7,
   },
   legend: {
     flexDirection: "row",
@@ -415,12 +409,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendPin: {
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   legendNotTaken: {
     width: 14,

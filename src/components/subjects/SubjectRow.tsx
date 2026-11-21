@@ -104,12 +104,7 @@ export const SubjectRow = ({
       {status ? (
         <View style={styles.status}>
           {status.tone === "in" ? (
-            <Icon
-              sf="checkmark.circle.fill"
-              fallback={CircleCheck}
-              size={13}
-              color={colors.success}
-            />
+            <Icon icon={CircleCheck} size={16} color={colors.success} />
           ) : null}
           <Text
             style={[

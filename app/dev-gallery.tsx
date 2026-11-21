@@ -110,14 +110,7 @@ export default function DevGalleryScreen() {
       ]}
       onSelect={(id) => setThemeMode(id as ThemeMode)}
       hitSlop={8}
-      trigger={
-        <Icon
-          sf="circle.lefthalf.filled"
-          fallback={Target}
-          size={22}
-          color={colors.accent}
-        />
-      }
+      trigger={<Icon icon={Target} size={24} color={colors.accent} />}
     />
   );
 
@@ -462,8 +455,7 @@ export default function DevGalleryScreen() {
                 onPress: noop,
                 icon: (
                   <Icon
-                    sf="plus"
-                    fallback={CirclePlus}
+                    icon={CirclePlus}
                     size={16}
                     color={colors.accentForeground}
                   />

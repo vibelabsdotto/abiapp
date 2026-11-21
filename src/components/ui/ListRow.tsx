@@ -15,7 +15,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { Check, ChevronRight, Circle, CircleCheck } from "lucide-react-native";
+import { Check, ChevronRight } from "lucide-react-native";
 
 import {
   ContextMenuRow,
@@ -41,7 +41,7 @@ export interface ListRowProps {
   subtitleLabel?: string;
   /** Leading element, e.g. <SubjectAvatar />. */
   leading?: React.ReactNode;
-  /** Small colour dot instead of a leading element. */
+  /** Thin subject-colour marker instead of a leading element. */
   dotColor?: string;
   /** Chips shown after the title (LK, P1). */
   badges?: React.ReactNode;
@@ -123,20 +123,20 @@ export const ListRow = ({
 
   const selectionNode =
     selected === undefined ? null : selectionStyle === "circle" ? (
-      <Icon
-        sf={selected ? "checkmark.circle.fill" : "circle"}
-        fallback={selected ? CircleCheck : Circle}
-        size={24}
-        color={selected ? colors.accent : colors.textTertiary}
-      />
+      <View
+        style={[
+          styles.circle,
+          selected
+            ? { backgroundColor: colors.accent, borderColor: colors.accent }
+            : { borderColor: colors.textTertiary },
+        ]}
+      >
+        {selected ? (
+          <Icon icon={Check} size={16} color={colors.accentForeground} />
+        ) : null}
+      </View>
     ) : selected ? (
-      <Icon
-        sf="checkmark"
-        fallback={Check}
-        size={17}
-        weight="semibold"
-        color={colors.accent}
-      />
+      <Icon icon={Check} size={20} color={colors.accent} />
     ) : (
       <View style={styles.checkSpacer} />
     );
@@ -197,10 +197,9 @@ export const ListRow = ({
       {selectionNode}
       {chevron ? (
         <Icon
-          sf="chevron.right"
-          fallback={ChevronRight}
-          size={13}
-          weight="bold"
+          icon={ChevronRight}
+          size={16}
+
           color={colors.textTertiary}
         />
       ) : null}
@@ -272,9 +271,9 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 3,
+    alignSelf: "stretch",
+    borderRadius: 1.5,
   },
   text: {
     flex: 1,
@@ -310,6 +309,14 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   checkSpacer: {
-    width: 17,
+    width: 20,
+  },
+  circle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

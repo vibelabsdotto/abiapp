@@ -141,19 +141,11 @@ export default function RulesScreen() {
               subtitle={[source.section, hostOf(source.url)]
                 .filter(Boolean)
                 .join(" · ")}
-              leading={
-                <Icon
-                  sf="link"
-                  fallback={Link}
-                  size={20}
-                  color={colors.accent}
-                />
-              }
+              leading={<Icon icon={Link} size={20} color={colors.accent} />}
               trailing={
                 <Icon
-                  sf="arrow.up.right"
-                  fallback={ArrowUpRight}
-                  size={14}
+                  icon={ArrowUpRight}
+                  size={16}
                   color={colors.textTertiary}
                 />
               }

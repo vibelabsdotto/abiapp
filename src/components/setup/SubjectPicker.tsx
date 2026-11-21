@@ -237,12 +237,7 @@ const CustomSubjectForm = ({
           !canAdd && styles.disabled,
         ]}
       >
-        <Icon
-          sf="plus.circle.fill"
-          fallback={Plus}
-          size={22}
-          color={colors.accent}
-        />
+        <Icon icon={Plus} size={24} color={colors.accent} />
         <Text style={[Type.body, { color: colors.accent }]}>
           {t("setup.subjects.addCustom")}
         </Text>

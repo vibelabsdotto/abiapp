@@ -114,10 +114,9 @@ export const ResultCard = ({
                 : t("subjects.detail.enterResult")}
             </Text>
             <Icon
-              sf="chevron.right"
-              fallback={ChevronRight}
-              size={12}
-              weight="bold"
+              icon={ChevronRight}
+              size={16}
+
               color={colors.accent}
             />
           </View>
@@ -193,7 +192,7 @@ const GoalBlock = ({
         style={({ pressed }) => [styles.goal, pressed && styles.pressed]}
       >
         <View style={styles.goalHeader}>
-          <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
+          <Icon icon={Target} size={20} color={colors.accent} />
           <View style={styles.flex}>
             <Text
               maxFontSizeMultiplier={FontScale.heading}
@@ -206,10 +205,9 @@ const GoalBlock = ({
             </Text>
           </View>
           <Icon
-            sf="chevron.right"
-            fallback={ChevronRight}
-            size={12}
-            weight="bold"
+            icon={ChevronRight}
+            size={16}
+
             color={colors.textTertiary}
           />
         </View>
@@ -285,7 +283,7 @@ const GoalBlock = ({
       style={({ pressed }) => [styles.goal, pressed && styles.pressed]}
     >
       <View style={styles.goalHeader}>
-        <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
+        <Icon icon={Target} size={20} color={colors.accent} />
         <Text
           maxFontSizeMultiplier={FontScale.heading}
           style={[Type.headline, styles.flex, { color: colors.text }]}

@@ -134,14 +134,7 @@ export const RulesLink = ({ ruleset }: { ruleset: RulesetSummary }) => {
       <ListRow
         title={t("abitur.rulesLink", { state: ruleset.stateName })}
         subtitle={t("abitur.rulesLinkHint")}
-        leading={
-          <Icon
-            sf="text.book.closed"
-            fallback={BookOpen}
-            size={22}
-            color={colors.accent}
-          />
-        }
+        leading={<Icon icon={BookOpen} size={24} color={colors.accent} />}
         chevron
         onPress={() => router.push("/rules")}
       />

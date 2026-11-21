@@ -1,7 +1,8 @@
-// Android theme accent in the brand color. Without it AppCompat falls back
-// to its teal default, which shows up in native alert buttons, PopupMenu
-// checkboxes, text selection handles and the cursor. Light and dark use the
-// app's accent tokens (src/constants/colors.ts: accent).
+// Android theme accent in ink. Without it AppCompat falls back to its teal
+// default (and Material 3 to lavender), which shows up in native alert
+// buttons, PopupMenu checkboxes, text selection handles and the cursor.
+// Light and dark use the app's accent tokens (src/constants/colors.ts:
+// accent), so every native widget stays black and white.
 
 const {
   AndroidConfig,
@@ -10,8 +11,8 @@ const {
   withAndroidStyles,
 } = require("expo/config-plugins");
 
-const ACCENT_LIGHT = "#3B3FD8";
-const ACCENT_DARK = "#8F94FF";
+const ACCENT_LIGHT = "#0A0A0A";
+const ACCENT_DARK = "#F5F5F5";
 
 const setColors = (modResults, accent) => {
   let colors = AndroidConfig.Colors.assignColorValue(modResults, {

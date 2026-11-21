@@ -1,9 +1,10 @@
 // PointsBadge - one course value on the 0-15 scale.
-// Source decides the style (matches CourseValue.source):
-//   official  solid tier colour        "12"    report-card value
-//   grades    tinted tier colour       "11,4"  prognosis from grades
-//   estimate  dashed tier outline      "10"    extrapolated, no grades yet
-//   none      dashed neutral outline   "–"
+// Source decides the shape (matches CourseValue.source), the tier only the
+// ink density (see points.ts):
+//   official  filled with the tier ink   "12"    report-card value
+//   grades    solid outline, no fill     "11,4"  prognosis from grades
+//   estimate  dashed outline             "10"    extrapolated, no grades yet
+//   none      dashed hairline            "–"
 
 import React from "react";
 import {
@@ -19,7 +20,12 @@ import { useTranslation } from "@locales/index";
 import { FontScale, NumberType, Radius } from "@constants/typography";
 import type { ValueSource } from "@domain/model";
 
-import { formatDecimal, pointsPalette, pointsTier } from "./points";
+import {
+  formatDecimal,
+  pointsPalette,
+  pointsTier,
+  type PointsScale,
+} from "./points";
 
 export type PointsBadgeSize = "mini" | "small" | "medium" | "large";
 
@@ -37,6 +43,8 @@ export interface PointsBadgeProps {
   dimmed?: boolean;
   /** Font scale cap; fixed-width grids pass `FontScale.grid`. */
   maxFontScale?: number;
+  /** Scale override (dev gallery comparison only). */
+  scale?: PointsScale;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }
@@ -94,6 +102,7 @@ export const PointsBadge = ({
   showDecimal,
   dimmed = false,
   maxFontScale = FontScale.badge,
+  scale,
   style,
   accessibilityLabel,
 }: PointsBadgeProps) => {
@@ -104,7 +113,7 @@ export const PointsBadge = ({
     source ?? (points === null ? "none" : "official");
   const isEmpty = resolvedSource === "none" || points === null;
   const tier = isEmpty ? "none" : pointsTier(points);
-  const palette = pointsPalette(colors, tier);
+  const palette = pointsPalette(colors, tier, scale);
   const dims = SIZES[size];
 
   const useDecimal =
@@ -129,11 +138,10 @@ export const PointsBadge = ({
   } else if (resolvedSource === "official") {
     background = palette.solid;
     textColor = palette.onSolid;
-  } else if (resolvedSource === "grades") {
-    background = palette.fill;
   } else {
-    borderColor = palette.text;
-    borderStyle = "dashed";
+    borderColor = palette.edge;
+    borderStyle = resolvedSource === "grades" ? "solid" : "dashed";
+    textColor = tier === "low" ? palette.text : colors.text;
   }
 
   const spoken =
@@ -159,7 +167,7 @@ export const PointsBadge = ({
         borderColor !== undefined && {
           borderColor,
           borderStyle,
-          borderWidth: size === "mini" ? 1 : 1.5,
+          borderWidth: size === "mini" || isEmpty ? 1 : 1.5,
         },
         dimmed && styles.dimmed,
         style,

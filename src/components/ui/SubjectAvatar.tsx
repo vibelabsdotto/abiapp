@@ -1,44 +1,51 @@
-// SubjectAvatar - rounded square in the subject colour with its symbol.
-// Symbol and automatic colour come from subjectVisual() with the ruleset
-// catalog (catalog SF Symbol, tags, stable colour for unknown keys).
+// SubjectAvatar - the subject's Lucide icon on a rounded tile. Neutral
+// (graphite icon on grey) unless the student picked an accent; then the
+// icon takes the accent on a lightly tinted tile. The only place besides
+// the subject detail header where a subject colour appears.
 
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import type { SFSymbol } from "sf-symbols-typescript";
 import type { LucideIcon } from "lucide-react-native";
 
-import { Icon } from "./Icon";
+import { useThemeStore } from "@stores/themeStore";
+
+import { Icon, type IconSize } from "./Icon";
+import { subjectTile } from "./subjectPalette";
 import { resolveSubjectColor } from "./subjects";
 import { useSubjectVisualResolver } from "./useSubjectVisual";
 
 export interface SubjectAvatarProps {
-  /** Catalog key; picks the default symbol and colour. */
+  /** Catalog key; picks the default symbol. */
   catalogKey?: string | null;
-  /** Subject name; seeds the automatic colour of custom subjects. */
   name?: string | null;
   /** Subject tags; pick a symbol for custom subjects. */
   tags?: readonly string[];
-  /** Palette key or hex; overrides the automatic colour. */
+  /** Stored subject colour (palette key) or null for neutral. */
   color?: string | null;
-  /** Overrides the catalog symbol (iOS). */
-  sf?: SFSymbol;
-  /** Overrides the catalog icon (Android). */
-  fallback?: LucideIcon;
+  /** Overrides the catalog icon. */
+  icon?: LucideIcon;
   size?: number;
 }
+
+const iconSizeFor = (size: number): IconSize =>
+  size >= 44 ? 24 : size >= 32 ? 20 : 16;
 
 export const SubjectAvatar = ({
   catalogKey,
   name,
   tags,
   color,
-  sf,
-  fallback,
+  icon,
   size = 32,
 }: SubjectAvatarProps) => {
+  const colors = useThemeStore((state) => state.colors);
+  const isDark = useThemeStore((state) => state.isDark);
   const visualFor = useSubjectVisualResolver();
   const visual = visualFor({ catalogKey, name, tags });
-  const background = resolveSubjectColor(color ?? visual.color);
+  const accent = resolveSubjectColor(color, isDark);
+  const tile = accent
+    ? subjectTile(accent, colors.card, isDark ? "dark" : "light")
+    : colors.fill;
 
   return (
     <View
@@ -50,16 +57,15 @@ export const SubjectAvatar = ({
         {
           width: size,
           height: size,
-          borderRadius: size * 0.3,
-          backgroundColor: background,
+          borderRadius: Math.round(size * 0.28),
+          backgroundColor: tile,
         },
       ]}
     >
       <Icon
-        sf={sf ?? visual.sf}
-        fallback={fallback ?? visual.icon}
-        size={size * 0.56}
-        color="#FFFFFF"
+        icon={icon ?? visual.icon}
+        size={iconSizeFor(size)}
+        color={accent ?? colors.text}
       />
     </View>
   );

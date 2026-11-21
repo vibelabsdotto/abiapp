@@ -194,7 +194,7 @@ export default function ExamEditorScreen() {
         {header}
         <ScreenLayout>
           <EmptyState
-            icon={{ sf: "questionmark.circle", fallback: CircleHelp }}
+            icon={CircleHelp}
             title={t("examEditor.title")}
             message={t("examEditor.unknownSlot")}
           />
@@ -209,7 +209,7 @@ export default function ExamEditorScreen() {
         {header}
         <ScreenLayout>
           <EmptyState
-            icon={{ sf: "list.number", fallback: ListOrdered }}
+            icon={ListOrdered}
             title={t("examEditor.noSubjectTitle")}
             message={t("examEditor.noSubjectMessage", { slot: slot ?? "" })}
             action={{

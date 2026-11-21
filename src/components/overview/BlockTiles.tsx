@@ -39,7 +39,7 @@ export const BlockTiles = ({
       <View style={stacked ? styles.stackedTile : styles.tile}>
         <StatTile
           label={t("home.blockI.label")}
-          icon={{ sf: "square.stack.3d.up", fallback: Layers }}
+          icon={Layers}
           value={pointsOrDash(blockI.points)}
           unit={`/${blockI.maxPoints}`}
           tone={blockI.admitted === false ? "error" : "default"}
@@ -61,7 +61,7 @@ export const BlockTiles = ({
       <View style={stacked ? styles.stackedTile : styles.tile}>
         <StatTile
           label={t("home.blockII.label")}
-          icon={{ sf: "graduationcap", fallback: GraduationCap }}
+          icon={GraduationCap}
           value={pointsOrDash(blockII.points)}
           unit={`/${blockII.maxPoints}`}
           tone={blockII.passed === false ? "error" : "default"}

@@ -53,7 +53,6 @@ import {
   IssueBanner,
   ListRow,
   Section,
-  SubjectColors,
   formatGrade,
 } from "@components/ui";
 import { isFeaturamaConfigured } from "@constants/config";
@@ -114,17 +113,6 @@ const isThemeMode = (id: string): id is ThemeMode =>
 
 const isLanguageMode = (id: string): id is LanguageMode =>
   id === "system" || id === "de" || id === "en";
-
-const TILE = {
-  profile: SubjectColors.ink,
-  goal: SubjectColors.amber,
-  appearance: SubjectColors.slate,
-  data: SubjectColors.teal,
-  danger: "#D0303A",
-  feedback: SubjectColors.orange,
-  about: SubjectColors.blue,
-  developer: SubjectColors.brown,
-} as const;
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -350,22 +338,14 @@ export default function SettingsScreen() {
             title={t("settings.state")}
             value={stateName}
             valueMaxWidth="62%"
-            leading={
-              <SettingsIcon sf="map" fallback={MapIcon} color={TILE.profile} />
-            }
+            leading={<SettingsIcon icon={MapIcon} />}
             chevron
             onPress={openProfile}
           />
           <ListRow
             title={t("settings.abiturYear")}
             value={String(profile.abiturYear)}
-            leading={
-              <SettingsIcon
-                sf="calendar"
-                fallback={Calendar}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={Calendar} />}
             chevron
             onPress={openProfile}
           />
@@ -377,13 +357,7 @@ export default function SettingsScreen() {
                 <Chip label={t("settings.draft")} tone="warning" />
               ) : undefined
             }
-            leading={
-              <SettingsIcon
-                sf="doc.text"
-                fallback={ScrollText}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={ScrollText} />}
             chevron
             onPress={openProfile}
           />
@@ -391,13 +365,7 @@ export default function SettingsScreen() {
             <ListRow
               title={t("settings.examVariant")}
               subtitle={variant?.label ?? t("settings.notSet")}
-              leading={
-                <SettingsIcon
-                  sf="list.number"
-                  fallback={ListOrdered}
-                  color={TILE.profile}
-                />
-              }
+              leading={<SettingsIcon icon={ListOrdered} />}
               chevron
               onPress={() => open("/setup/exams")}
             />
@@ -405,13 +373,7 @@ export default function SettingsScreen() {
           <ListRow
             title={t("settings.subjects")}
             value={t("settings.subjectsCount", { count: subjects.length })}
-            leading={
-              <SettingsIcon
-                sf="books.vertical"
-                fallback={BookOpenText}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={BookOpenText} />}
             chevron
             onPress={() => open("/setup/subjects")}
           />
@@ -423,13 +385,7 @@ export default function SettingsScreen() {
                 : t("settings.notSet")
             }
             valueMaxWidth="55%"
-            leading={
-              <SettingsIcon
-                sf="arrow.up.square"
-                fallback={ArrowUpWideNarrow}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={ArrowUpWideNarrow} />}
             chevron
             onPress={() => open("/setup/levels")}
           />
@@ -439,13 +395,7 @@ export default function SettingsScreen() {
               count: examCount,
               total: required?.length ?? 0,
             })}
-            leading={
-              <SettingsIcon
-                sf="graduationcap"
-                fallback={GraduationCap}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={GraduationCap} />}
             chevron
             onPress={() => open("/setup/exams")}
           />
@@ -478,9 +428,7 @@ export default function SettingsScreen() {
                 ? formatGrade(profile.targetTenths, locale)
                 : t("settings.notSet")
             }
-            leading={
-              <SettingsIcon sf="target" fallback={Target} color={TILE.goal} />
-            }
+            leading={<SettingsIcon icon={Target} />}
             chevron
             onPress={() => open("/goal-editor")}
           />
@@ -499,13 +447,7 @@ export default function SettingsScreen() {
             <ListRow
               title={t("settings.theme")}
               accessibilityLabel={`${t("settings.theme")}, ${t(THEME_LABEL_KEYS[themeMode])}`}
-              leading={
-                <SettingsIcon
-                  sf="circle.lefthalf.filled"
-                  fallback={SunMoon}
-                  color={TILE.appearance}
-                />
-              }
+              leading={<SettingsIcon icon={SunMoon} />}
               trailing={pickerValue(t(THEME_LABEL_KEYS[themeMode]))}
             />
           }
@@ -521,13 +463,7 @@ export default function SettingsScreen() {
             <ListRow
               title={t("settings.language")}
               accessibilityLabel={`${t("settings.language")}, ${t(LANGUAGE_LABEL_KEYS[languageMode])}`}
-              leading={
-                <SettingsIcon
-                  sf="globe"
-                  fallback={Languages}
-                  color={TILE.appearance}
-                />
-              }
+              leading={<SettingsIcon icon={Languages} />}
               trailing={pickerValue(t(LANGUAGE_LABEL_KEYS[languageMode]))}
             />
           }
@@ -541,32 +477,18 @@ export default function SettingsScreen() {
       >
         <ListRow
           title={t("settings.exportBackup")}
-          leading={
-            <SettingsIcon
-              sf="square.and.arrow.up"
-              fallback={Upload}
-              color={TILE.data}
-            />
-          }
+          leading={<SettingsIcon icon={Upload} />}
           onPress={() => void handleExport()}
         />
         <ListRow
           title={t("settings.importBackup")}
-          leading={
-            <SettingsIcon
-              sf="square.and.arrow.down"
-              fallback={Download}
-              color={TILE.data}
-            />
-          }
+          leading={<SettingsIcon icon={Download} />}
           onPress={() => void handleImport()}
         />
         <ListRow
           title={t("settings.deleteAll")}
           destructive
-          leading={
-            <SettingsIcon sf="trash" fallback={Trash2} color={TILE.danger} />
-          }
+          leading={<SettingsIcon icon={Trash2} tone="destructive" />}
           onPress={() => void handleDeleteAll()}
         />
       </Section>
@@ -575,22 +497,14 @@ export default function SettingsScreen() {
         {isFeaturamaConfigured ? (
           <ListRow
             title={t("settings.featureRequests")}
-            leading={
-              <SettingsIcon
-                sf="lightbulb"
-                fallback={Lightbulb}
-                color={TILE.feedback}
-              />
-            }
+            leading={<SettingsIcon icon={Lightbulb} />}
             chevron
             onPress={() => open("/feature-requests")}
           />
         ) : null}
         <ListRow
           title={t("settings.rate")}
-          leading={
-            <SettingsIcon sf="star" fallback={Star} color={TILE.feedback} />
-          }
+          leading={<SettingsIcon icon={Star} />}
           onPress={() => void handleRate()}
         />
       </Section>
@@ -598,42 +512,26 @@ export default function SettingsScreen() {
       <Section title={t("settings.about")} separatorInset={58}>
         <ListRow
           title={t("settings.openSource")}
-          leading={
-            <SettingsIcon
-              sf="chevron.left.forwardslash.chevron.right"
-              fallback={CodeXml}
-              color={TILE.about}
-            />
-          }
+          leading={<SettingsIcon icon={CodeXml} />}
           chevron
           onPress={() => void openUrl(GITHUB_URL)}
         />
         <ListRow
           title={t("settings.privacyPolicy")}
-          leading={
-            <SettingsIcon sf="hand.raised" fallback={Hand} color={TILE.about} />
-          }
+          leading={<SettingsIcon icon={Hand} />}
           chevron
           onPress={() => void openUrl(PRIVACY_URL)}
         />
         <ListRow
           title={t("settings.imprint")}
-          leading={
-            <SettingsIcon
-              sf="doc.plaintext"
-              fallback={FileText}
-              color={TILE.about}
-            />
-          }
+          leading={<SettingsIcon icon={FileText} />}
           chevron
           onPress={() => void openUrl(IMPRINT_URL)}
         />
         <ListRow
           title={t("settings.version")}
           value={version}
-          leading={
-            <SettingsIcon sf="info.circle" fallback={Info} color={TILE.about} />
-          }
+          leading={<SettingsIcon icon={Info} />}
         />
       </Section>
 
@@ -651,37 +549,19 @@ export default function SettingsScreen() {
             trigger={
               <ListRow
                 title={t("settings.seedDemo")}
-                leading={
-                  <SettingsIcon
-                    sf="wand.and.stars"
-                    fallback={WandSparkles}
-                    color={TILE.developer}
-                  />
-                }
+                leading={<SettingsIcon icon={WandSparkles} />}
                 trailing={pickerValue(profile?.state ?? "SN")}
               />
             }
           />
           <ListRow
             title={t("settings.resetOnboarding")}
-            leading={
-              <SettingsIcon
-                sf="arrow.counterclockwise"
-                fallback={RotateCcw}
-                color={TILE.developer}
-              />
-            }
+            leading={<SettingsIcon icon={RotateCcw} />}
             onPress={() => void handleResetOnboarding()}
           />
           <ListRow
             title={t("settings.designGallery")}
-            leading={
-              <SettingsIcon
-                sf="paintpalette"
-                fallback={Palette}
-                color={TILE.developer}
-              />
-            }
+            leading={<SettingsIcon icon={Palette} />}
             chevron
             onPress={() => open("/dev-gallery")}
           />

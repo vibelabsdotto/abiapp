@@ -109,12 +109,7 @@ export const BlockIISection = ({
               accessibilityLabel={`${t("abitur.blockII.variant")}, ${variant.label}`}
               style={[styles.variant, { backgroundColor: colors.card }]}
             >
-              <Icon
-                sf={variantIcon(variant)}
-                fallback={ListOrdered}
-                size={20}
-                color={colors.accent}
-              />
+              <Icon icon={ListOrdered} size={20} color={colors.accent} />
               <View style={styles.variantValue}>
                 <Text style={[Type.footnote, { color: colors.textSecondary }]}>
                   {t("abitur.blockII.variant")}
@@ -124,9 +119,8 @@ export const BlockIISection = ({
                 </Text>
               </View>
               <Icon
-                sf="chevron.up.chevron.down"
-                fallback={ChevronsUpDown}
-                size={14}
+                icon={ChevronsUpDown}
+                size={16}
                 color={colors.textSecondary}
               />
             </View>

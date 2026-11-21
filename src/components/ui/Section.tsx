@@ -67,7 +67,7 @@ export const Section = ({
             >
               <Text
                 maxFontSizeMultiplier={FontScale.heading}
-                style={[Type.subhead, { color: colors.accent }]}
+                style={[Type.subhead, styles.action, { color: colors.text }]}
               >
                 {action.title}
               </Text>
@@ -133,6 +133,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.5,
+  },
+  action: {
+    fontWeight: "600",
   },
   card: {
     borderRadius: Radius.card,

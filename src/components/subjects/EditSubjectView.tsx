@@ -14,9 +14,7 @@ import {
   SUBJECT_COLOR_KEYS,
   Section,
   SegmentedControl,
-  SubjectColors,
-  resolveSubjectColor,
-  subjectVisual,
+  SubjectPalette,
   type SubjectColorKey,
 } from "@components/ui";
 import { validateSetup } from "@domain/index";
@@ -55,6 +53,7 @@ export const EditSubjectView = ({
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
+  const isDark = useThemeStore((state) => state.isDark);
   const courses = useCourseStore((state) => state.courses);
   const grades = useCourseStore((state) => state.grades);
   const updateSubject = useCourseStore((state) => state.updateSubject);
@@ -160,9 +159,6 @@ export const EditSubjectView = ({
   const presets = EXAM_WEIGHT_PRESETS.includes(draft.examWeightPercent)
     ? EXAM_WEIGHT_PRESETS
     : [...EXAM_WEIGHT_PRESETS, draft.examWeightPercent].sort((a, b) => a - b);
-  const defaultColor = subjectVisual(subject.catalogKey, {
-    name: subject.name,
-  }).color;
   const stateName = ruleset?.stateName ?? "";
 
   return (
@@ -303,22 +299,30 @@ export const EditSubjectView = ({
           </Text>
           <View style={[styles.colors, { backgroundColor: colors.card }]}>
             <ColorSwatch
-              color={resolveSubjectColor(defaultColor)}
+              color={null}
               selected={draft.color === null}
-              label={t("subjects.subjectEditor.colorAuto")}
-              auto
+              label={t("subjects.subjectEditor.colorNone")}
               onPress={() => update({ color: null })}
             />
             {SUBJECT_COLOR_KEYS.map((key: SubjectColorKey) => (
               <ColorSwatch
                 key={key}
-                color={SubjectColors[key]}
+                color={SubjectPalette[key][isDark ? "dark" : "light"]}
                 selected={draft.color === key}
                 label={t(`subjects.subjectEditor.colors.${key}`)}
                 onPress={() => update({ color: key })}
               />
             ))}
           </View>
+          <Text
+            style={[
+              Type.footnote,
+              styles.note,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {t("subjects.subjectEditor.colorFooter")}
+          </Text>
         </View>
 
         <Section>
@@ -350,17 +354,16 @@ export const EditSubjectView = ({
   );
 };
 
+/** One colour choice; `color: null` is "Keine" (neutral). */
 const ColorSwatch = ({
   color,
   selected,
   label,
-  auto = false,
   onPress,
 }: {
-  color: string;
+  color: string | null;
   selected: boolean;
   label: string;
-  auto?: boolean;
   onPress: () => void;
 }) => {
   const colors = useThemeStore((state) => state.colors);
@@ -380,14 +383,17 @@ const ColorSwatch = ({
       <View
         style={[
           styles.swatch,
-          { backgroundColor: color },
-          auto && [styles.auto, { borderColor: colors.card }],
+          color === null
+            ? [styles.none, { borderColor: colors.textTertiary }]
+            : { backgroundColor: color },
         ]}
       >
-        {selected ? (
-          <Icon sf="checkmark" fallback={Check} size={14} color="#FFFFFF" />
-        ) : auto ? (
-          <Text style={[Type.caption2, styles.autoLabel]}>A</Text>
+        {color === null ? (
+          <View
+            style={[styles.noneSlash, { backgroundColor: colors.textTertiary }]}
+          />
+        ) : selected ? (
+          <Icon icon={Check} size={16} color={colors.accentForeground} />
         ) : null}
       </View>
     </Pressable>
@@ -425,13 +431,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  auto: {
-    borderWidth: 2,
-    borderStyle: "dashed",
+  none: {
+    borderWidth: 1.5,
+    overflow: "hidden",
   },
-  autoLabel: {
-    color: "#FFFFFF",
-    fontWeight: "700",
+  noneSlash: {
+    width: 1.5,
+    height: 40,
+    transform: [{ rotate: "45deg" }],
   },
   pressed: {
     opacity: 0.6,

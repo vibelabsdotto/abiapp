@@ -1,12 +1,14 @@
 // ArchGauge - the AbiApp arch: two legs and a half circle, filled from the
 // left foot over the top. Same geometry as the app icon. Used by GradeHero
-// (with markers) and as the brand mark (EmptyState, onboarding).
+// (thin, with markers) and as the brand mark (EmptyState, onboarding).
 //
-// The fill animates once on mount unless the user prefers reduced motion.
+// `dashed` draws the fill as dashes: a prognosis reads differently from an
+// official result by its shape, not by colour. The fill animates once on
+// mount unless the user prefers reduced motion.
 
-import React, { useEffect } from "react";
+import React, { useEffect, useId } from "react";
 import { StyleSheet, View } from "react-native";
-import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
+import Svg, { Circle, Defs, Line, Mask, Path, Rect } from "react-native-svg";
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -21,8 +23,11 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 export interface ArchMarker {
   /** Position along the arch, 0 (left foot) to 1 (right foot). */
   at: number;
-  /** notch: gap across the stroke; dot: filled circle on the stroke. */
-  kind: "notch" | "dot";
+  /**
+   * notch: gap across the stroke; tick: short scale mark outside the arch;
+   * dot: filled circle on the stroke.
+   */
+  kind: "notch" | "tick" | "dot";
   color: string;
 }
 
@@ -32,14 +37,16 @@ export interface ArchGaugeProps {
   progress: number;
   color: string;
   trackColor: string;
-  /** Stroke width relative to the radius (icon: 0.57, gauge: 0.18). */
+  /** Stroke width relative to the radius (icon: 0.57, hero: 0.06). */
   strokeRatio?: number;
   /** Leg length relative to the radius. */
   legRatio?: number;
   markers?: ArchMarker[];
   /** Horizontal bar between the legs: turns the arch into the "A" mark. */
   crossbar?: boolean;
-  /** Background behind the gauge; notches are cut in this colour. */
+  /** Draw the fill as dashes (prognosis). */
+  dashed?: boolean;
+  /** Background behind the gauge; notches and dot rings use this colour. */
   surfaceColor?: string;
   animated?: boolean;
   /** Content centred inside the arch (e.g. the grade). */
@@ -79,6 +86,9 @@ const normalAt = (g: Geometry, s: number) => {
 const clamp01 = (value: number) =>
   Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
 
+/** Room outside the stroke for tick marks. */
+const TICK = 7;
+
 export const ArchGauge = ({
   width,
   progress,
@@ -88,18 +98,22 @@ export const ArchGauge = ({
   legRatio = 0.62,
   markers = [],
   crossbar = false,
+  dashed = false,
   surfaceColor = "transparent",
   animated = true,
   children,
 }: ArchGaugeProps) => {
+  const maskId = `arch-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const reduceMotion = useReducedMotion();
-  const r = width / (2 + strokeRatio);
+  const hasTicks = markers.some((marker) => marker.kind === "tick");
+  const inset = hasTicks ? TICK + 2 : 0;
+  const r = (width - 2 * inset) / (2 + strokeRatio);
   const stroke = r * strokeRatio;
   const leg = r * legRatio;
-  const height = r + stroke / 2 + leg;
+  const height = inset + r + stroke / 2 + leg;
   const g: Geometry = {
     cx: width / 2,
-    cy: stroke / 2 + r,
+    cy: inset + stroke / 2 + r,
     r,
     leg,
     total: 2 * leg + Math.PI * r,
@@ -132,20 +146,56 @@ export const ArchGauge = ({
   });
 
   const inner = r - stroke / 2;
+  // Fine rhythm: short dashes with equal gaps read as "not final yet".
+  const dash = Math.max(2, stroke * 0.45);
 
   return (
     <View style={{ width, height }}>
       <Svg width={width} height={height}>
         <Path d={d} stroke={trackColor} strokeWidth={stroke} fill="none" />
-        <AnimatedPath
-          d={d}
-          stroke={color}
-          strokeWidth={stroke}
-          fill="none"
-          strokeDasharray={[g.total, g.total]}
-          animatedProps={fillProps}
-        />
-        <AnimatedCircle fill={color} animatedProps={capProps} />
+        {dashed ? (
+          <>
+            <Defs>
+              <Mask
+                id={maskId}
+                maskUnits="userSpaceOnUse"
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+              >
+                <AnimatedPath
+                  d={d}
+                  stroke="white"
+                  strokeWidth={stroke + 2}
+                  fill="none"
+                  strokeDasharray={[g.total, g.total]}
+                  animatedProps={fillProps}
+                />
+              </Mask>
+            </Defs>
+            <Path
+              d={d}
+              stroke={color}
+              strokeWidth={stroke}
+              fill="none"
+              strokeDasharray={[dash, dash]}
+              mask={`url(#${maskId})`}
+            />
+          </>
+        ) : (
+          <>
+            <AnimatedPath
+              d={d}
+              stroke={color}
+              strokeWidth={stroke}
+              fill="none"
+              strokeDasharray={[g.total, g.total]}
+              animatedProps={fillProps}
+            />
+            <AnimatedCircle fill={color} animatedProps={capProps} />
+          </>
+        )}
         {crossbar ? (
           <Rect
             x={g.cx - inner - 0.5}
@@ -158,20 +208,34 @@ export const ArchGauge = ({
         {markers.map((marker) => {
           const s = g.total * clamp01(marker.at);
           const p = pointAt(g, s);
+          const n = normalAt(g, s);
           if (marker.kind === "dot") {
             return (
               <Circle
                 key={`dot-${marker.at}`}
                 cx={p.x}
                 cy={p.y}
-                r={stroke * 0.3}
+                r={Math.max(4.5, stroke * 0.3)}
                 fill={marker.color}
                 stroke={surfaceColor}
-                strokeWidth={2}
+                strokeWidth={2.5}
               />
             );
           }
-          const n = normalAt(g, s);
+          if (marker.kind === "tick") {
+            const from = stroke / 2 + 2;
+            return (
+              <Line
+                key={`tick-${marker.at}`}
+                x1={p.x + n.x * from}
+                y1={p.y + n.y * from}
+                x2={p.x + n.x * (from + TICK)}
+                y2={p.y + n.y * (from + TICK)}
+                stroke={marker.color}
+                strokeWidth={1.5}
+              />
+            );
+          }
           const reach = stroke / 2 + 1;
           return (
             <Line
@@ -192,9 +256,9 @@ export const ArchGauge = ({
           style={[
             styles.overlay,
             {
-              top: stroke + r * 0.18,
-              left: stroke,
-              right: stroke,
+              top: inset + stroke + r * 0.16,
+              left: inset + stroke,
+              right: inset + stroke,
             },
           ]}
         >

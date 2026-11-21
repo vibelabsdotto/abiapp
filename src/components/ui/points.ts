@@ -19,35 +19,70 @@ export const pointsTier = (points: number | null | undefined): PointsTier => {
   return "top";
 };
 
+/**
+ * How the 0-15 scale is drawn.
+ * ink:     ink density, 13-15 full ink, 10-12 mid grey, 5-9 light grey,
+ *          0-4 red.
+ * neutral: every value neutral grey, only the deficit (0-4) red.
+ * The app uses `POINTS_SCALE`; the dev gallery renders both for comparison.
+ */
+export type PointsScale = "ink" | "neutral";
+
+export const POINTS_SCALE: PointsScale = "ink";
+
 export interface PointsPalette {
   /** Text/icon colour on `card` and on `fill`. */
   text: string;
-  /** Tinted background. */
+  /** Quiet background. */
   fill: string;
   /** Strong background (official values, selected cells). */
   solid: string;
   /** Text on `solid`. */
   onSolid: string;
+  /** Outline of prognoses (solid) and estimates (dashed). */
+  edge: string;
 }
 
 export const pointsPalette = (
   colors: ThemeColors,
   tier: PointsTier,
+  scale: PointsScale = POINTS_SCALE,
 ): PointsPalette => {
+  if (tier === "low") {
+    return {
+      text: colors.pointsLowText,
+      fill: colors.pointsLowFill,
+      solid: colors.pointsLowSolid,
+      onSolid: colors.pointsLowOnSolid,
+      edge: colors.pointsLowText,
+    };
+  }
+  if (tier === "none") {
+    return {
+      text: colors.pointsNoneText,
+      fill: colors.pointsNoneFill,
+      solid: colors.pointsNoneFill,
+      onSolid: colors.pointsNoneText,
+      edge: colors.separator,
+    };
+  }
+  if (scale === "neutral") {
+    return {
+      text: colors.text,
+      fill: colors.fill,
+      solid: colors.fill,
+      onSolid: colors.text,
+      edge: colors.textSecondary,
+    };
+  }
   switch (tier) {
-    case "low":
-      return {
-        text: colors.pointsLowText,
-        fill: colors.pointsLowFill,
-        solid: colors.pointsLowSolid,
-        onSolid: colors.pointsLowOnSolid,
-      };
     case "mid":
       return {
         text: colors.pointsMidText,
         fill: colors.pointsMidFill,
         solid: colors.pointsMidSolid,
         onSolid: colors.pointsMidOnSolid,
+        edge: colors.textTertiary,
       };
     case "good":
       return {
@@ -55,20 +90,15 @@ export const pointsPalette = (
         fill: colors.pointsGoodFill,
         solid: colors.pointsGoodSolid,
         onSolid: colors.pointsGoodOnSolid,
+        edge: colors.pointsGoodSolid,
       };
-    case "top":
+    default:
       return {
         text: colors.pointsTopText,
         fill: colors.pointsTopFill,
         solid: colors.pointsTopSolid,
         onSolid: colors.pointsTopOnSolid,
-      };
-    default:
-      return {
-        text: colors.pointsNoneText,
-        fill: colors.pointsNoneFill,
-        solid: colors.pointsNoneFill,
-        onSolid: colors.pointsNoneText,
+        edge: colors.pointsTopSolid,
       };
   }
 };

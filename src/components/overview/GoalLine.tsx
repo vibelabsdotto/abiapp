@@ -93,7 +93,7 @@ export const GoalLine = ({
       ]}
     >
       <View style={[styles.icon, { backgroundColor: colors.accentLight }]}>
-        <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
+        <Icon icon={Target} size={20} color={colors.accent} />
       </View>
       <View style={styles.text}>
         <Text style={[Type.subhead, styles.title, { color: tone }]}>
@@ -106,10 +106,9 @@ export const GoalLine = ({
         ) : null}
       </View>
       <Icon
-        sf="chevron.right"
-        fallback={ChevronRight}
-        size={13}
-        weight="bold"
+        icon={ChevronRight}
+        size={16}
+
         color={colors.textTertiary}
       />
     </Pressable>

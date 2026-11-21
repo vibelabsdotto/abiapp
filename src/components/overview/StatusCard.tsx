@@ -69,20 +69,14 @@ export const StatusCard = ({
           pressed && { backgroundColor: colors.fill },
         ]}
       >
-        <Icon
-          sf={summaryIcon.sf}
-          fallback={summaryIcon.fallback}
-          size={22}
-          color={summaryColor}
-        />
+        <Icon icon={summaryIcon.fallback} size={24} color={summaryColor} />
         <Text style={[Type.body, styles.summaryText, { color: colors.text }]}>
           {summary}
         </Text>
         <Icon
-          sf="chevron.right"
-          fallback={ChevronRight}
-          size={13}
-          weight="bold"
+          icon={ChevronRight}
+          size={16}
+
           color={colors.textTertiary}
         />
       </Pressable>
@@ -123,13 +117,8 @@ const IssueRow = ({ issue }: { issue: Issue }) => {
       style={styles.issue}
     >
       <Icon
-        sf={
-          error
-            ? "exclamationmark.octagon.fill"
-            : "exclamationmark.triangle.fill"
-        }
-        fallback={error ? OctagonAlert : TriangleAlert}
-        size={22}
+        icon={error ? OctagonAlert : TriangleAlert}
+        size={24}
         color={error ? colors.error : colors.warning}
       />
       <View style={styles.issueText}>
