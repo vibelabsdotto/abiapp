@@ -19,6 +19,7 @@ import {
   combinations,
   component,
   consecutiveWindows,
+  continuedLanguages,
   doubledPairs,
   elevatedSubjects,
   examSubjectRequirements,
@@ -59,18 +60,32 @@ const four = (s: EngineSubject, label?: string) => ({
 // Shared building blocks
 // ---------------------------------------------------------------------------
 
-/** Every foreign language may fulfil the duty; a newly started one adds 2 results (Anlage 3 Fn. 2). */
-function fsPicks(f: EngineSubject, allFs: EngineSubject[]) {
-  return [
-    four(f, FS_LABEL),
-    ...allFs
-      .filter((x) => x !== f && isNewFs(x))
-      .map((x) => ({
+/**
+ * Anlage 3 Fn. 2: whoever had to start a new language in the
+ * Einführungsphase (no second language from Sek I) adds 2 results of it
+ * unless it fulfils the duty itself. With two continued languages the new one
+ * was voluntary; with at most one the app assumes it was compulsory.
+ */
+function compulsoryNewFs(ctx: RuleContext): EngineSubject[] {
+  return continuedLanguages(ctx).length <= 1 ? taken(ctx, isNewFs) : [];
+}
+
+/** Picks of the language duty with language f (plus Fn. 2) and the assumption it implies. */
+function fsOption(f: EngineSubject, ctx: RuleContext) {
+  const extra = compulsoryNewFs(ctx).filter((x) => x !== f);
+  return {
+    picks: [
+      four(f, FS_LABEL),
+      ...extra.map((x) => ({
         subjectId: x.id,
         count: 2,
         label: "neu begonnene Fremdsprache",
       })),
-  ];
+    ],
+    assumption: extra.length
+      ? `Annahme: Du musstest ${extra.map((x) => x.name).join(" und ")} in der Einführungsphase neu beginnen, deshalb zählen 2 Ergebnisse davon zusätzlich.`
+      : undefined,
+  };
 }
 
 const sportCap = (s: EngineSubject): number | null =>
@@ -176,7 +191,8 @@ function fsNw2027(ctx: RuleContext, focus: Focus | null): Requirement {
   const options: RequirementOption[] = [];
   for (const f of allFs) {
     for (const n of nws) {
-      const base = [...fsPicks(f, allFs), four(n, NW_LABEL)];
+      const fo = fsOption(f, ctx);
+      const base = [...fo.picks, four(n, NW_LABEL)];
       let extra: { s: EngineSubject; count: number }[] | null = null;
       if (focus === "lang")
         extra = allFs.filter((x) => x !== f).map((s) => ({ s, count: 4 }));
@@ -192,7 +208,11 @@ function fsNw2027(ctx: RuleContext, focus: Focus | null): Requirement {
           ...inf,
         ].map((s) => ({ s, count: 2 }));
       if (!extra) {
-        options.push({ label: `${f.name}, ${n.name}`, picks: base });
+        options.push({
+          label: `${f.name}, ${n.name}`,
+          picks: base,
+          assumption: fo.assumption,
+        });
         continue;
       }
       for (const x of extra) {
@@ -202,6 +222,7 @@ function fsNw2027(ctx: RuleContext, focus: Focus | null): Requirement {
             ...base,
             { subjectId: x.s.id, count: x.count, label: secondLabel(x.s) },
           ],
+          assumption: fo.assumption,
         });
       }
     }
@@ -217,18 +238,30 @@ function fsNw2027(ctx: RuleContext, focus: Focus | null): Requirement {
   return { id: "fsnw", label, options };
 }
 
-function religionRequirement(ctx: RuleContext): Requirement {
+function religionRequirement(ctx: RuleContext, ownDuty: string[]): Requirement {
   const rel = byKey(ctx, ...REL);
   const label = "2 Ergebnisse Religion, Werte und Normen oder Philosophie";
   if (rel.length > 0) return oneOf("rel", label, rel, 2);
-  // Anlage 3 Fn. 5: two consecutive results of another social subject that is no exam subject.
+  // Anlage 3 Fn. 5: two consecutive ADDITIONAL results of another social
+  // subject that is no exam subject. Geschichte and Politik-Wirtschaft carry
+  // their own duty of 2, so they need all 4 results to add 2 consecutive ones.
   const options: RequirementOption[] = [];
   for (const s of taken(ctx, (x) => niField(x) === "social" && !x.examSlot)) {
+    const assumption = `Annahme: Religion deiner Konfession wurde nicht angeboten, ${s.name} ersetzt die Pflicht.`;
+    if (ownDuty.includes(s.catalogKey ?? "")) {
+      if (ctx.takenHalfYears(s.id).length === 4)
+        options.push({
+          label: `${s.name} (alle 4 Halbjahre)`,
+          picks: [{ subjectId: s.id, count: 4 }],
+          assumption,
+        });
+      continue;
+    }
     for (const w of consecutiveWindows(ctx, s.id, 2)) {
       options.push({
         label: `${s.name} ${w.map((h) => ctx.ruleset.halfYears[h]).join("/")}`,
         picks: [{ subjectId: s.id, count: 2, halfYears: w }],
-        assumption: `Annahme: Religion deiner Konfession wurde nicht angeboten, ${s.name} ersetzt die Pflicht.`,
+        assumption,
       });
     }
   }
@@ -274,7 +307,7 @@ function requirements2027(ctx: RuleContext): Requirement[] {
       oneOf("pol", "2 Ergebnisse Politik-Wirtschaft", byKey(ctx, "pol"), 2),
     );
   reqs.push(oneOf("ge", "2 Ergebnisse Geschichte", byKey(ctx, "ge"), 2));
-  reqs.push(religionRequirement(ctx));
+  reqs.push(religionRequirement(ctx, powiFree ? ["ge"] : ["ge", "pol"]));
   const sem = byKey(ctx, "sem");
   reqs.push({
     ...oneOf(
@@ -342,6 +375,16 @@ function validate2027(ctx: RuleContext): Issue[] {
       out.push(
         issue("exam.ds", "error", "Darstellendes Spiel kann nur P5 sein.", ref),
       );
+    // VO-GO Anlage 2 Fn. 9.
+    if (hasKey(s, "ds") && examSubjects(ctx).some((x) => hasKey(x, "ku", "mu")))
+      out.push(
+        issue(
+          "exam.dsArts",
+          "error",
+          "Mit Kunst oder Musik als Prüfungsfach kann Darstellendes Spiel nicht mündliches Prüfungsfach sein.",
+          ref,
+        ),
+      );
     if (hasKey(s, "eth") && !oral)
       out.push(
         issue(
@@ -392,35 +435,38 @@ export const NI_2027: Ruleset = {
   catalog: catalog([...CATALOG_BASE, ["sem", { defaultHalfYears: [0, 1, 2] }]]),
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase 12/1 bis 13/2 mit drei Fächern auf erhöhtem Niveau: P1 und P2 sind deine Schwerpunktfächer, P3 ist ein drittes eA-Fach.",
-    "Block I: 32 bis 36 Ergebnisse, nur P1 und P2 zählen doppelt. Punkte = 40 × Summe / gewichtete Anzahl, ab 0,5 aufgerundet. Die App wählt die beste Anzahl.",
-    "Pflicht: alle fünf Prüfungsfächer, Deutsch, Mathematik, eine Fremdsprache und eine Naturwissenschaft (je 4), dazu je 2 in Kunst, Musik oder Darstellendem Spiel, Politik-Wirtschaft, Geschichte, Religion oder Werte und Normen und im Seminarfach.",
-    "Je nach Schwerpunkt kommen Pflichtergebnisse dazu, im mathematisch-naturwissenschaftlichen Schwerpunkt etwa 4 Ergebnisse einer zweiten Naturwissenschaft oder Informatik.",
-    "Zulassung: mindestens 200 Punkte, höchstens 6 Ergebnisse unter 5 Punkten (bei 35 oder 36 Ergebnissen 7), in P1 bis P3 höchstens 3, kein eingebrachtes Ergebnis mit 0 Punkten.",
+    "Qualifikationsphase 12/1 bis 13/2 mit drei Fächern auf erhöhtem Niveau (eA): P1 und P2 sind deine Schwerpunktfächer (im gesellschaftswissenschaftlichen Schwerpunkt Geschichte und ein Kernfach), P3 ist das dritte eA-Fach.",
+    "Block I: 32 bis 36 Halbjahresergebnisse, nur P1 und P2 zählen doppelt. Punkte = 40 × Summe ÷ gewichtete Anzahl, kaufmännisch gerundet. Die App wählt die beste Anzahl.",
+    "Pflicht: alle Ergebnisse der fünf Prüfungsfächer, je 4 in Deutsch, Mathematik, einer Fremdsprache und einer Naturwissenschaft, je 2 in Kunst, Musik oder Darstellendem Spiel, Politik-Wirtschaft, Geschichte, Religion, Werte und Normen oder Philosophie und im Seminarfach (mit dem Halbjahr der Facharbeit).",
+    "Je nach Schwerpunkt kommt mehr dazu: sprachlich 4 einer zweiten Fremdsprache, mathematisch-naturwissenschaftlich 4 einer zweiten Naturwissenschaft oder Informatik, gesellschaftswissenschaftlich und sportlich 2 einer weiteren Fremdsprache, Naturwissenschaft oder Informatik, musisch-künstlerisch 2 im zweiten künstlerischen Fach.",
+    "Musstest du in der Einführungsphase eine Fremdsprache neu beginnen, zählen 2 Ergebnisse davon zusätzlich, außer sie erfüllt selbst die Fremdsprachen-Pflicht.",
+    "Zulassung: mindestens 200 Punkte, höchstens 6 Ergebnisse unter 5 Punkten (bei 35 oder 36 eingebrachten 7), in P1 bis P3 höchstens 3. Kein eingebrachtes Ergebnis darf 0 Punkte haben.",
     "Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
-    "Block II: fünf Prüfungen vierfach. P1 bis P4 schriftlich, P5 mündlich oder als Präsentation. Eine Besondere Lernleistung kann P4 ersetzen.",
-    "Zusätzliche mündliche Prüfung: (8 × schriftlich + 4 × mündlich) / 3, ab 0,5 aufgerundet.",
-    "Bestehen: Block II mindestens 100 Punkte und drei Prüfungen mit je mindestens 20 Punkten, gesamt mindestens 300.",
+    "Block II: fünf Prüfungen, jede vierfach. P1 bis P4 schriftlich, P5 mündlich oder als Präsentation. Eine Besondere Lernleistung kann die schriftliche Prüfung in P4 ersetzen.",
+    "Zusätzliche mündliche Prüfung: (8 × schriftlich + 4 × mündlich) ÷ 3, kaufmännisch gerundet.",
+    "Bestehen: Block II mindestens 100 Punkte und in drei Prüfungen je mindestens 20 Punkte (5 Punkte einfach), gesamt mindestens 300.",
   ],
   sources: [
     {
-      title: "AVO-GOBAK, Gesamtqualifikation",
+      title:
+        "AVO-GOBAK und EB-AVO-GOBAK (Lesefassung MK, Fassung ab 05.03.2025)",
+      section: "§ 15 Abs. 2, 3, 8; Anlage 1 Nr. 1, 4; Anlage 2; Anlage 3",
+      url: "https://www.mk.niedersachsen.de/download/110382/AVO-GOBAK_und_EB-AVO-GOBAK_Maerz_2025.pdf",
+    },
+    {
+      title: "VO-GO und EB-VO-GO (Lesefassung MK, VO-GO Fassung ab 25.02.2021)",
+      section: "§ 10 Abs. 2, § 11 Abs. 2–4, 9, Anlagen 2, 3",
+      url: "https://www.mk.niedersachsen.de/download/110377/Verordnung_ueber_die_gymnasiale_Oberstufe_und_Ergaenzende_Bestimmungen_Fassungen_Maerz_2025_.pdf",
+    },
+    {
+      title: "AVO-GOBAK § 15 Gesamtqualifikation (VORIS)",
       section: "§ 15",
       url: "https://voris.wolterskluwer-online.de/browse/document/27d7582a-d2a2-324d-9375-c340c689ddb9",
     },
     {
-      title: "AVO-GOBAK und EB-AVO-GOBAK (Lesefassung MK, März 2025)",
-      section: "§§ 4, 11, 13, 15, Anlagen 1–3",
-      url: "https://www.mk.niedersachsen.de/download/110382/AVO-GOBAK_und_EB-AVO-GOBAK_Maerz_2025.pdf",
-    },
-    {
-      title: "VO-GO und EB-VO-GO (Lesefassung MK, März 2025)",
-      section: "§§ 1, 10, 11, Anlage 3",
-      url: "https://www.mk.niedersachsen.de/download/110377/Verordnung_ueber_die_gymnasiale_Oberstufe_und_Ergaenzende_Bestimmungen_Fassungen_Maerz_2025_.pdf",
-    },
-    {
-      title: "Entwurf VO-SEK II-Abitur, Übergangsregel",
-      section: "§ 70 Abs. 1, 3",
+      title:
+        "Entwurf VO-SEK II-Abitur (Anhörungsfassung 20.08.2026), Übergangsregel",
+      section: "§ 70 Abs. 1, 3: bisheriges Recht bis Abitur 2029",
       url: "https://www.mk.niedersachsen.de/download/231195/Entwurf_EB-VO_SEK_II_Abitur.pdf",
     },
   ],
@@ -517,7 +563,7 @@ function requirements2030(ctx: RuleContext): Requirement[] {
   reqs.push({
     id: "fs",
     label: "4 Ergebnisse einer Fremdsprache",
-    options: allFs.map((f) => ({ label: f.name, picks: fsPicks(f, allFs) })),
+    options: allFs.map((f) => ({ label: f.name, ...fsOption(f, ctx) })),
   });
   reqs.push(
     oneOf("nw", "4 Ergebnisse einer Naturwissenschaft", byKey(ctx, ...NWS), 4),

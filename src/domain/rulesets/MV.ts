@@ -337,52 +337,56 @@ function mv(v2028: boolean): Ruleset {
       v2028
         ? "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine fortgeführte Fremdsprache und eine Naturwissenschaft je 4. Musik, Kunst oder Theater, Geschichte, Politische Bildung/Sozialkunde, Religion oder Philosophie je 2."
         : "Pflicht: alle Prüfungsfächer, Deutsch, Mathematik, eine fortgeführte Fremdsprache, eine Naturwissenschaft sowie Geschichte und Politische Bildung je 4. Musik, Kunst oder Darstellendes Spiel und Religion oder Philosophie je 2.",
-      "Eine Facharbeit kann doppelt als zwei Halbjahresleistungen zählen.",
-      "Zulassung: mindestens 200 Punkte, mindestens 29 Halbjahre mit 5 oder mehr Punkten (höchstens 7 darunter). Halbjahre mit 0 Punkten zählen nicht.",
+      "Eine Facharbeit aus dem ersten Jahr der Qualifikationsphase kann freiwillig mit bis zu 30 Punkten eingebracht werden; sie zählt wie zwei Halbjahresleistungen.",
+      "Zulassung: mindestens 200 Punkte, mindestens 29 Halbjahre mit 5 oder mehr Punkten (höchstens 7 darunter). Halbjahre mit 0 Punkten zählen weder für die Belegung noch für die Einbringung.",
       "Block II: P1 und P2 (LK) und P3 schriftlich, P4 und P5 mündlich, alle vierfach. Eine Besondere Lernleistung kann P4 ersetzen.",
       v2028
-        ? "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, ab 0,5 aufgerundet. BLL: Dokumentation 40 %, Kolloquium 60 %."
-        : "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, ab 0,5 aufgerundet. BLL: Dokumentation und Kolloquium je zur Hälfte.",
+        ? "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) × 4/3, ab 0,5 aufgerundet (Anlage 5). BLL: Dokumentation 40 %, Kolloquium 60 %."
+        : "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) × 4/3, ab 0,5 aufgerundet. BLL: Dokumentation und Kolloquium je zur Hälfte (Annahme, alte Fassung nicht im Volltext geprüft).",
       "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 5 Punkten (20 vierfach), darunter P1 oder P2.",
       "Gesamt mindestens 300 von 900 Punkten, Note nach Anlage 7.",
     ],
     sources: v2028
       ? [
           {
-            title: "Abiturprüfungsverordnung (APVO M-V)",
-            section: "§§ 12, 25, 26, 31, 37, 42, 43; Anlagen 4, 5, 6a, 7",
+            title:
+              "Abiturprüfungsverordnung (APVO M-V), Gesamtausgabe Stand 08.07.2026",
+            section:
+              "§§ 6, 12, 19, 22, 25, 26, 31, 42, 43; Anlagen 4, 5, 6a, 7",
             url: "https://www.landesrecht-mv.de/bsmv/document/jlr-AbiPrVMVrahmen",
           },
           {
             title:
-              "Fünfte Verordnung zur Änderung der APVO M-V vom 1. August 2025",
-            section: "Art. 2 Abs. 2",
-            url: "http://erasmus-gymnasium-rostock.de/wp-content/uploads/2026/03/apvo_ab2025.pdf",
+              "Fünfte Verordnung zur Änderung der APVO M-V vom 01.08.2025 (Mittl.bl. BM M-V 2025 S. 122)",
+            section:
+              "Art. 2 Abs. 2: gilt aufwachsend ab Eintritt in die Einführungsphase 2025/26",
+            url: "https://www.landesrecht-mv.de/bsmv/document/jlr-AbiPrVMVrahmen",
           },
           {
             title:
-              "Broschüre „Die gymnasiale Oberstufe in Mecklenburg-Vorpommern“",
-            section: "S. 14–17",
+              "Broschüre „Die gymnasiale Oberstufe in Mecklenburg-Vorpommern“, 4. Auflage April 2026",
+            section: "Belegungs- und Einbringungsverpflichtung, S. 9–14",
             url: "https://www.bildung-mv.de/export/sites/bildungsserver/.galleries/dokumente/schule/Broschuere-zur-Oberstufen-und-Abiturpruefung.pdf",
           },
         ]
       : [
           {
             title:
-              "Abiturprüfungsverordnung (APVO M-V), Fassung vom 30. April 2024",
-            section: "§§ 12, 25, 26, 31, 37, 42, 43; Anlagen 3, 4, 5a, 6",
-            url: "http://erasmus-gymnasium-rostock.de/wp-content/uploads/2024/12/abiprv_mv.pdf",
+              "Fünfte Verordnung zur Änderung der APVO M-V vom 01.08.2025 (Mittl.bl. BM M-V 2025 S. 122)",
+            section:
+              "Art. 2 Abs. 3: wer 2025/26 in der Qualifikationsphase ist, legt das Abitur nach der APVO i. d. F. vom 30.04.2024 ab",
+            url: "https://www.landesrecht-mv.de/bsmv/document/jlr-AbiPrVMVrahmen",
           },
           {
             title:
-              "Fünfte Verordnung zur Änderung der APVO M-V vom 1. August 2025 (Übergang)",
-            section: "Art. 2 Abs. 3",
-            url: "http://erasmus-gymnasium-rostock.de/wp-content/uploads/2026/03/apvo_ab2025.pdf",
-          },
-          {
-            title: "APVO M-V, aktuelle Fassung (Berechnungsregeln unverändert)",
+              "Abiturprüfungsverordnung (APVO M-V), aktuelle Gesamtausgabe (Berechnungsregeln)",
             section: "§ 43, Anlagen 4, 5, 7",
             url: "https://www.landesrecht-mv.de/bsmv/document/jlr-AbiPrVMVrahmen",
+          },
+          {
+            title: "Bildungsministerium M-V: Prüfungstermine 2027",
+            section: "Abitur 2027 mit „Geschichte und Politische Bildung“",
+            url: "https://www.bildung-mv.de/export/sites/bildungsserver/.galleries/dokumente/schule/pruefungstermine_2027.pdf",
           },
         ],
     totalMinPoints: 300,
@@ -396,7 +400,16 @@ function mv(v2028: boolean): Ruleset {
       deficitLimits: () => [
         limit("total", 7, "Höchstens 7 Halbjahre unter 5 Punkten"),
       ],
-      zero: { includable: false, failIfTaken: false },
+      // § 12 Abs. 4, 7 and § 31 Abs. 4: a 0-point HJL does not count for the
+      // Belegung, so it blocks admission in subjects taken throughout.
+      zero: {
+        includable: false,
+        failIfTaken: (s) =>
+          hasKey(s, "de", "ma", "ge", "sp", ...(v2028 ? ["pol"] : [])) ||
+          hasTag(s, "new_foreign_language") ||
+          s.level === "elevated" ||
+          s.examSlot !== null,
+      },
     },
     blockII: {
       maxPoints: 300,

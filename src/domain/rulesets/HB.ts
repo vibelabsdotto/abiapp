@@ -56,20 +56,35 @@ function lkPairs(ctx: RuleContext): { pair: EngineSubject[]; open: boolean }[] {
   return combinations(el, 2).map((pair) => ({ pair, open: true }));
 }
 
-function weightings(ctx: RuleContext): WeightingOption[] {
+/**
+ * HB-2027 (AP-V § 8 Abs. 1 Nr. 1 b): LK doubled in Q1.1 to Q2.1, once in
+ * Q2.2. HB-2030 (draft): all eight LK courses doubled.
+ */
+function weightings(ctx: RuleContext, v2030 = false): WeightingOption[] {
   return lkPairs(ctx).map(({ pair, open }) => {
     const ids = new Set(pair.map((s) => s.id));
     const names = pair.map((s) => s.name).join(" und ");
+    const notes = [
+      open
+        ? `Annahme: ${names} sind dein erstes und zweites Leistungsfach, das dritte LK-Fach zählt als Grundfach.`
+        : null,
+      v2030 ? DRAFT_LK_WEIGHT : null,
+    ].filter((x): x is string => !!x);
     return {
       id: `lk:${[...ids].join("+")}`,
-      label: names ? `LK ${names} in Q1.1 bis Q2.1 doppelt` : null,
-      weight: (s, hy) => (ids.has(s.id) && hy < LAST ? 2 : 1),
-      assumption: open
-        ? `Annahme: ${names} sind dein erstes und zweites Leistungsfach, das dritte LK-Fach zählt als Grundfach.`
-        : undefined,
+      label: names
+        ? v2030
+          ? `LK ${names} doppelt`
+          : `LK ${names} in Q1.1 bis Q2.1 doppelt`
+        : null,
+      weight: (s, hy) => (ids.has(s.id) && (v2030 || hy < LAST) ? 2 : 1),
+      assumption: notes.length ? notes.join(" ") : undefined,
     };
   });
 }
+
+const DRAFT_LK_WEIGHT =
+  "Annahme nach dem Verordnungsentwurf (Stand Oktober 2026): alle 8 LK-Kurse zählen doppelt, der Projektkurs einfach. Die Broschüre „Wege zum Abitur 2027/28“ nennt Q2.2 einfach.";
 
 /** LK subjects for the deficit limit (P1/P2 if set, otherwise all elevated subjects). */
 function lkIds(ctx: RuleContext): Set<string> {
@@ -111,9 +126,35 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
     "Annahme: Dein Politikkurs ist Politik mit historischen Anteilen.";
   const gw = taken(ctx, (s) => hbField(s) === "social");
   if (v2030) {
-    reqs.push(
-      oneOf("gw", "4 Kurse eines gesellschaftswissenschaftlichen Fachs", gw, 4),
-    );
+    // Draft AP-V § 8 Abs. 2 Nr. 1 d: six courses from Aufgabenfeld II.
+    reqs.push({
+      id: "gw",
+      label: "6 Kurse aus dem Aufgabenfeld II",
+      short: "Aufgabenfeld II",
+      options: [
+        {
+          picks: [],
+          groupMins: [
+            {
+              id: "gw6",
+              label: "6 Kurse aus dem Aufgabenfeld II",
+              short: "Aufgabenfeld II",
+              subjectIds: gw.map((s) => s.id),
+              count: 6,
+            },
+          ],
+        },
+      ],
+    });
+    // Draft § 8 Abs. 1 Nr. 1 c: both Projektkurs half-years of Q1.
+    reqs.push({
+      id: "projekt",
+      label: "Projektkurs Q1.1 und Q1.2",
+      short: "Projektkurs",
+      options: byKey(ctx, "projekt").map((s) => ({
+        picks: [{ subjectId: s.id, count: 2, halfYears: [0, 1] }],
+      })),
+    });
     const hist: RequirementOption[] = [];
     if (ge)
       hist.push({ label: ge.name, picks: [{ subjectId: ge.id, count: 2 }] });
@@ -228,25 +269,14 @@ const exams = (f: number) => [
   component("P1", "written", "elevated", f, { levelShort: "LK" }),
   component("P2", "written", "elevated", f, { levelShort: "LK" }),
   component("P3", "written", "basic", f, { levelShort: "GK" }),
-  component("P4", "oral", "basic", f, { levelShort: "GK" }),
+  // A third LK "zum Grundfach abgestuft" may be the 4th exam subject, not
+  // the 3rd (AP-V § 9a Abs. 3 S. 2).
+  component("P4", "oral", "any", f, { levelShort: "GK" }),
 ];
 
 const P3_2027 = ["de", "la", "ge", "pol", "ma", "bio", "ch", "ph"];
-const P3_2030 = [
-  "de",
-  "en",
-  "es",
-  "fr",
-  "la",
-  "ge",
-  "pol",
-  "ma",
-  "bio",
-  "ch",
-  "ph",
-];
 
-function validate(ctx: RuleContext, v2030: boolean): Issue[] {
+function validate(ctx: RuleContext): Issue[] {
   const out: Issue[] = [];
   const lk = [...lkIds(ctx)]
     .map((id) => ctx.subjectById.get(id))
@@ -298,10 +328,10 @@ function validate(ctx: RuleContext, v2030: boolean): Issue[] {
   }
   const p3 = ctx.examSubjectBySlot.get("P3");
   if (p3) {
-    const ok = v2030
-      ? hasKey(p3, ...P3_2030)
-      : hasKey(p3, ...P3_2027) ||
-        (isFs(p3) && !isNewFs(p3) && !hasKey(p3, "ja", "zh"));
+    // § 9a Abs. 3 (unchanged in the 2030 draft).
+    const ok =
+      hasKey(p3, ...P3_2027) ||
+      (isFs(p3) && !isNewFs(p3) && !hasKey(p3, "ja", "zh"));
     if (!ok)
       out.push(
         issue(
@@ -456,23 +486,25 @@ export const HB_2027: Ruleset = {
   catalog: CATALOG,
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen, ein dritter ist zulässig und zählt dann als Grundfach.",
-    "Block I: 24 Grundkurse, 8 Leistungskurse und die Projektarbeit. LK zählen in Q1.1 bis Q2.1 doppelt, in Q2.2 einfach, die Projektarbeit doppelt. Damit ist Block I gleich der Punktsumme.",
-    "Pflicht: beide LK, P3 und P4, Deutsch, Mathematik, eine fortgesetzte Fremdsprache, eine Naturwissenschaft und ein Fach aus Aufgabenfeld II (je 4), 2 Kurse Kunst, Musik oder Darstellendes Spiel, ggf. 2 Kurse Geschichte.",
+    "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen. Ein dritter ist zulässig und zählt dann als Grundkurs (er kann 4., aber nicht 3. Prüfungsfach sein).",
+    "Block I: 24 Grundkurse, 8 Leistungskurse und die Projektarbeit. LK zählen in Q1.1 bis Q2.1 doppelt, in Q2.2 einfach, die Projektarbeit doppelt. Damit ist Block I gleich der gewichteten Punktsumme.",
+    "Pflicht: beide LK, P3 und P4, Deutsch, Mathematik, eine fortgesetzte Fremdsprache, eine Naturwissenschaft und ein Fach aus Aufgabenfeld II (je 4), 2 Kurse Kunst, Musik oder Darstellendes Spiel. Ist dein Fach aus Aufgabenfeld II nicht Geschichte und hat keine historischen Anteile, dazu 2 Kurse Geschichte.",
+    "Eine in der Einführungsphase neu begonnene zweite Fremdsprache: 2 Kurse, davon mindestens einer aus Q2.",
     "Die übrigen Grundkurse wählt die App nach Punkten. Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
-    "Zulassung: mindestens 200 Punkte, höchstens 6 Kurse unter 5 Punkten, davon höchstens 2 LK. Kurse mit 0 Punkten können nicht eingebracht werden.",
+    "Zulassung: mindestens 200 Punkte, höchstens 6 Kurse unter 5 Punkten, davon höchstens 2 LK. Die Projektarbeit zählt dabei nicht mit. Kurse mit 0 Punkten können nicht eingebracht werden; eine Projektarbeit mit 0 Punkten gilt als nicht angefertigt (keine Zulassung).",
     "Block II: vier Prüfungen fünffach, beide LK und ein GK schriftlich, ein GK mündlich. Mit Besonderer Lernleistung zählen alle fünf vierfach.",
-    "Zusätzliche mündliche Prüfung in P1 bis P3: (2 × schriftlich + mündlich) / 3 × Faktor, gerundet. Die App rechnet mit der Formel, nicht mit der Tabelle (Druckfehler bei 15/2).",
-    "Bestehen: Block II mindestens 100 Punkte, zwei Prüfungsfächer mit je mindestens 25 Punkten (mit BLL 20), darunter ein LK.",
+    "Zusätzliche mündliche Prüfung in P1 bis P3: (2 × schriftlich + mündlich) / 3 × Faktor, gerundet (Anlage 2). In der Tabelle mit BLL steht bei schriftlich 15 und mündlich 2 der Druckfehler 53; die App rechnet richtig 43.",
+    "Bestehen: Block II mindestens 100 Punkte, zwei Prüfungsfächer mit je mindestens 25 Punkten (mit BLL 20), darunter ein LK. Die BLL zählt dabei nicht als Prüfungsfach (Annahme, die Verordnung sagt es nicht ausdrücklich).",
   ],
   sources: [
     {
-      title: "Verordnung über die Abiturprüfung im Lande Bremen (AP-V)",
+      title:
+        "AP-V Bremen vom 11.03.2022, zuletzt geändert am 19.04.2023 (gültig ab 01.08.2024)",
       section: "§§ 7, 8, 9, 9a, 14–18, Anlagen 2 und 3",
       url: "https://www.transparenz.bremen.de/metainformationen/verordnung-ueber-die-abiturpruefung-im-lande-bremen-ap-v-vom-11-maerz-2022-192657?template=20_gp_ifg_meta_detail_d",
     },
     {
-      title: "Verordnung über die Gymnasiale Oberstufe (GyO-VO)",
+      title: "GyO-VO Bremen vom 01.08.2005, zuletzt geändert am 25.04.2019",
       section: "§§ 2, 7–10a, 12, 13, Anlage 1",
       url: "https://www.transparenz.bremen.de/metainformationen/verordnung-ueber-die-gymnasiale-oberstufe-gyo-vo-vom-1-august-2005-130143?template=20_gp_ifg_meta_detail_d",
     },
@@ -495,7 +527,7 @@ export const HB_2027: Ruleset = {
     zero: { includable: false, failIfTaken: false },
   },
   blockII: blockIICommon,
-  validate: (ctx) => validate(ctx, false),
+  validate,
 };
 
 export const HB_2030: Ruleset = {
@@ -505,19 +537,34 @@ export const HB_2030: Ruleset = {
   label: "Bremen · Abitur ab 2030",
   confidence: "low",
   draft: true,
-  elevatedSubjects: { min: 2, max: 2 },
   extraInputs: [BLL_INPUT],
+  catalog: [
+    ...CATALOG,
+    ...catalog([["projekt", { defaultHalfYears: [0, 1] }]]),
+  ],
   summary: [
-    "Vorläufig: Die neuen Verordnungen sind noch nicht beschlossen. Grundlage sind die Mitteilung 182/2026 und die Broschüre Wege zum Abitur 2027/28.",
-    "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen.",
-    "Block I: 26 Grundkurse und 8 Leistungskurse. LK zählen in Q1.1 bis Q2.1 doppelt, in Q2.2 einfach. Die Projektarbeit zählt nicht mehr. Block I ist gleich der Punktsumme.",
-    "Pflicht: beide LK, P3 und P4, Deutsch, Mathematik, eine fortgesetzte Fremdsprache, eine Gesellschaftswissenschaft und eine Naturwissenschaft (je 4), 2 Kurse Geschichte oder 4 Kurse Politik mit historischen Anteilen, 2 Kurse eines ästhetischen Fachs.",
+    "Vorläufig: Die neuen Verordnungen lagen der Deputation am 17.11.2026 zum Beschluss vor und sind noch nicht verkündet. Sie sollen ab der Einführungsphase 2027/28 gelten (erstes Abitur 2030).",
+    "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen (ein dritter ist zulässig und zählt als Grundkurs) und einem Projektkurs in Q1.",
+    "Block I nach dem Verordnungsentwurf: 24 Grundkurse, 8 LK (alle doppelt) und die 2 Projektkurs-Halbjahre (einfach). Punkte = Summe × 40 / 42, ab 0,5 aufgerundet. Die Broschüre Wege zum Abitur 2027/28 nennt abweichend die LK in Q2.2 einfach.",
+    "Pflicht: beide LK, P3 und P4, Deutsch, Mathematik, eine fortgesetzte Fremdsprache und eine Naturwissenschaft (je 4), 6 Kurse aus Aufgabenfeld II mit 2 Kursen Geschichte (oder 4 Kursen Politik mit historischen Anteilen), 2 Kurse Kunst, Musik oder Darstellendes Spiel, beide Projektkurs-Halbjahre.",
     "Die übrigen Kurse wählt die App nach Punkten. Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
-    "Zulassung: mindestens 200 Punkte, mindestens 28 von 34 Kursen und 6 von 8 LK mit 5 oder mehr Punkten. Kurse mit 0 Punkten sind vermutlich nicht einbringbar.",
-    "Block II wie bisher angenommen: vier Prüfungen fünffach, mit Besonderer Lernleistung alle fünf vierfach. Zusätzliche mündliche Prüfung 2:1.",
-    "Bestehen: Block II mindestens 100 Punkte, zwei Prüfungen mit je mindestens 5 Punkten (einfach), darunter ein LK.",
+    "Zulassung: mindestens 200 Punkte, höchstens 6 der 34 Kurse unter 5 Punkten (der Projektkurs zählt mit), davon höchstens 2 LK. Kurse mit 0 Punkten können nicht eingebracht werden.",
+    "Block II unverändert: vier Prüfungen fünffach, mit Besonderer Lernleistung alle fünf vierfach. Zusätzliche mündliche Prüfung 2:1.",
+    "Bestehen: Block II mindestens 100 Punkte, zwei Prüfungsfächer mit je mindestens 25 Punkten (mit BLL 20), darunter ein LK.",
   ],
   sources: [
+    {
+      title:
+        "Entwurf Verordnung zur Änderung der AP-V (Deputationsvorlage VL 21/8645, Anlagen 2 und 3)",
+      section: "Art. 1 Nr. 7 (§ 8), Stand 05.10.2026",
+      url: "https://sd.bremische-buergerschaft.de/sdnetrim/UGhVM0hpd2NXNFdFcExjZYJHy67k83hWG6gsOM2pWx1bXdnY5OQgHBhNHjmrb4xF/Beschlussvorlage_Ausschuesse-Deputationen_VL_21-8645.pdf",
+    },
+    {
+      title:
+        "Entwurf Verordnung zur Änderung der GyO-VO (Deputationsvorlage VL 21/8663)",
+      section: "§ 10, § 10a",
+      url: "https://sd.bremische-buergerschaft.de/sdnetrim/UGhVM0hpd2NXNFdFcExjZR1ydI6K4J2hD1Z35hbsf1daotkQqRMHYabac0IV7Gcd/Beschlussvorlage_Ausschuesse-Deputationen_VL_21-8663.pdf",
+    },
     {
       title: "Senator für Kinder und Bildung: Mitteilung Nr. 182/2026",
       section: "Nr. 2",
@@ -543,11 +590,11 @@ export const HB_2030: Ruleset = {
     maxPoints: 600,
     minPoints: 200,
     count: { min: 34, max: 34 },
-    weightings,
+    weightings: (ctx) => weightings(ctx, true),
     requirements: (ctx) => requirements(ctx, true),
     maxPerSubject: sportCap,
     deficitLimits: (_n, _s, ctx) => deficitLimits(ctx),
     zero: { includable: false, failIfTaken: false },
   },
-  validate: (ctx) => validate(ctx, true),
+  validate,
 };
