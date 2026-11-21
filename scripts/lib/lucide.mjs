@@ -6,6 +6,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { normalizePathData } from "./svgPath.mjs";
+
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -69,7 +71,8 @@ const num = (value) => Number(value ?? 0);
 export function toPathData([tag, a]) {
   switch (tag) {
     case "path":
-      return a.d;
+      // Android needs separated arc flags (see svgPath.mjs).
+      return normalizePathData(a.d);
     case "circle": {
       const [cx, cy, r] = [num(a.cx), num(a.cy), num(a.r)];
       return `M${cx - r},${cy}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`;
