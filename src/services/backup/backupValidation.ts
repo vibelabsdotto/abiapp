@@ -24,8 +24,10 @@ export interface BackupIssue {
 export interface BackupValidationOptions {
   format: string;
   version: number;
-  /** Half-year count of a ruleset, null if the ruleset is unknown. */
-  halfYearCount: (rulesetId: string) => number | null;
+  /** State and half-year count of a ruleset, null if it is unknown. */
+  ruleset: (
+    rulesetId: string,
+  ) => { state: string; halfYearCount: number } | null;
 }
 
 const MAX_ERRORS = 25;
@@ -275,18 +277,27 @@ export function validateBackup(
     }
   });
 
-  // Ruleset (only checkable when this app version knows it)
-  const rulesetId = profile[0] ? String(profile[0].ruleset_id) : null;
-  if (rulesetId) {
-    const count = options.halfYearCount(rulesetId);
-    if (count === null) {
-      warnings.push({
-        code: "backup.ruleset.unknown",
-        message: `Die Regelversion ${rulesetId} ist in dieser App-Version nicht bekannt.`,
-      });
+  // Ruleset: without it this app version can neither calculate nor edit
+  // the restored data, so an unknown version blocks like a newer format.
+  if (profile[0]) {
+    const rulesetId = String(profile[0].ruleset_id);
+    const ruleset = options.ruleset(rulesetId);
+    if (!ruleset) {
+      fail(
+        "backup.ruleset.unknown",
+        `Das Backup nutzt die Regelversion ${rulesetId}, die diese App-Version nicht kennt. Aktualisiere AbiApp und versuche es erneut.`,
+      );
     } else {
+      if (ruleset.state !== profile[0].state) {
+        fail(
+          "backup.ruleset.state",
+          `Die Regelversion ${rulesetId} gehört nicht zum Bundesland im Backup.`,
+        );
+      }
       const beyond = [...courses, ...grades].some(
-        (row) => typeof row.half_year === "number" && row.half_year >= count,
+        (row) =>
+          typeof row.half_year === "number" &&
+          row.half_year >= ruleset.halfYearCount,
       );
       if (beyond) {
         fail(

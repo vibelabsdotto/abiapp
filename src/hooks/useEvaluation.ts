@@ -1,6 +1,6 @@
 // Engine hooks: EngineInput from the stores and the cached engine results.
-// Engine failures (including the stub phase) come back as `error` instead
-// of throwing, so screens can render an empty/error state.
+// Engine failures come back as `error` instead of throwing, so screens can
+// render an error state.
 
 import { useMemo } from "react";
 
@@ -41,7 +41,7 @@ export function useEngineInput(): EngineInput | null {
 export interface EvaluationState {
   evaluation: AbiturEvaluation | null;
   input: EngineInput | null;
-  /** Engine error message (e.g. engine not available yet). */
+  /** Engine error message (e.g. unknown ruleset id). */
   error: string | null;
   /** "no_profile" before onboarding created a profile. */
   status: "no_profile" | "ok" | "error";

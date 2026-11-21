@@ -17,7 +17,7 @@ import type {
   SubjectTag,
 } from "@domain/model";
 import type { SubjectRecord } from "@services/database";
-import { useCourseStore } from "@stores/courseStore";
+import { subjectsWithData, useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject, tryDomain } from "@stores/domainAccess";
 import { useProfileStore } from "@stores/profileStore";
 import {
@@ -62,16 +62,10 @@ export const minimumSubjects = (ruleset: RulesetSummary): number => {
 export function useSubjectsWithData(): Set<string> {
   const courses = useCourseStore((state) => state.courses);
   const grades = useCourseStore((state) => state.grades);
-  return useMemo(() => {
-    const ids = new Set<string>();
-    for (const grade of grades) ids.add(grade.subjectId);
-    for (const course of courses) {
-      if (course.officialPoints !== null || course.targetPoints !== null) {
-        ids.add(course.subjectId);
-      }
-    }
-    return ids;
-  }, [courses, grades]);
+  return useMemo(
+    () => subjectsWithData({ courses, grades }),
+    [courses, grades],
+  );
 }
 
 function validateDraft(
@@ -107,6 +101,27 @@ export interface SubjectsSaveResult {
 
 const catalogIndex = (ruleset: RulesetSummary | null) =>
   new Map((ruleset?.catalog ?? []).map((entry, index) => [entry.key, index]));
+
+/** Whether the draft drops a saved subject (catalog key or custom row). */
+const draftRemoval = (
+  ruleset: RulesetSummary | null,
+  keys: readonly string[],
+  custom: readonly CustomSubjectDraft[],
+) => {
+  const known = catalogIndex(ruleset);
+  const wanted = new Set(keys);
+  const keptCustom = new Set(
+    custom.filter((item) => item.selected).map((item) => item.subjectId),
+  );
+  return (subject: SubjectRecord) => {
+    const isCatalog =
+      subject.catalogKey !== null && known.has(subject.catalogKey);
+    const removed = isCatalog
+      ? !wanted.has(subject.catalogKey as string)
+      : !keptCustom.has(subject.id);
+    return { removed, isCatalog };
+  };
+};
 
 const initialSubjectsDraft = (
   subjects: SubjectRecord[],
@@ -198,35 +213,18 @@ export function useSubjectsDraft(options?: { preselect?: readonly string[] }) {
 
   /** Subjects that would be removed although they hold entries. */
   const removalsWithData = useMemo(() => {
-    const wanted = new Set(keys);
-    const keptCustom = new Set(
-      custom.filter((item) => item.selected).map((item) => item.subjectId),
+    const removal = draftRemoval(ruleset, keys, custom);
+    return subjects.filter(
+      (subject) => removal(subject).removed && withData.has(subject.id),
     );
-    const known = catalogIndex(ruleset);
-    return subjects.filter((subject) => {
-      const isCatalog =
-        subject.catalogKey !== null && known.has(subject.catalogKey);
-      const removed = isCatalog
-        ? !wanted.has(subject.catalogKey as string)
-        : !keptCustom.has(subject.id);
-      return removed && withData.has(subject.id);
-    });
   }, [custom, keys, ruleset, subjects, withData]);
 
   /** Writes the draft. Call only after confirming `removalsWithData`. */
   const save = useCallback(async (): Promise<SubjectsSaveResult> => {
-    const store = useCourseStore.getState();
     const known = catalogIndex(ruleset);
-    const wanted = new Set(keys);
-    const keptCustom = new Set(
-      custom.filter((item) => item.selected).map((item) => item.subjectId),
-    );
-    for (const subject of store.subjects) {
-      const isCatalog =
-        subject.catalogKey !== null && known.has(subject.catalogKey);
-      const removed = isCatalog
-        ? !wanted.has(subject.catalogKey as string)
-        : !keptCustom.has(subject.id);
+    const removal = draftRemoval(ruleset, keys, custom);
+    for (const subject of useCourseStore.getState().subjects) {
+      const { removed, isCatalog } = removal(subject);
       // Catalog subjects without entries go through syncCatalogSubjects.
       // Kept subjects from another state's catalog keep their key; the
       // catalog sync only touches keys of the current catalog.

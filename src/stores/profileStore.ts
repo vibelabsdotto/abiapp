@@ -92,9 +92,7 @@ export const useProfileStore = create<ProfileState>()((set, get) => {
     setTarget: async (targetTenths) => {
       assertTargetTenths(targetTenths);
       await patchProfile({ targetTenths });
-      if (targetTenths !== null) {
-        track(ANALYTICS_EVENTS.goalSet, { target_tenths: targetTenths });
-      }
+      if (targetTenths !== null) track(ANALYTICS_EVENTS.goalSet);
     },
 
     setExamVariant: async (variantId) => {

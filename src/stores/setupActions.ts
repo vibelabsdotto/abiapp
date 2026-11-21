@@ -28,7 +28,7 @@ import {
   trackProfile,
 } from "@services/analytics/appEvents";
 
-import { useCourseStore } from "./courseStore";
+import { subjectsWithData, useCourseStore } from "./courseStore";
 import {
   defaultHalfYearsOf,
   errorMessage,
@@ -145,18 +145,6 @@ export async function startSetup(input: {
   return { applied: true, rulesetId: ruleset.id, issues: [] };
 }
 
-const hasEnteredData = (subjectId: string): boolean => {
-  const { courses, grades } = useCourseStore.getState();
-  return (
-    grades.some((grade) => grade.subjectId === subjectId) ||
-    courses.some(
-      (course) =>
-        course.subjectId === subjectId &&
-        (course.officialPoints !== null || course.targetPoints !== null),
-    )
-  );
-};
-
 /**
  * Onboarding step "Fächer": makes the catalog subjects match `keys`.
  * Missing keys are created, deselected catalog subjects are removed unless
@@ -175,13 +163,14 @@ export async function syncCatalogSubjects(
     requireRuleset(profile.rulesetId).catalog.map((entry) => entry.key),
   );
   const courseStore = useCourseStore.getState();
+  const withData = subjectsWithData(courseStore);
   const wanted = new Set(keys);
   const issues: Issue[] = [];
   const toRemove: SubjectRecord[] = [];
   for (const subject of courseStore.subjects) {
     if (!subject.catalogKey || !catalogKeys.has(subject.catalogKey)) continue;
     if (wanted.has(subject.catalogKey)) continue;
-    if (hasEnteredData(subject.id)) {
+    if (withData.has(subject.id)) {
       issues.push({
         code: "setup.subject.keptWithData",
         severity: "warning",

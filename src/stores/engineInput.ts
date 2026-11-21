@@ -2,7 +2,7 @@
 //
 // The input is memoized on the identity of the store arrays, so every
 // screen that calls useEvaluation() shares one input object and one engine
-// run per data change (plan §4.2: evaluation must stay cheap).
+// run per data change.
 
 import { evaluate, targetAnalysis, validateSetup } from "@domain/index";
 import type { TargetAnalysis } from "@domain/index";
