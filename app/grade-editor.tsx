@@ -45,6 +45,7 @@ import type { EngineGrade, GradeKind } from "@domain/model";
 import { useHalfYearLabels } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
+import { useProfileStore } from "@stores/profileStore";
 import { tryDomain } from "@stores/domainAccess";
 import { useThemeStore } from "@stores/themeStore";
 import { Radius, Type } from "@constants/typography";
@@ -69,6 +70,9 @@ export default function GradeEditorScreen() {
   const { t, locale } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
   const labels = useHalfYearLabels();
+  const rulesetId = useProfileStore(
+    (state) => state.profile?.rulesetId ?? null,
+  );
   const subjects = useCourseStore((state) => state.subjects);
   const grades = useCourseStore((state) => state.grades);
   const courses = useCourseStore((state) => state.courses);
@@ -146,6 +150,7 @@ export default function GradeEditorScreen() {
       halfYearPrognosis(
         toEngine(existing ? [...siblings, existing] : siblings),
         subject.examWeightPercent,
+        rulesetId,
       ),
     ).value;
     const after = tryDomain(() =>
@@ -160,10 +165,11 @@ export default function GradeEditorScreen() {
           },
         ],
         subject.examWeightPercent,
+        rulesetId,
       ),
     ).value;
     return { before, after };
-  }, [subject, draft, siblings, existing]);
+  }, [subject, draft, siblings, existing, rulesetId]);
 
   const examCount = siblings.filter((grade) => grade.kind === "exam").length;
   const suggestions =

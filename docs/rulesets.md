@@ -43,18 +43,20 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 
 - **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“.
 - **SN:** Informatik ersetzt eine Naturwissenschaft nur bei einer NW oder bei zwei NW mit nur einer Fremdsprache.
-- **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt.
+- **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt. Vertiefungskurs Deutsch/Mathematik gilt als Wahlpflichtfach, sobald die Option günstiger ist (bei in 13 freiwillig fortgeführtem Fach als Annahme angezeigt). Ein 0-Punkte-Kurs in einem eigenen Fach (Zusatzangebot) blockiert die Zulassung nicht.
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
 - **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation (amtlich nicht geregelt).
-- **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
+- **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer, die Engine wählt sie günstigst (Annahme), aber nie Deutsch, Mathematik, Englisch, Geschichte, Sport oder das einzige Fach aus Naturwissenschaft, Kunst/Musik/DG bzw. Religion/Ethik (§ 76 Abs. 1). Klausuranteil der Prognose 33 % für das amtliche Drittel (§ 74 Abs. 11); exakt auf ,5 kann die Prognose daher um einen Punkt abweichen.
 - **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben.
+- **HE:** Die Pflicht aus § 14 Abs. 3 OAVO (zweite, in der Oberstufe neu begonnene Fremdsprache: Q3 und Q4 immer einbringen) ist nicht eigens modelliert; die App kann nicht unterscheiden, ob die neu begonnene Sprache Pflicht (§ 14 Abs. 3) oder freiwillig (§ 14 Abs. 2, 4) ist. Geographie zählt für die 2 GW-Kurse ohne Prüfung der durchgängigen Belegung seit E1. Mit Besonderer Lernleistung gilt ein fehlendes Aufgabenfeld unter den vier Prüfungsfächern nur als Hinweis (§ 24 Abs. 3 Satz 4).
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
 - **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13. Zusätzliche mündliche Prüfung kaufmännisch gerundet nach mss.rlp.de; die AbiPrO-Fassung 2010 (§ 12, Anlagen 1, 2) schnitt ab, der aktuelle Wortlaut war nicht abrufbar. Facharbeit unter 5 Punkten zählt als ein Defizit.
 - **NI, RP, HH, SH:** Eine neu begonnene Fremdsprache gilt als Pflichtsprache (Zusatzeinbringung, 0-Punkte-Sperre), wenn höchstens eine fortgeführte Fremdsprache belegt ist; bei zwei fortgeführten gilt sie als freiwillig.
 - **HH ab 2030:** Künstlerisches Fach nur 2 Ergebnisse (Entwurf laut Stellungnahmen, KMK Ziff. 7.1), übrige Pflichten wie 2027 angenommen.
 - **SH:** Kern-Fremdsprache ist die in P1/P2 geprüfte, sonst eine fortgeführte Sprache.
 - **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
+- **MV:** MV-2027 folgt der APVO i. d. F. vom 30.04.2024 (Übergang Art. 2 Abs. 3 der VO vom 01.08.2025). Deren Volltext war bei der Prüfung im November 2026 nicht abrufbar; Berechnung (§ 43, Anlagen 4, 5, 7) wie in der geltenden Fassung angenommen, Geschichte und Politische Bildung mit 4 Pflicht-Halbjahren, Sozialkunde ohne Pflicht, BLL je zur Hälfte. Eine neu einsetzende Fremdsprache gilt immer als Pflicht nach § 6 (Q3 und Q4 einbringen).
 
 ## Bekannte Grenzen
 
