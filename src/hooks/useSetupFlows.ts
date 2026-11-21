@@ -379,8 +379,9 @@ export function subjectsNote(
   }
   const [first, ...rest] = draft.gaps;
   if (first) {
+    // "…: 4 Kurse Mathematik und 2 weitere." (one sentence, one period).
     return rest.length > 0
-      ? `${first.message} ${t("setup.rulesChange.more", { count: rest.length })}`
+      ? `${first.message.replace(/\.$/, "")} ${t("setup.rulesChange.more", { count: rest.length })}.`
       : first.message;
   }
   return t("setup.subjects.selected", { count: draft.selectedCount });

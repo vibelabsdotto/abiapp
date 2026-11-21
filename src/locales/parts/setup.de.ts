@@ -193,7 +193,10 @@ export const setupDE = {
       lossMessage:
         "In {{ruleset}} gibt es {{halfYears}} nicht. Noten, Halbjahresergebnisse und Ziele aus diesen Halbjahren werden gelöscht: {{subjects}}.",
       doneTitle: "Regeln geändert",
-      more: "und {{count}} weitere",
+      more: {
+        one: "und noch 1",
+        other: "und {{count}} weitere",
+      },
     },
     subjects: {
       title: "Fächer",

@@ -194,7 +194,10 @@ export const setupEN = {
       lossMessage:
         "{{ruleset}} has no {{halfYears}}. Grades, half-year results and goals from these half-years will be deleted: {{subjects}}.",
       doneTitle: "Rules changed",
-      more: "and {{count}} more",
+      more: {
+        one: "and 1 more",
+        other: "and {{count}} more",
+      },
     },
     subjects: {
       title: "Subjects",
