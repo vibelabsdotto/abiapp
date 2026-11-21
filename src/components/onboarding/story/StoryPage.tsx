@@ -73,6 +73,8 @@ const ENTER_DELAY = 200;
 /** Share of the clock between two cascaded elements. */
 const LEAVE_STAGGER = 0.09;
 const ENTER_STAGGER = 0.16;
+/** Space between the parts of a layer. */
+const GAP = 20;
 
 type Rect = Pick<LayoutRectangle, "x" | "y" | "width" | "height">;
 const NO_RECT: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -101,7 +103,25 @@ export const StoryPage = ({
   const resume = useOnboardingStory((state) => state.resume);
   const [phase, setPhase] = useState<Phase>("question");
   const [play, setPlay] = useState(0);
-  const [heights, setHeights] = useState({ question: 0, scene: 0 });
+  // Natural heights: the question layer, and the parts of the scene layer
+  // (label, headline, stage, text), so the page grows when they need more
+  // than the screen and the stage takes the room left over otherwise.
+  const [heights, setHeights] = useState({
+    question: 0,
+    label: 0,
+    headline: 0,
+    stage: 0,
+    text: 0,
+  });
+  const measure =
+    (part: keyof typeof heights) => (event: LayoutChangeEvent) => {
+      const height = event.nativeEvent.layout.height;
+      setHeights((value) =>
+        value[part] === height ? value : { ...value, [part]: height },
+      );
+    };
+  const sceneHeight =
+    heights.label + heights.headline + heights.stage + heights.text + 3 * GAP;
   const [labelRect, setLabelRect] = useState<Rect>(NO_RECT);
   const [cardWidth, setCardWidth] = useState(0);
   const listY = useRef(0);
@@ -298,6 +318,7 @@ export const StoryPage = ({
     const { x, y, width, height } = event.nativeEvent.layout;
     label.current = { x, y, width, height };
     setLabelRect(label.current);
+    measure("label")(event);
   };
 
   const sceneVisible = phase === "scene" || phase === "back";
@@ -307,6 +328,7 @@ export const StoryPage = ({
       title=""
       {...progress}
       inPlace
+      fill
       primary={
         phase === "scene"
           ? { title: continueLabel, onPress: onContinue }
@@ -319,7 +341,10 @@ export const StoryPage = ({
       }
     >
       <View
-        style={{ height: Math.max(heights.question, heights.scene) }}
+        style={[
+          styles.page,
+          { minHeight: Math.max(heights.question, sceneHeight) },
+        ]}
         accessibilityLiveRegion="polite"
       >
         {/* Question */}
@@ -330,10 +355,7 @@ export const StoryPage = ({
           importantForAccessibility={
             sceneVisible ? "no-hide-descendants" : "auto"
           }
-          onLayout={(event) => {
-            const height = event.nativeEvent.layout.height;
-            setHeights((value) => ({ ...value, question: height }));
-          }}
+          onLayout={measure("question")}
         >
           <Leaving leave={leave} index={0} reduce={reduce} lift>
             <StoryHeading title={t(`onboarding.story.${question}.question`)} />
@@ -374,16 +396,12 @@ export const StoryPage = ({
 
         {/* Scene */}
         <View
-          style={styles.layer}
+          style={[styles.layer, styles.sceneLayer]}
           pointerEvents={phase === "scene" ? "box-none" : "none"}
           accessibilityElementsHidden={!sceneVisible}
           importantForAccessibility={
             sceneVisible ? "auto" : "no-hide-descendants"
           }
-          onLayout={(event) => {
-            const height = event.nativeEvent.layout.height;
-            setHeights((value) => ({ ...value, scene: height }));
-          }}
         >
           <Animated.View
             onLayout={onLabelLayout}
@@ -402,19 +420,32 @@ export const StoryPage = ({
               })}
             </Text>
           </Animated.View>
-          <Entering enter={enter} index={0} reduce={reduce}>
+          <Entering
+            enter={enter}
+            index={0}
+            reduce={reduce}
+            onLayout={measure("headline")}
+          >
             <StoryHeading title={headline} />
           </Entering>
-          <Entering enter={enter} index={1} reduce={reduce}>
-            <StoryScene
-              question={question}
-              cue={{ play, reduce }}
-              onReplay={() => {
-                if (phase === "scene") startScene();
-              }}
-            />
+          {/* The stage fills the room between headline and text, centred. */}
+          <Entering enter={enter} index={1} reduce={reduce} grow>
+            <View onLayout={measure("stage")}>
+              <StoryScene
+                question={question}
+                cue={{ play, reduce }}
+                onReplay={() => {
+                  if (phase === "scene") startScene();
+                }}
+              />
+            </View>
           </Entering>
-          <Entering enter={enter} index={2} reduce={reduce}>
+          <Entering
+            enter={enter}
+            index={2}
+            reduce={reduce}
+            onLayout={measure("text")}
+          >
             <Text style={[Type.body, styles.text, { color: colors.text }]}>
               {t(`onboarding.story.${question}.text`)}
             </Text>
@@ -506,11 +537,16 @@ const Entering = ({
   enter,
   index,
   reduce,
+  grow = false,
+  onLayout,
   children,
 }: {
   enter: SharedValue<number>;
   index: number;
   reduce: boolean;
+  /** Takes the free height and centres its content in it. */
+  grow?: boolean;
+  onLayout?: (event: LayoutChangeEvent) => void;
   children: React.ReactNode;
 }) => {
   const style = useAnimatedStyle(() => {
@@ -521,16 +557,33 @@ const Entering = ({
       transform: [{ translateY: reduce ? 0 : 14 * (1 - p) }],
     };
   });
-  return <Animated.View style={style}>{children}</Animated.View>;
+  return (
+    <Animated.View
+      onLayout={onLayout}
+      style={[grow ? styles.grow : null, style]}
+    >
+      {children}
+    </Animated.View>
+  );
 };
 
 const styles = StyleSheet.create({
+  page: {
+    flexGrow: 1,
+  },
   layer: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    gap: 20,
+    gap: GAP,
+  },
+  sceneLayer: {
+    bottom: 0,
+  },
+  grow: {
+    flex: 1,
+    justifyContent: "center",
   },
   answers: {
     gap: 10,

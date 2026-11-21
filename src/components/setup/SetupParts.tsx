@@ -2,7 +2,7 @@
 // code, exam slot) and the onboarding step scaffold with a pinned footer
 // button. Selection marks live in ListRow (`selected`).
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Platform,
   Pressable,
@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { Stack } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -112,6 +113,11 @@ interface OnboardingStepProps {
    * slides to the new step and a footer button that appears fades in.
    */
   inPlace?: boolean;
+  /**
+   * The content fills the screen between header and footer (story scenes:
+   * the stage takes the room between heading and text).
+   */
+  fill?: boolean;
   /** Quiet "Überspringen" top right in the header (story pages). */
   onSkip?: () => void;
   children: React.ReactNode;
@@ -133,12 +139,18 @@ export const OnboardingStep = ({
   footerNote,
   keyboardAware = false,
   inPlace = false,
+  fill = false,
   onSkip,
   children,
 }: OnboardingStepProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const [viewport, setViewport] = useState(0);
+  // iOS insets the content by the header (contentInsetAdjustment): the
+  // room to fill is the scroll view minus the header.
+  const fillHeight = viewport - (Platform.OS === "ios" ? headerHeight : 0);
   const hasFooter = Boolean(primary || primaryMenu || secondary || footerNote);
 
   // ScrollView and footer are direct children of the screen (fragment):
@@ -172,6 +184,11 @@ export const OnboardingStep = ({
       <AndroidKeyboardAvoider enabled={keyboardAware}>
         <ScrollView
           style={[styles.flex, { backgroundColor: colors.background }]}
+          onLayout={
+            fill
+              ? (event) => setViewport(event.nativeEvent.layout.height)
+              : undefined
+          }
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -179,6 +196,7 @@ export const OnboardingStep = ({
           contentContainerStyle={[
             styles.content,
             readableContent,
+            fill && fillHeight > 0 ? { minHeight: fillHeight } : null,
             // Without a footer the list runs to the bottom edge (Android
             // draws edge-to-edge; iOS adds the inset automatically).
             !hasFooter && Platform.OS === "android"
