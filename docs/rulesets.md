@@ -41,8 +41,8 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 
 ## Annahmen, wo die Verordnung offen ist
 
-- **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“.
-- **SN:** Informatik ersetzt eine Naturwissenschaft nur bei einer NW oder bei zwei NW mit nur einer Fremdsprache.
+- **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“. Zusatzkurse Geschichte/Sozialwissenschaften sind zwei aufeinanderfolgende Kurse (auch Q1 bei Fortführung, § 11 Abs. 3 Nr. 5). NW-2030: Ist das 5. Abiturfach in Q2 nicht belegt, gilt es als Referenzfach des Projektkurses (nur 2 Kurse Q1, § 26 Abs. 2); ist es durchgehend belegt, rechnet die App mit 4 Kursen. Nicht modelliert: § 28 Abs. 4/5 (2027: § 26 Abs. 4/5) für neu einsetzende zweite Fremdsprachen, Vertiefungskurse, instrumental-/vokalpraktische Kurse.
+- **SN:** Informatik ersetzt eine Naturwissenschaft nur, wenn ohne sie eine fehlt (§ 42 Abs. 1 S. 4, § 43 Abs. 3): bei einer NW oder bei zwei NW ohne zweite Fremdsprache, ohne in Klasse 10 begonnene Fremdsprache und ohne Fremdsprachen-LK. Befreiungen nach § 42 Abs. 4/5 erkennt die App nicht.
 - **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt. Vertiefungskurs Deutsch/Mathematik gilt als Wahlpflichtfach, sobald die Option günstiger ist (bei in 13 freiwillig fortgeführtem Fach als Annahme angezeigt). Ein 0-Punkte-Kurs in einem eigenen Fach (Zusatzangebot) blockiert die Zulassung nicht.
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
@@ -51,12 +51,13 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben.
 - **HE:** Die Pflicht aus § 14 Abs. 3 OAVO (zweite, in der Oberstufe neu begonnene Fremdsprache: Q3 und Q4 immer einbringen) ist nicht eigens modelliert; die App kann nicht unterscheiden, ob die neu begonnene Sprache Pflicht (§ 14 Abs. 3) oder freiwillig (§ 14 Abs. 2, 4) ist. Geographie zählt für die 2 GW-Kurse ohne Prüfung der durchgängigen Belegung seit E1. Mit Besonderer Lernleistung gilt ein fehlendes Aufgabenfeld unter den vier Prüfungsfächern nur als Hinweis (§ 24 Abs. 3 Satz 4).
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
+- **SL-2027:** Eine Fremdsprache als L-Kurs ist die Pflichtfremdsprache (nur sie zählt als Kernfach); bei zwei G-Kurs-Fremdsprachen bzw. zwei GW- oder NW-Fächern wählt die Engine das günstigere Pflichtfach. SL-2030: 36 Kurse, zwei eA-Prüfungsfächer doppelt, höchstens 20 % unter 5 Punkten (KMK Ziff. 9.5.3–9.5.7), LK-Kombination nur als Warnung.
 - **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13. Zusätzliche mündliche Prüfung kaufmännisch gerundet nach mss.rlp.de; die AbiPrO-Fassung 2010 (§ 12, Anlagen 1, 2) schnitt ab, der aktuelle Wortlaut war nicht abrufbar. Facharbeit unter 5 Punkten zählt als ein Defizit.
 - **NI, RP, HH, SH:** Eine neu begonnene Fremdsprache gilt als Pflichtsprache (Zusatzeinbringung, 0-Punkte-Sperre), wenn höchstens eine fortgeführte Fremdsprache belegt ist; bei zwei fortgeführten gilt sie als freiwillig.
 - **HH ab 2030:** Künstlerisches Fach nur 2 Ergebnisse (Entwurf laut Stellungnahmen, KMK Ziff. 7.1), übrige Pflichten wie 2027 angenommen.
 - **SH:** Kern-Fremdsprache ist die in P1/P2 geprüfte, sonst eine fortgeführte Sprache.
-- **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
 - **MV:** MV-2027 folgt der APVO i. d. F. vom 30.04.2024 (Übergang Art. 2 Abs. 3 der VO vom 01.08.2025). Deren Volltext war bei der Prüfung im November 2026 nicht abrufbar; Berechnung (§ 43, Anlagen 4, 5, 7) wie in der geltenden Fassung angenommen, Geschichte und Politische Bildung mit 4 Pflicht-Halbjahren, Sozialkunde ohne Pflicht, BLL je zur Hälfte. Eine neu einsetzende Fremdsprache gilt immer als Pflicht nach § 6 (Q3 und Q4 einbringen).
+- **HB:** Formel statt der fehlerhaften amtlichen Tabelle (vierfache Tabelle mit BLL, mündlich 2 / schriftlich 15: gedruckt 53, Formel 43). Die BLL zählt bei „zwei Prüfungsfächer mit 25 bzw. 20 Punkten“ nicht mit (Annahme, § 18 Abs. 3 nennt nur Prüfungsfächer). HB-2030 nach dem Verordnungsentwurf (VL 21/8645, Stand 05.10.2026): alle 8 LK doppelt, Projektkurs Q1 einfach (S = 42), 6 Kurse Aufgabenfeld II, Defizitgrenze inkl. Projektkurs; die Broschüre „Wege zum Abitur 2027/28“ nennt abweichend LK in Q2.2 einfach.
 
 ## Bekannte Grenzen
 

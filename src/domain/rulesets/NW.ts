@@ -4,6 +4,7 @@
 import type { EngineSubject, SubjectField } from "../model";
 import type {
   BlockIExtraDef,
+  Pick,
   Requirement,
   RequirementOption,
   RuleContext,
@@ -40,18 +41,44 @@ const GW = ["ge", "geo", "sowi", "phil", "re", "paed", "psy"];
 const RELIGION = ["rel_ev", "rel_kath", "rel_isl", "rel_jued", "phil"];
 
 function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
-  const reqs: Requirement[] = [...examSubjectRequirements(ctx)];
+  const reqs: Requirement[] = examSubjectRequirements(ctx);
+  // NW-2030 § 26 Abs. 2 S. 2: the reference subject of the Projektkurs as
+  // 5th Abitur subject needs only its two Q1 courses (plus the Projektkurs).
+  // Recognized when the 5th subject is not taken in Q2 (otherwise 4 courses).
+  const p5 = ctx.examSubjectBySlot.get("P5");
+  if (
+    v2030 &&
+    p5 &&
+    ctx.variant.id === "standard" &&
+    byKey(ctx, "projekt").length > 0 &&
+    !(
+      ctx.takenHalfYears(p5.id).includes(2) &&
+      ctx.takenHalfYears(p5.id).includes(3)
+    )
+  ) {
+    const i = reqs.findIndex((r) => r.id === `exam.${p5.id}`);
+    if (i >= 0)
+      reqs[i] = {
+        id: `exam.${p5.id}`,
+        label: `2 Kurse Q1 im Referenzfach ${p5.name} (5. Abiturfach)`,
+        short: "Prüfungsfach",
+        options: [
+          { picks: [{ subjectId: p5.id, count: 2, halfYears: [0, 1] }] },
+        ],
+      };
+  }
   reqs.push(oneOf("de", "4 Kurse Deutsch", byKey(ctx, "de"), 4));
   reqs.push(oneOf("ma", "4 Kurse Mathematik", byKey(ctx, "ma"), 4));
 
   // Fremdsprache (4), Naturwissenschaft (4), neuntes Pflichtfach (Q2-Kurse).
-  let fs = continuedLanguages(ctx);
-  if (fs.length === 0)
-    fs = taken(
-      ctx,
-      (s) =>
-        hasTag(s, "foreign_language") && ctx.takenHalfYears(s.id).length === 4,
-    );
+  // § 11 Abs. 2 Nr. 2 (2030: Abs. 3 Nr. 2): a continued language or a newly
+  // started one taken throughout the Qualifikationsphase.
+  let fs = taken(
+    ctx,
+    (s) =>
+      hasTag(s, "foreign_language") && ctx.takenHalfYears(s.id).length === 4,
+  );
+  if (fs.length === 0) fs = continuedLanguages(ctx);
   const allFs = taken(ctx, (s) => hasTag(s, "foreign_language"));
   const nws = byKey(ctx, ...NWS);
   const af3 = byKey(ctx, ...NWS, ...AF3_EXTRA);
@@ -115,18 +142,32 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
     options: arts,
   });
 
-  // Fortgeführtes gesellschaftswissenschaftliches Fach + Zusatzkurse Geschichte/SoWi.
+  // Fortgeführtes gesellschaftswissenschaftliches Fach + Zusatzkurse
+  // Geschichte/SoWi: two consecutive courses (§ 11 Abs. 3 Nr. 2–5, 2030:
+  // Abs. 4), also the Q1 courses if the subject is continued through Q1.
   const ge = byKey(ctx, "ge")[0];
   const sw = byKey(ctx, "sowi")[0];
+  const extraPicks = (s: EngineSubject | undefined, missing: string) => {
+    if (!s) return [{ subjectId: missing, count: 2 }];
+    const ws = consecutiveWindows(ctx, s.id, 2);
+    // No consecutive pair taken: unsatisfiable (empty window).
+    if (ws.length === 0) return [{ subjectId: s.id, count: 2, halfYears: [] }];
+    return ws.map((w) => ({ subjectId: s.id, count: 2, halfYears: w }));
+  };
   const gw: RequirementOption[] = [];
   for (const g of byKey(ctx, ...GW)) {
     if (ctx.takenHalfYears(g.id).length < 4) continue;
-    const picks = [{ subjectId: g.id, count: 4 }];
-    if (!hasKey(g, "ge"))
-      picks.push({ subjectId: ge?.id ?? "__missing_ge", count: 2 });
-    if (!hasKey(g, "sowi"))
-      picks.push({ subjectId: sw?.id ?? "__missing_sowi", count: 2 });
-    gw.push({ label: g.name, picks });
+    const geOpts = hasKey(g, "ge") ? [null] : extraPicks(ge, "__missing_ge");
+    const swOpts = hasKey(g, "sowi")
+      ? [null]
+      : extraPicks(sw, "__missing_sowi");
+    for (const a of geOpts)
+      for (const b of swOpts) {
+        const picks: Pick[] = [{ subjectId: g.id, count: 4 }];
+        if (a) picks.push(a);
+        if (b) picks.push(b);
+        gw.push({ label: g.name, picks });
+      }
   }
   reqs.push({
     id: "gw",
@@ -316,28 +357,30 @@ export const NW_2027: Ruleset = {
   catalog: catalog(CATALOG),
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen (1. und 2. Abiturfach).",
+    "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen (1. und 2. Abiturfach). Gilt für alle, die vor 2027/28 in die Einführungsphase eingetreten sind, nach einer Wiederholung also auch für ein späteres Abitur.",
     "Block I: 35 bis 40 Kurse nach eigener Wahl. LK zählen doppelt, Punkte = Summe / gewichtete Anzahl × 40, ab 0,5 aufgerundet. Die App wählt die beste Anzahl.",
-    "Pflicht: die vier Abiturfächer, Deutsch, Mathematik, fortgeführte Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), Zusatzkurse Geschichte/Sozialwissenschaften, 2 Kurse Kunst oder Musik, 2 Kurse Religionslehre/Philosophie, Q2-Kurse des neunten Pflichtfachs.",
-    "Defizite (Kurse unter 5 Punkten): bei 35–37 Kursen höchstens 7, bei 38–40 höchstens 8, davon höchstens 3 in Leistungskursen. Kurse mit 0 Punkten zählen nicht.",
-    "Ein Projektkurs zählt wie zwei Grundkurse (bei höchstens 4 Punkten zwei Defizite).",
-    "Block II: vier Prüfungen fünffach (LK1, LK2, 3. Fach schriftlich, 4. Fach mündlich). Mit Besonderer Lernleistung alle fünf vierfach.",
-    "Zusatzprüfung in schriftlichen Fächern: (2s + m)/3 × 5, ab 0,5 aufgerundet.",
-    "Bestehen: Block II mindestens 100 Punkte und zwei Fächer mit je 25 Punkten (mit BLL 20), darunter ein LK. Block I mindestens 200.",
+    "Pflicht: die vier Abiturfächer, Deutsch, Mathematik, Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), je 2 aufeinanderfolgende Zusatzkurse Geschichte bzw. Sozialwissenschaften, 2 aufeinanderfolgende Kurse Kunst oder Musik (oder Literatur), 2 Kurse Religionslehre oder Philosophie, die Q2-Kurse des neunten Pflichtfachs.",
+    "Defizite (Kurse mit 4 oder weniger Punkten): bei 35–37 Kursen höchstens 7, bei 38–40 höchstens 8, davon höchstens 3 in Leistungskursen.",
+    "Ein Kurs mit 0 Punkten gilt als nicht belegt und kann nicht eingebracht werden. Ist es ein Pflichtkurs, wirst du nicht zugelassen.",
+    "Ein Projektkurs zählt wie zwei Grundkurse mit seiner Note (bei 4 oder weniger Punkten zwei Defizite).",
+    "Block II: vier Prüfungen fünffach (LK1, LK2, 3. Fach schriftlich, 4. Fach mündlich). Mit Besonderer Lernleistung zählen alle fünf vierfach.",
+    "Zusätzliche mündliche Prüfung im 1. bis 3. Fach: (2 × schriftlich + mündlich) / 3 × 5 (mit BLL × 4), ab 0,5 aufgerundet.",
+    "Bestehen: Block II mindestens 100 Punkte und zwei Prüfungsfächer mit je 25 Punkten (mit BLL 20), darunter ein LK. Die BLL zählt dabei nicht als Prüfungsfach. Block I mindestens 200.",
   ],
   sources: [
     {
-      title: "APO-GOSt NRW (1998), Fassung ab 01.08.2025",
-      section: "§§ 11, 12, 14, 17, 28, 29, 36",
-      url: "https://recht.nrw.de/taxonomy/term/29852",
+      title: "APO-GOSt NRW vom 05.10.1998, Fassung ab 01.08.2025",
+      section: "§§ 6, 11, 12, 17, 28, 29, 30, 36",
+      url: "https://recht.nrw.de/lrgv/rechtsverordnung/01082025-verordnung-ueber-den-bildungsgang-und-die-abiturpruefung-der/",
     },
     {
-      title: "VVzAPO-GOSt (BASS 13-32 Nr. 3.2)",
+      title: "APO-GOSt und VVzAPO-GOSt (BASS 13-32 Nr. 3.1/3.2)",
       section: "VV 28.3, 28.10, 29.5; Anlagen 8, 9, 13",
       url: "https://bass.schule.nrw/9607.htm",
     },
     {
-      title: "MSB NRW: Merkblatt zur Berechnung der Gesamtqualifikation",
+      title:
+        "MSB NRW: Merkblatt zur Berechnung der Gesamtqualifikation (Stand 08/2018)",
       url: "https://www.schulministerium.nrw/system/files/media/document/file/merkblatt-zur-berechnung-der-gesamtqualifikation.pdf",
     },
     {
@@ -406,15 +449,19 @@ export const NW_2027: Ruleset = {
       const bll = c.ctx.variant.id === "bll";
       return [
         checkBlockIIMin(c),
-        checkMinComponents(c, {
-          id: "block2.min",
-          label: bll
-            ? "In 2 Prüfungen je mindestens 20 Punkte, darunter ein LK"
-            : "In 2 Prüfungen je mindestens 25 Punkte, darunter ein LK",
-          count: 2,
-          minWeighted: bll ? 20 : 25,
-          require: compIsElevated,
-        }),
+        // § 29 Abs. 4 Nr. 1–2: two Prüfungsfächer; the BLL is none of them.
+        checkMinComponents(
+          { ...c, components: c.components.filter((x) => x.kind !== "bll") },
+          {
+            id: "block2.min",
+            label: bll
+              ? "In 2 Prüfungsfächern je mindestens 20 Punkte, darunter ein LK (die BLL zählt nicht)"
+              : "In 2 Prüfungsfächern je mindestens 25 Punkte, darunter ein LK",
+            count: 2,
+            minWeighted: bll ? 20 : 25,
+            require: compIsElevated,
+          },
+        ),
       ];
     },
   },
@@ -429,24 +476,28 @@ export const NW_2030: Ruleset = {
   extraInputs: [],
   catalog: catalog([...CATALOG, ["projekt", { defaultHalfYears: [2, 3] }]]),
   summary: [
-    "Neue APO-GOSt: gilt für alle, die 2027/28 in die Einführungsphase eingetreten sind (erstes Abitur 2030).",
-    "Qualifikationsphase Q1.1 bis Q2.2: genau 40 Kurse, davon 8 LK und ein Projektkurs in Q2.",
+    "Neue APO-GOSt vom 16.07.2026: gilt für alle, die 2027/28 oder später in die Einführungsphase eintreten (erstes Abitur 2030).",
+    "Qualifikationsphase Q1.1 bis Q2.2: 40 Kurse, davon 8 LK und ein Projektkurs in Q2.",
     "Block I: genau 36 Kurse (8 LK doppelt, 28 weitere), Punkte = Summe × 40 / 44, ab 0,5 aufgerundet.",
-    "Pflicht: alle fünf Abiturfächer, Deutsch, Mathematik, fortgeführte Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), Zusatzkurse, Kunst oder Musik (2), Religionslehre/Philosophie (2), Projektkurs (2), Q2-Kurse des neunten Pflichtfachs.",
-    "Höchstens 7 Defizite (Kurse unter 5 Punkten), davon höchstens 3 in Leistungskursen. Höchstens 4 Grundkurse je Fach.",
+    "Pflicht: alle fünf Abiturfächer, Deutsch, Mathematik, Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), je 2 aufeinanderfolgende Zusatzkurse Geschichte bzw. Sozialwissenschaften, 2 aufeinanderfolgende Kurse Kunst oder Musik (oder Literatur), 2 Kurse Religionslehre oder Philosophie, beide Projektkurs-Halbjahre, die Q2-Kurse des neunten Pflichtfachs.",
+    "Ist das Referenzfach des Projektkurses dein 5. Abiturfach, zählen davon nur die zwei Kurse aus Q1 als Pflicht.",
+    "Höchstens 7 Defizite (Kurse mit 4 oder weniger Punkten), davon höchstens 3 in Leistungskursen. Höchstens 4 Grundkurse je Fach.",
+    "Ein Kurs mit 0 Punkten gilt als nicht belegt und kann nicht eingebracht werden. Ist es ein Pflichtkurs, wirst du nicht zugelassen.",
     "Block II: fünf Prüfungen vierfach: drei schriftlich, eine mündlich, eine Präsentationsprüfung oder Besondere Lernleistung.",
+    "Zusätzliche mündliche Prüfung im 1. bis 3. Fach: (2 × schriftlich + mündlich) / 3 × 4, ab 0,5 aufgerundet.",
     "Bestehen: Block II mindestens 100 Punkte, drei Fächer mit je 20 Punkten, darunter ein LK.",
   ],
   sources: [
     {
-      title: "APO-GOSt NRW vom 16.07.2026",
-      section: "§§ 6–8, 11, 12, 16, 17, 26–28, 34–38, 45, 46",
+      title:
+        "APO-GOSt NRW vom 16.07.2026 (GV. NRW. S. 457), in Kraft ab 01.08.2027",
+      section: "§§ 6–8, 11, 12, 26, 27, 37, 38, 45, 46",
       url: "https://recht.nrw.de/lrgv/rechtsverordnung/01082027-ausbildungs-und-pruefungsordnung-fuer-die-gymnasiale-oberstufe-und/",
     },
     {
-      title: "VVzAPO-GOSt (2027)",
+      title: "VVzAPO-GOSt (2027), BASS 13-32 Nr. 3.2",
       section: "VV 26.3, 27.3, 38.3, Anlagen 8, 13",
-      url: "https://bass.schule.nrw/20319.htm",
+      url: "https://bass.schule.nrw/20320.htm",
     },
     {
       title: "MSB NRW: Weiterentwicklung der gymnasialen Oberstufe",
