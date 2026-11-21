@@ -5,10 +5,9 @@
 // ask natively first.
 
 import React, { useCallback, useEffect, useMemo } from "react";
-import { Linking, Platform, StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import * as Application from "expo-application";
-import * as StoreReview from "expo-store-review";
 import {
   ArrowUpWideNarrow,
   Banknote,
@@ -28,6 +27,7 @@ import {
   Palette,
   RotateCcw,
   ScrollText,
+  Share2,
   Star,
   SunMoon,
   Target,
@@ -79,10 +79,14 @@ import {
   trackClippingShown,
 } from "@services/analytics/appEvents";
 import { clippingUrl } from "@services/clipping/clipping";
+import { requestStoreReview } from "@services/engagement/storeReview";
+import { presentPrompt } from "@components/engagement/prompts";
+import { resetEngagementSession } from "@hooks/useEngagementPrompts";
 import { afterDeleteAll } from "@services/cloudBackup/cloudSync";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
 import { useLanguageStore } from "@stores/languageStore";
+import { usePreferencesStore } from "@stores/preferencesStore";
 import { useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
 import { ThemeMode, type LanguageMode } from "@apptypes/enums";
@@ -90,10 +94,6 @@ import { ThemeMode, type LanguageMode } from "@apptypes/enums";
 const GITHUB_URL = "https://github.com/vibelabsdotto/abiapp";
 const PRIVACY_URL = "https://vibelabs.to/de/privacy";
 const IMPRINT_URL = "https://vibelabs.to/de/imprint";
-const APP_STORE_REVIEW_URL =
-  "https://apps.apple.com/app/id6450996587?action=write-review";
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.max.mannstein.abisax";
 
 const THEME_ICONS: Record<ThemeMode, MenuSymbol> = {
   [ThemeMode.System]: "circle.lefthalf.filled",
@@ -245,18 +245,17 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleRate = async () => {
-    try {
-      if (await StoreReview.isAvailableAsync()) {
-        await StoreReview.requestReview();
-        return;
-      }
-    } catch {
-      // Fall through to the store page.
-    }
-    await openUrl(
-      Platform.OS === "ios" ? APP_STORE_REVIEW_URL : PLAY_STORE_URL,
+  const handleRate = () => {
+    usePreferencesStore.getState().markRatingRequested();
+    requestStoreReview().catch((error: unknown) =>
+      showError(t("settings.linkFailed"), error),
     );
+  };
+
+  const handleResetEngagement = () => {
+    usePreferencesStore.getState().resetEngagement();
+    resetEngagementSession();
+    showSuccess(t("engagement.dev.resetDone"));
   };
 
   // Development builds only; release bundles drop the demo module.
@@ -483,7 +482,7 @@ export default function SettingsScreen() {
         <ListRow
           title={t("settings.rate")}
           leading={<SettingsIcon icon={Star} />}
-          onPress={() => void handleRate()}
+          onPress={handleRate}
         />
       </Section>
 
@@ -546,6 +545,26 @@ export default function SettingsScreen() {
             title={t("settings.resetOnboarding")}
             leading={<SettingsIcon icon={RotateCcw} />}
             onPress={() => void handleResetOnboarding()}
+          />
+          <ListRow
+            title={t("engagement.dev.rating")}
+            leading={<SettingsIcon icon={Star} />}
+            onPress={() => presentPrompt("rating")}
+          />
+          <ListRow
+            title={t("engagement.dev.recommend")}
+            leading={<SettingsIcon icon={Share2} />}
+            onPress={() => presentPrompt("recommend")}
+          />
+          <ListRow
+            title={t("engagement.dev.clipping")}
+            leading={<SettingsIcon icon={Banknote} />}
+            onPress={() => presentPrompt("clipping")}
+          />
+          <ListRow
+            title={t("engagement.dev.reset")}
+            leading={<SettingsIcon icon={RotateCcw} />}
+            onPress={handleResetEngagement}
           />
           <ListRow
             title={t("settings.designGallery")}

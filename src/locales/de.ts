@@ -2,6 +2,7 @@
 // en.ts must satisfy the same shape.
 
 import { backupDE } from "./parts/backup.de";
+import { engagementDE } from "./parts/engagement.de";
 import { onboardingDE } from "./parts/onboarding.de";
 import { overviewDE } from "./parts/overview.de";
 import { setupDE } from "./parts/setup.de";
@@ -13,6 +14,7 @@ export const de = {
   ...onboardingDE,
   ...subjectsDE,
   ...overviewDE,
+  ...engagementDE,
   common: {
     cancel: "Abbrechen",
     save: "Sichern",

@@ -1,5 +1,6 @@
 import type { Translations } from "./de";
 import { backupEN } from "./parts/backup.en";
+import { engagementEN } from "./parts/engagement.en";
 import { onboardingEN } from "./parts/onboarding.en";
 import { overviewEN } from "./parts/overview.en";
 import { setupEN } from "./parts/setup.en";
@@ -11,6 +12,7 @@ export const en: Translations = {
   ...onboardingEN,
   ...subjectsEN,
   ...overviewEN,
+  ...engagementEN,
   common: {
     cancel: "Cancel",
     save: "Save",
