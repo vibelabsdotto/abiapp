@@ -397,3 +397,57 @@ describe("BW-2027 Seminarkurs", () => {
     expect(e.total.gradeTenths).toBe(24);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Leistungsfach Wirtschaft (§ 13 Abs. 2 Satz 3, § 21 Abs. 2 Nr. 2): only the
+// first Geographie and Gemeinschaftskunde course is belegpflichtig; as oral
+// exam subject Geographie has three courses (1 + 2 extra), all included.
+// ---------------------------------------------------------------------------
+describe("BW-2027 Leistungsfach Wirtschaft", () => {
+  it("Geographie as oral exam subject with three courses", () => {
+    // LF De, Ma, Wi (10 each): any two doubled → 80 + 80 + 40 = 200.
+    // Duties: En 36 (FS, P5), Fr 32 + Bio 28 (2 FS + 1 NW), Ku 6+6, Ge 36,
+    //   Geo 8+8+8 (P4), GK 7 = 34 courses with LF. Free 6: Sp 12 × 4,
+    //   Rel 9, 9 = 66. Basic: 36+32+28+12+36+24+7+66 = 241.
+    // P = 441, E_I = 441 · 40 / 48 = 367,5 → 368.
+    const ten: Points[] = [10, 10, 10, 10];
+    const e = evaluate(
+      build("BW-2027", [
+        { key: "de", lf: true, slot: "P1", hy: ten },
+        { key: "ma", lf: true, slot: "P2", hy: ten },
+        { key: "wi", lf: true, slot: "P3", hy: ten },
+        { key: "en", slot: "P5", hy: [9, 9, 9, 9] },
+        { key: "fr", hy: [8, 8, 8, 8] },
+        { key: "bio", hy: [7, 7, 7, 7] },
+        { key: "ku", hy: [6, 6, 6, 6] },
+        { key: "ge", hy: [9, 9, 9, 9] },
+        { key: "geo", slot: "P4", hy: [8, 8, 8, null] },
+        { key: "pol", hy: [7, null, null, null] },
+        { key: "rel_ev", hy: [9, 9, 9, 9] },
+        { key: "sp", hy: [12, 12, 12, 12] },
+      ]),
+    );
+    expect(included(e, "geo")).toEqual([0, 1, 2]);
+    expect(included(e, "pol")).toEqual([0]);
+    expect(e.blockI.weightedSum).toBe(441);
+    expect(e.blockI.points).toBe(368);
+    expect(e.blockI.admitted).toBe(true);
+  });
+});
+
+describe("BW-2027 Informatik as second science (assumption)", () => {
+  it("counts only with the Schulversuch note", () => {
+    // Muster without Biologie, Informatik 10 × 4 instead: one FS (Englisch),
+    // one NW (Physik), Informatik as the second (Leitfaden). P = 452 − 35 + 40
+    // = 457, E_I = 457 · 40 / 48 = 380,83 → 381.
+    const specs = [
+      ...MUSTER.filter((s) => s.key !== "bio"),
+      { key: "inf", hy: [10, 10, 10, 10] },
+    ];
+    const e = evaluate(build("BW-2027", specs, { exams: MUSTER_EXAMS }));
+    expect(e.blockI.points).toBe(381);
+    expect(e.blockI.assumptions?.some((a) => a.includes("Informatik"))).toBe(
+      true,
+    );
+  });
+});
