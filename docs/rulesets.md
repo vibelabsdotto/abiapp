@@ -52,7 +52,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
 - **SL-2027:** Eine Fremdsprache als L-Kurs ist die Pflichtfremdsprache (nur sie zählt als Kernfach); bei zwei G-Kurs-Fremdsprachen bzw. zwei GW- oder NW-Fächern wählt die Engine das günstigere Pflichtfach. SL-2030: 36 Kurse, zwei eA-Prüfungsfächer doppelt, höchstens 20 % unter 5 Punkten (KMK Ziff. 9.5.3–9.5.7), LK-Kombination nur als Warnung.
 - **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13.
-- **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
+- **HB:** Formel statt der fehlerhaften amtlichen Tabelle (vierfache Tabelle mit BLL, mündlich 2 / schriftlich 15: gedruckt 53, Formel 43). Die BLL zählt bei „zwei Prüfungsfächer mit 25 bzw. 20 Punkten“ nicht mit (Annahme, § 18 Abs. 3 nennt nur Prüfungsfächer). HB-2030 nach dem Verordnungsentwurf (VL 21/8645, Stand 05.10.2026): alle 8 LK doppelt, Projektkurs Q1 einfach (S = 42), 6 Kurse Aufgabenfeld II, Defizitgrenze inkl. Projektkurs; die Broschüre „Wege zum Abitur 2027/28“ nennt abweichend LK in Q2.2 einfach.
 
 ## Bekannte Grenzen
 
