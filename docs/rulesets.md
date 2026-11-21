@@ -48,7 +48,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
 - **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation (amtlich nicht geregelt).
 - **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
-- **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben.
+- **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben; die Gesamtbewertung der Besonderen Lernleistung rundet die App kaufmännisch. Eine später begonnene Fremdsprache gilt als in der Einführungsphase begonnene zweite Fremdsprache (§ 10 Abs. 3, § 25 Abs. 2). Drei Leistungskurse (§ 24) und ein BLL-Referenzfach, das schon Prüfungsfach ist, sind nicht abbildbar.
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
 - **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13.
 - **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
