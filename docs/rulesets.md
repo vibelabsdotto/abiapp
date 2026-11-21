@@ -42,7 +42,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 ## Annahmen, wo die Verordnung offen ist
 
 - **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“.
-- **SN:** Informatik ersetzt eine Naturwissenschaft nur bei einer NW oder bei zwei NW mit nur einer Fremdsprache.
+- **SN:** Informatik ersetzt eine Naturwissenschaft nur, wenn ohne sie eine fehlt (§ 42 Abs. 1 S. 4, § 43 Abs. 3): bei einer NW oder bei zwei NW ohne zweite Fremdsprache, ohne in Klasse 10 begonnene Fremdsprache und ohne Fremdsprachen-LK. Befreiungen nach § 42 Abs. 4/5 erkennt die App nicht.
 - **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt.
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.

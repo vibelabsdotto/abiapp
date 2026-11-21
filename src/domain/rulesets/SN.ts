@@ -1,6 +1,6 @@
 // Sachsen, Abitur ab 2027 (SOGYA 2023, Fassung ab 01.08.2026).
 
-import type { Requirement, Ruleset } from "./types";
+import type { Requirement, RequirementOption, Ruleset } from "./types";
 import { catalog } from "./catalog";
 import {
   byKey,
@@ -25,6 +25,7 @@ import {
   partsCombine,
   requireExamSubject,
   requireFieldsCovered,
+  taken,
 } from "./helpers";
 
 const P3_KEYS = ["de", "ge", "geo", "grw", "ma", "ph", "ch", "bio"];
@@ -77,18 +78,20 @@ export const SN_2027: Ruleset = {
   summary: [
     "Qualifikationsphase 11/I bis 12/II mit zwei Leistungskursen. Der 1. LK ist Deutsch oder Mathematik.",
     "Block I: genau 40 Kurshalbjahre, LK zählen in Summe und Anzahl doppelt. Punkte = Summe × 40 / Anzahl, ab 0,5 aufgerundet.",
-    "Pflicht sind alle Prüfungsfächer, eine fortgeführte Fremdsprache und Geschichte (je 4), zwei Naturwissenschaften (8), je 2 in Kunst oder Musik, Geographie oder GRW, Religion oder Ethik, dazu aus jedem Fach mindestens 1.",
-    "Zulassung: mindestens 200 Punkte, höchstens 8 Unterkurse (davon höchstens 4 im LK), kein belegter Kurs mit 0 Punkten.",
+    "Pflicht sind alle Prüfungsfächer, eine fortgeführte Fremdsprache und Geschichte (je 4), zwei Naturwissenschaften (zusammen 8), je 2 in Kunst oder Musik, Geographie oder GRW, Religion oder Ethik, dazu aus jedem belegten Fach mindestens 1.",
+    "Informatik zählt statt einer Naturwissenschaft nur, wenn sie eine ersetzt hat, also ohne sie eine Naturwissenschaft fehlen würde.",
+    "Zulassung: mindestens 200 Punkte, höchstens 8 eingebrachte Kurse unter 5 Punkten (davon höchstens 4 im LK) und kein belegter Kurs mit 0 Punkten, auch kein nicht eingebrachter.",
     "Block II: fünf Prüfungen, P1 bis P3 schriftlich, P4 und P5 mündlich, alle vierfach.",
-    "Zusätzliche mündliche Prüfung: 4 × (2/3 Prüfung + 1/3 Zusatzprüfung), einmal gerundet.",
+    "Zusätzliche mündliche Prüfung (Pflicht bei 0 Punkten, sonst auf Antrag): 4 × (2/3 Prüfung + 1/3 Zusatzprüfung), am Ende ab 0,5 aufgerundet. Sie kann das Ergebnis auch senken.",
     "Eine Besondere Lernleistung ersetzt P5: 4 × (2/3 Kolloquium + 1/3 schriftlicher Teil).",
     "Bestehen: Block II mindestens 100 Punkte, drei Prüfungen mit je 20 Punkten (darunter ein LK), keine Prüfung mit 0 Punkten.",
     "Gesamt mindestens 300 von 900 Punkten, Note nach Anlage 3.",
   ],
   sources: [
     {
-      title: "Schulordnung Gymnasien Abiturprüfung (SOGYA)",
-      section: "§§ 2, 39–52, 60, 61, 63, 67, 68",
+      title:
+        "Schulordnung Gymnasien Abiturprüfung (SOGYA) vom 30.05.2023, Stand 01.08.2026",
+      section: "§§ 39–43, 47–52, 63, 67, 68",
       url: "https://www.revosax.sachsen.de/vorschrift_gesamt/20003.html",
     },
     {
@@ -105,6 +108,12 @@ export const SN_2027: Ruleset = {
       title: "Zweite Verordnung zur Änderung der SOGYA (BeLL-Gewichtung)",
       section: "Art. 1 Nr. 5, Nr. 8; Art. 2",
       url: "https://www.revosax.sachsen.de/vorschrift_gesamt/21489.html",
+    },
+    {
+      title:
+        "SMK: Das Abitur am allgemeinbildenden Gymnasium (Rechenbeispiel, Stand 2017)",
+      section: "S. 12–13",
+      url: "https://publikationen.sachsen.de/bdb/artikel/28331/documents/40541",
     },
   ],
   totalMinPoints: 300,
@@ -130,14 +139,21 @@ export const SN_2027: Ruleset = {
       reqs.push(oneOf("ge", "4 Halbjahre Geschichte", byKey(ctx, "ge"), 4));
       const nws = byKey(ctx, "bio", "ch", "ph");
       const inf = byKey(ctx, "inf");
-      const options = combinations(nws, 2).map((pair) => ({
+      const options: RequirementOption[] = combinations(nws, 2).map((pair) => ({
         label: pair.map((s) => s.name).join(" und "),
         picks: pair.map((s) => ({ subjectId: s.id, count: 4 })),
       }));
-      // Informatik counts only as replacement of a natural science (§ 48 Abs. 2 S. 2–3).
+      // § 42 Abs. 1 S. 4–5, Abs. 2 S. 1: two natural sciences suffice with a
+      // second foreign language, the language begun in class 10 or a
+      // foreign-language LK, otherwise all three are required.
+      const twoSuffice =
+        taken(ctx, (s) => hasTag(s, "foreign_language")).length >= 2 ||
+        fs.some((s) => s.level === "elevated");
+      // § 48 Abs. 2 S. 2–3: Informatik counts only if it replaced a natural
+      // science (§ 43 Abs. 3 Nr. 2), i.e. one is missing without it.
       if (
         inf.length > 0 &&
-        (nws.length === 1 || (nws.length === 2 && fs.length === 1))
+        (nws.length === 1 || (nws.length === 2 && !twoSuffice))
       ) {
         for (const nw of nws) {
           options.push({
@@ -148,10 +164,10 @@ export const SN_2027: Ruleset = {
             ],
             ...(nws.length > 1
               ? {
-                  assumption: `Annahme: ${inf[0].name} ersetzt eine Naturwissenschaft.`,
+                  assumption: `Annahme: ${inf[0].name} ersetzt deine dritte Naturwissenschaft (keine zweite Fremdsprache belegt).`,
                 }
               : {}),
-          } as (typeof options)[number]);
+          });
         }
       }
       reqs.push({
@@ -179,7 +195,7 @@ export const SN_2027: Ruleset = {
       return reqs;
     },
     deficitLimits: () => [
-      limit("total", 8, "Höchstens 8 Unterkurse"),
+      limit("total", 8, "Höchstens 8 Kurse unter 5 Punkten"),
       limit(
         "elevated",
         4,
@@ -291,8 +307,11 @@ export const SN_2027: Ruleset = {
     out.push(...requireExamSubject(ctx, ["ma"], "Mathematik"));
     out.push(...requireFieldsCovered(ctx));
     const ex = examSubjects(ctx);
+    // § 50 Abs. 6 S. 3: not with Kunst as LK and a Besondere Lernleistung.
+    const kuBell = ctx.variant.id === "bell" && lk.some((s) => hasKey(s, "ku"));
     if (
       ex.length >= 4 &&
+      !kuBell &&
       !ex.some((s) => hasTag(s, "natural_science", "foreign_language"))
     ) {
       out.push(
