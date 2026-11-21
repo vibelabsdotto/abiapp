@@ -8,6 +8,7 @@ import { useCourseStore } from "@stores/courseStore";
 import { useExamStore } from "@stores/examStore";
 import { usePreferencesStore } from "@stores/preferencesStore";
 import { useProfileStore } from "@stores/profileStore";
+import { useThemeStore } from "@stores/themeStore";
 
 import { seedDemoData } from "./demoData";
 
@@ -22,6 +23,7 @@ export function registerDevTools(): void {
       course: useCourseStore,
       exam: useExamStore,
       preferences: usePreferencesStore,
+      theme: useThemeStore,
     },
   };
 }

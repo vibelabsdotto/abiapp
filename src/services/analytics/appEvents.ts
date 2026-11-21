@@ -4,6 +4,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { ExamSlot, GradeKind, StateCode } from "@domain/model";
+import type { Worry } from "@utils/onboardingStory";
 
 import {
   initializeAnalytics,
@@ -27,6 +28,7 @@ export const ANALYTICS_EVENTS = {
   backupRestored: "backup_restored",
   dataDeleted: "data_deleted",
   onboardingSource: "onboarding_source",
+  onboardingWorry: "onboarding_worry",
   clippingShown: "clipping_shown",
   clippingOpened: "clipping_opened",
   clippingDismissed: "clipping_dismissed",
@@ -79,6 +81,11 @@ interface EventParams {
   backup_restored: undefined;
   data_deleted: undefined;
   onboarding_source: { source: AcquisitionSource | "skipped" };
+  /**
+   * One event per answer of "Was stresst dich am Abi am meisten?" (enum
+   * keys of WORRIES); "none" = continued without an answer.
+   */
+  onboarding_worry: { worry: Worry | "none" | "skipped" };
   clipping_shown: { placement: ClippingPlacement };
   clipping_opened: { placement: ClippingPlacement };
   clipping_dismissed: { placement: ClippingPlacement };

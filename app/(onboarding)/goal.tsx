@@ -5,10 +5,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import { GradeGrid } from "@components/overview/GradeGrid";
 import { OnboardingStep, showError } from "@components/setup";
 import { formatGrade } from "@components/ui";
@@ -23,6 +20,7 @@ const DEFAULT_TARGET = 20;
 export default function OnboardingGoalScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "goal" });
   const colors = useThemeStore((state) => state.colors);
   const saved = useProfileStore((state) => state.profile?.targetTenths ?? null);
   const setTarget = useProfileStore((state) => state.setTarget);
@@ -46,8 +44,7 @@ export default function OnboardingGoalScreen() {
   return (
     <OnboardingStep
       title={t("onboarding.goal.title")}
-      step={ONBOARDING_STEPS.goal}
-      totalSteps={ONBOARDING_TOTAL_STEPS}
+      {...progress}
       intro={t("onboarding.goal.intro")}
       footerNote={t("onboarding.goal.need", { points })}
       primary={{

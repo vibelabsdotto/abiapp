@@ -4,10 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 
 import { elevatedSlotDefaults } from "@components/onboarding/examDefaults";
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import { ExamPicker, OnboardingStep, showError } from "@components/setup";
 import { useExamsDraft } from "@hooks/useSetupFlows";
 import { useTranslation } from "@locales/index";
@@ -15,6 +12,7 @@ import { useTranslation } from "@locales/index";
 export default function OnboardingExamsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "exams" });
   const draft = useExamsDraft();
   const [saving, setSaving] = useState<"next" | "later" | null>(null);
 
@@ -36,7 +34,7 @@ export default function OnboardingExamsScreen() {
     try {
       // "Später" keeps whatever is valid so far.
       if (draft.canSave) await draft.save();
-      router.push("/(onboarding)/source");
+      router.push("/(onboarding)/accent");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
@@ -55,8 +53,7 @@ export default function OnboardingExamsScreen() {
   return (
     <OnboardingStep
       title={t("onboarding.exams.title")}
-      step={ONBOARDING_STEPS.exams}
-      totalSteps={ONBOARDING_TOTAL_STEPS}
+      {...progress}
       intro={t("onboarding.exams.intro")}
       footerNote={blocked}
       primary={{

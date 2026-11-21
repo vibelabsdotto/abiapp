@@ -4,10 +4,7 @@
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import {
   OnboardingStep,
   RulesetCard,
@@ -21,6 +18,7 @@ import { useTranslation } from "@locales/index";
 export default function OnboardingYearScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "year" });
   const state = useProfileDraft((draft) => draft.state);
   const abiturYear = useProfileDraft((draft) => draft.abiturYear);
   const rulesetId = useProfileDraft((draft) => draft.rulesetId);
@@ -41,7 +39,7 @@ export default function OnboardingYearScreen() {
         abiturYear: year,
         rulesetId: ruleset.id,
       });
-      if (result) router.push("/(onboarding)/goal");
+      if (result) router.push("/(onboarding)/rules");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
@@ -52,8 +50,7 @@ export default function OnboardingYearScreen() {
   return (
     <OnboardingStep
       title={t("onboarding.year.title")}
-      step={ONBOARDING_STEPS.year}
-      totalSteps={ONBOARDING_TOTAL_STEPS}
+      {...progress}
       intro={t("onboarding.year.intro")}
     >
       <YearPicker

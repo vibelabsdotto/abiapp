@@ -6,10 +6,7 @@ import { Platform } from "react-native";
 import { useRouter } from "expo-router";
 
 import { shuffledSources } from "@components/onboarding/sources";
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import { OnboardingStep } from "@components/setup";
 import { ListRow, Section } from "@components/ui";
 import { useTranslation } from "@locales/index";
@@ -24,6 +21,7 @@ let answered = false;
 export default function OnboardingSourceScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "source" });
   // Shuffled once per visit, so no answer profits from its position.
   const [sources] = useState(() => shuffledSources());
   const [chosen, setChosen] = useState<AcquisitionSource | null>(null);
@@ -48,8 +46,7 @@ export default function OnboardingSourceScreen() {
   return (
     <OnboardingStep
       title={t("onboarding.source.title")}
-      step={ONBOARDING_STEPS.source}
-      totalSteps={ONBOARDING_TOTAL_STEPS}
+      {...progress}
       intro={t("onboarding.source.intro")}
       secondary={{
         title: t("onboarding.skip"),

@@ -4,10 +4,7 @@
 import React, { useState } from "react";
 import { Stack, useRouter } from "expo-router";
 
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import {
   LevelPicker,
   OnboardingStep,
@@ -20,6 +17,7 @@ import { useTranslation } from "@locales/index";
 export default function OnboardingLevelsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "levels" });
   const draft = useLevelsDraft();
   const [saving, setSaving] = useState(false);
   const title = elevatedPlural(draft.ruleset, locale);
@@ -59,8 +57,7 @@ export default function OnboardingLevelsScreen() {
       <Stack.Screen options={{ title }} />
       <OnboardingStep
         title={title}
-        step={ONBOARDING_STEPS.levels}
-        totalSteps={ONBOARDING_TOTAL_STEPS}
+        {...progress}
         intro={t("onboarding.levels.intro", { name: singular, need })}
         footerNote={blocked}
         primary={{

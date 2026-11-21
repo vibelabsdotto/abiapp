@@ -21,7 +21,7 @@ export default function OnboardingWelcomeScreen() {
     if (draft.state === null) {
       draft.initFrom(useProfileStore.getState().profile);
     }
-    router.push("/(onboarding)/state");
+    router.push("/(onboarding)/worries");
   }, [router]);
 
   const restore = useCallback(async () => {
