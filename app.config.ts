@@ -91,6 +91,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     package: "com.max.mannstein.abisax",
     versionCode: 20,
+    // No ads: keep Firebase Analytics from reading the advertising ID.
+    blockedPermissions: [
+      "com.google.android.gms.permission.AD_ID",
+      "android.permission.ACCESS_ADSERVICES_AD_ID",
+      "android.permission.ACCESS_ADSERVICES_ATTRIBUTION",
+    ],
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
       monochromeImage: "./assets/images/adaptive-icon-monochrome.png",
