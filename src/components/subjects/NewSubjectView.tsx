@@ -29,7 +29,7 @@ import { savedFeedback, showSaveError } from "./actions";
 import { ChoiceChips, EditorScroll, FormTextInput } from "./form";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { FIELD_ORDER, TAGS_BY_FIELD, suggestFromName } from "./subjectSuggest";
-import { useEditorClose } from "./useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 
 export const levelLabel = (
   ruleset: RulesetSummary | null,
@@ -69,7 +69,9 @@ const CatalogPicker = ({
   );
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const close = useEditorClose(selected.length > 0 && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(
+    selected.length > 0 && !saving,
+  );
 
   const groups = useMemo(() => {
     const existing = new Set(subjects.map((subject) => subject.catalogKey));
@@ -99,7 +101,7 @@ const CatalogPicker = ({
         type: "success",
         text1: t("subjects.subjectEditor.added", { count: created.length }),
       });
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
       showSaveError(error);
@@ -140,7 +142,7 @@ const CatalogPicker = ({
             ? t("subjects.subjectEditor.selected", { count: selected.length })
             : t("subjects.subjectEditor.titleNew")
         }
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveLabel={t("subjects.subjectEditor.add")}
         saveDisabled={selected.length === 0 || saving}
@@ -230,7 +232,9 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
   const [touched, setTouched] = useState(false);
   const [suggested, setSuggested] = useState(false);
   const [saving, setSaving] = useState(false);
-  const close = useEditorClose(name.trim().length > 0 && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(
+    name.trim().length > 0 && !saving,
+  );
 
   const changeName = (text: string) => {
     setName(text);
@@ -282,7 +286,7 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
         type: "success",
         text1: t("subjects.subjectEditor.added", { count: 1 }),
       });
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
       showSaveError(error);
@@ -297,7 +301,7 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
     <>
       <ModalHeader
         title={t("subjects.subjectEditor.titleCustom")}
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveLabel={t("subjects.subjectEditor.add")}
         saveDisabled={!valid || saving}

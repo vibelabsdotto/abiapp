@@ -19,7 +19,7 @@ import { EditorScroll } from "@components/subjects/form";
 import { formatExact } from "@components/subjects/format";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { SubjectContext } from "@components/subjects/headers";
-import { useEditorClose } from "@components/subjects/useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 import { usePrognosis } from "@hooks/usePrognosis";
 import { useHalfYearLabels } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
@@ -68,7 +68,7 @@ export default function CourseResultScreen() {
   const [saving, setSaving] = useState(false);
 
   const dirty = official !== initial.official || target !== initial.target;
-  const close = useEditorClose(dirty && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(dirty && !saving);
   const label = labels[halfYear] ?? "";
 
   const save = async () => {
@@ -82,7 +82,7 @@ export default function CourseResultScreen() {
         await setTargetPoints(subject.id, halfYear, target);
       }
       savedFeedback();
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
       showSaveError(error);
@@ -94,7 +94,7 @@ export default function CourseResultScreen() {
       <>
         <ModalHeader
           title={t("subjects.courseResult.title")}
-          onCancel={() => close(true)}
+          onCancel={() => closeAfterSave()}
         />
         <EditorScroll>
           <EmptyState
@@ -123,7 +123,7 @@ export default function CourseResultScreen() {
             ? t("subjects.courseResult.titleResult")
             : t("subjects.courseResult.titleTarget")
         }
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveDisabled={!dirty || saving}
       />

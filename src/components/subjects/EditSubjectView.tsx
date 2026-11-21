@@ -31,7 +31,7 @@ import { confirmRemoveSubject, savedFeedback, showSaveError } from "./actions";
 import { EditorScroll, FormRow, FormSwitchRow, FormTextInput } from "./form";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { levelLabel } from "./NewSubjectView";
-import { useEditorClose } from "./useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 
 const EXAM_WEIGHT_PRESETS = [25, 33, 50, 67, 75];
 
@@ -94,7 +94,9 @@ export const EditSubjectView = ({
     takenChanged ||
     draft.examWeightPercent !== initial.examWeightPercent ||
     draft.color !== initial.color;
-  const close = useEditorClose(dirty && !saving);
+  const { cancel, closeAfterSave, allowClose } = useEditorClose(
+    dirty && !saving,
+  );
 
   const catalogEntry = subject.catalogKey
     ? (ruleset?.catalog.find((entry) => entry.key === subject.catalogKey) ??
@@ -149,7 +151,7 @@ export const EditSubjectView = ({
         }
       }
       savedFeedback();
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
       showSaveError(error);
@@ -165,7 +167,7 @@ export const EditSubjectView = ({
     <>
       <ModalHeader
         title={t("subjects.subjectEditor.titleEdit")}
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveDisabled={!dirty || saving || draft.name.trim().length === 0}
       />
@@ -343,7 +345,7 @@ export const EditSubjectView = ({
             destructive
             onPress={() =>
               confirmRemoveSubject(subject, () => {
-                close(true);
+                allowClose();
                 router.dismissTo("/subjects");
               })
             }

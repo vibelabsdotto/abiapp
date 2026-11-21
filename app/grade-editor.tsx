@@ -39,7 +39,7 @@ import {
 } from "@components/subjects/format";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { SubjectContext } from "@components/subjects/headers";
-import { useEditorClose } from "@components/subjects/useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 import { halfYearPrognosis } from "@domain/index";
 import type { EngineGrade, GradeKind } from "@domain/model";
 import { useHalfYearLabels } from "@hooks/useRuleset";
@@ -118,7 +118,7 @@ export default function GradeEditorScreen() {
     draft.title.trim() !== initial.title.trim() ||
     draft.date !== initial.date ||
     draft.weight !== initial.weight;
-  const close = useEditorClose(dirty && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(dirty && !saving);
 
   const halfYearLabel = labels[halfYear] ?? "";
   const course = courses.find(
@@ -207,7 +207,7 @@ export default function GradeEditorScreen() {
         await addGrade({ subjectId: subject.id, halfYear, ...values });
       }
       savedFeedback();
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
       showSaveError(error);
@@ -216,7 +216,7 @@ export default function GradeEditorScreen() {
 
   const remove = () => {
     if (!existing) return;
-    close(true);
+    closeAfterSave();
     void deleteGradeWithUndo(existing);
   };
 
@@ -229,7 +229,7 @@ export default function GradeEditorScreen() {
   if (!subject) {
     return (
       <>
-        <ModalHeader title={title} onCancel={() => close(true)} />
+        <ModalHeader title={title} onCancel={() => closeAfterSave()} />
         <EditorScroll>
           <EmptyState
             icon={BookOpen}
@@ -246,7 +246,7 @@ export default function GradeEditorScreen() {
     <>
       <ModalHeader
         title={title}
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveDisabled={
           draft.points === null || saving || (existing !== null && !dirty)

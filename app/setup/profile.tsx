@@ -24,7 +24,7 @@ import {
   resolveDraftRuleset,
   useProfileDraft,
 } from "@hooks/useSetupDraft";
-import { useSetupModal } from "@hooks/useSetupModal";
+import { useEditorClose } from "@components/common/feedback";
 import { useTranslation } from "@locales/index";
 import { useProfileStore } from "@stores/profileStore";
 
@@ -52,7 +52,7 @@ export default function SetupProfileScreen() {
     [state, abiturYear, rulesetId],
   );
   const dirty = isProfileDraftDirty(draft, profile);
-  const { cancel, closeAfterSave, closing } = useSetupModal(dirty);
+  const { cancel, closeAfterSave, closing } = useEditorClose(dirty);
   const stateName =
     listStates().find((item) => item.code === state)?.name ?? "";
 
