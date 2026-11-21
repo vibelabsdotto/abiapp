@@ -164,8 +164,12 @@ export const ExamPicker = ({
         </Section>
       ) : null}
 
+      {/* The screen title already says "Prüfungsfächer"; the section needs
+          its own only to set it apart from the variant choice. */}
       <Section
-        title={t("setup.exams.slots")}
+        title={
+          ruleset.examVariants.length > 1 ? t("setup.exams.slots") : undefined
+        }
         footer={t("setup.exams.assigned", {
           count: assignedCount,
           total: requiredCount,
