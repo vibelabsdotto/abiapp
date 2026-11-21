@@ -21,6 +21,7 @@ import { RulesetUnavailable } from "@components/overview/RulesetUnavailable";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
+import { rulesetVersionLabel } from "@hooks/useRuleset";
 import { Radius, Type } from "@constants/typography";
 
 const CONFIDENCE_TONE: Record<"high" | "medium" | "low", ChipTone> = {
@@ -71,11 +72,20 @@ export default function RulesScreen() {
       {header}
       <ScreenLayout contentContainerStyle={styles.content}>
         <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[Type.title2, { color: colors.text }]}>
+          <Text
+            accessibilityRole="header"
+            // Grows with Dynamic Type; long names shrink instead of breaking
+            // mid-word: compounds ("Nordrhein-Westfalen") on two lines,
+            // single words ("Niedersachsen") on one.
+            numberOfLines={/[\s-]/.test(ruleset.stateName) ? 2 : 1}
+            adjustsFontSizeToFit
+            android_hyphenationFrequency="normal"
+            style={[Type.title2, { color: colors.text }]}
+          >
             {ruleset.stateName}
           </Text>
           <Text style={[Type.subhead, { color: colors.textSecondary }]}>
-            {ruleset.label}
+            {rulesetVersionLabel(ruleset)}
           </Text>
           <View style={styles.chips}>
             <Chip
