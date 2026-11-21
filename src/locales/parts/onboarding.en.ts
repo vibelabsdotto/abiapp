@@ -32,7 +32,16 @@ export const onboardingEN = {
       counted: "counts",
       notCounted: "doesn't count",
       inclusion: "{{count}} of {{total}} courses count",
-      atLeast: "at least {{points}}",
+      atLeast: "at least {{points}} points",
+      nextExam: "{{subject}} · next exam",
+      rules: "Calculated by {{source}}",
+      short: {
+        german: "Ger",
+        maths: "Ma",
+        english: "Eng",
+        biology: "Bio",
+        history: "His",
+      },
       states: "16 states",
     },
     worries: {

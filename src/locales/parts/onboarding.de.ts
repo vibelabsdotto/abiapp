@@ -37,7 +37,16 @@ export const onboardingDE = {
       counted: "zählt",
       notCounted: "zählt nicht",
       inclusion: "{{count}} von {{total}} Kursen zählen",
-      atLeast: "mindestens {{points}}",
+      atLeast: "mindestens {{points}} Punkte",
+      nextExam: "{{subject}} · nächste Klausur",
+      rules: "Gerechnet nach {{source}}",
+      short: {
+        german: "De",
+        maths: "Ma",
+        english: "En",
+        biology: "Bio",
+        history: "Ge",
+      },
       states: "16 Bundesländer",
     },
     worries: {

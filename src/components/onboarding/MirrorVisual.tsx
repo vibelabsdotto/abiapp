@@ -28,7 +28,7 @@ import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 import type { Worry } from "@utils/onboardingStory";
 
-import { DemoInclusion } from "./intro/IntroScreens";
+import { DemoInclusion, demoSubject } from "./intro/IntroScreens";
 
 const DEMO_TOTAL = 612;
 
@@ -128,14 +128,14 @@ const RulesVisual = () => {
 const FOCUS_ROWS = [
   {
     name: "maths",
-    color: "slate",
+    key: "ma",
     values: [11, 12, 13, 12],
     counted: [true, true, true, true],
     chip: "full",
   },
   {
     name: "history",
-    color: "orange",
+    key: "ge",
     values: [7, 8, 11, 10],
     counted: [false, false, true, true],
     chip: "relaxed",
@@ -150,11 +150,7 @@ const FocusVisual = () => {
       {FOCUS_ROWS.map((row) => (
         <View key={row.name} style={styles.focusRow}>
           <View style={styles.focusHead}>
-            <SubjectAvatar
-              name={t(`onboarding.demo.${row.name}`)}
-              color={row.color}
-              size={28}
-            />
+            <SubjectAvatar {...demoSubject(row.key)} size={28} />
             <Text
               numberOfLines={1}
               style={[Type.headline, styles.flex, { color: colors.text }]}

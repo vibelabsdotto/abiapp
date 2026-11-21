@@ -29,9 +29,15 @@ import {
   formatGrade,
 } from "@components/ui";
 import { NumberType, Radius, Type } from "@constants/typography";
-import { gradeFromPoints, listStates, minPointsForGrade } from "@domain/index";
+import {
+  gradeFromPoints,
+  listStates,
+  minPointsForGrade,
+  rulesetsForState,
+} from "@domain/index";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
+import { defaultSubjectColor } from "@utils/subjectColor";
 
 export type IntroBeat = "standing" | "counts" | "needs" | "states";
 export const INTRO_BEATS: readonly IntroBeat[] = [
@@ -67,10 +73,7 @@ export const CAMERA: Record<IntroBeat, CameraKey[]> = {
     { at: 0, zoom: 1.22, anchor: "matrix" },
     { at: 2150, zoom: 1.28, anchor: "caption" },
   ],
-  needs: [
-    { at: 0, zoom: 1.18, anchor: "goal" },
-    { at: 750, zoom: 1.3, anchor: "hero" },
-  ],
+  needs: [{ at: 0, zoom: 1.28, anchor: "hero" }],
   states: [
     { at: 0, zoom: 1.2, anchor: "grid" },
     { at: 2050, zoom: 1.25, anchor: "caption" },
@@ -84,8 +87,18 @@ type OnAnchor = (name: string, y: number, height: number) => void;
 const DEMO_TOTAL = 612;
 const DEMO_GOAL_TENTHS = 15;
 const DEMO_NEXT_EXAM = 12;
-/** The state the tap lands on in beat 4. */
+/** The state the tap lands on in beat 4, and its real ruleset. */
 const DEMO_STATE = "SN";
+const DEMO_RULES = (() => {
+  const ruleset = rulesetsForState(DEMO_STATE)[0];
+  const source = ruleset.sources[0];
+  // "Schulordnung … (SOGYA) vom …": the short name in brackets reads best.
+  const short = /\(([^)]+)\)/.exec(source.title)?.[1] ?? source.title;
+  return {
+    label: ruleset.label,
+    source: [short, source.section].filter(Boolean).join(" "),
+  };
+})();
 
 /** A direct child of a screen that the camera can centre on. */
 const Anchor = ({
@@ -151,14 +164,20 @@ interface ScreenProps {
   onAnchor: OnAnchor;
 }
 
+/** A demo subject as the app shows it: catalog icon and default colour. */
+export const demoSubject = (key: string) => ({
+  catalogKey: key,
+  color: defaultSubjectColor({ catalogKey: key, tags: [] }, []),
+});
+
 const DEMO_ROWS: {
   name: string;
-  color: string;
+  key: string;
   cells: [number, boolean][];
 }[] = [
   {
     name: "german",
-    color: "blue",
+    key: "de",
     cells: [
       [12, true],
       [13, true],
@@ -168,7 +187,7 @@ const DEMO_ROWS: {
   },
   {
     name: "maths",
-    color: "slate",
+    key: "ma",
     cells: [
       [10, true],
       [12, true],
@@ -178,7 +197,7 @@ const DEMO_ROWS: {
   },
   {
     name: "english",
-    color: "violet",
+    key: "en",
     cells: [
       [9, false],
       [11, true],
@@ -188,7 +207,7 @@ const DEMO_ROWS: {
   },
   {
     name: "biology",
-    color: "green",
+    key: "bio",
     cells: [
       [13, true],
       [7, false],
@@ -198,7 +217,7 @@ const DEMO_ROWS: {
   },
   {
     name: "history",
-    color: "orange",
+    key: "ge",
     cells: [
       [6, false],
       [8, false],
@@ -303,11 +322,7 @@ const StandingScreen = ({ animate, onAnchor }: ScreenProps) => {
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         {DEMO_ROWS.slice(0, 4).map((row) => (
           <View key={row.name} style={styles.subjectRow}>
-            <SubjectAvatar
-              name={t(`onboarding.demo.${row.name}`)}
-              color={row.color}
-              size={30}
-            />
+            <SubjectAvatar {...demoSubject(row.key)} size={30} />
             <Text
               allowFontScaling={false}
               numberOfLines={1}
@@ -396,17 +411,13 @@ const InclusionMatrix = ({ animate }: { animate: boolean }) => {
       {DEMO_ROWS.map((row) => (
         <View key={row.name} style={styles.matrixRow}>
           <View style={styles.matrixName}>
-            <SubjectAvatar
-              name={t(`onboarding.demo.${row.name}`)}
-              color={row.color}
-              size={26}
-            />
+            <SubjectAvatar {...demoSubject(row.key)} size={26} />
             <Text
               allowFontScaling={false}
               numberOfLines={1}
               style={[Type.subhead, styles.flex, { color: colors.text }]}
             >
-              {t(`onboarding.demo.${row.name}`)}
+              {t(`onboarding.demo.short.${row.name}`)}
             </Text>
           </View>
           {row.cells.map(([points, inc], index) => (
@@ -471,6 +482,26 @@ const CountsScreen = ({ animate, onAnchor }: ScreenProps) => {
           >
             {t("onboarding.demo.inclusion", INCLUSION)}
           </Text>
+          <View style={styles.legend}>
+            {[true, false].map((counted) => (
+              <View
+                key={String(counted)}
+                style={[styles.legendItem, !counted && styles.faded]}
+              >
+                <PointsBadge points={12} size="small" maxFontScale={1} />
+                <Text
+                  allowFontScaling={false}
+                  style={[Type.subhead, { color: colors.textSecondary }]}
+                >
+                  {t(
+                    counted
+                      ? "onboarding.demo.counted"
+                      : "onboarding.demo.notCounted",
+                  )}
+                </Text>
+              </View>
+            ))}
+          </View>
         </Animated.View>
       </Anchor>
     </View>
@@ -486,10 +517,11 @@ const NeedsScreen = ({ animate, onAnchor }: ScreenProps) => {
   const { t, locale } = useTranslation();
   const goalPoints = minPointsForGrade(DEMO_GOAL_TENTHS);
   const grade = formatGrade(DEMO_GOAL_TENTHS, locale);
+  const maths = t("onboarding.demo.maths");
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title={t("onboarding.demo.maths")} />
+      <ScreenTitle title={maths} />
       <Anchor name="goal" onAnchor={onAnchor}>
         <View
           style={[
@@ -518,16 +550,12 @@ const NeedsScreen = ({ animate, onAnchor }: ScreenProps) => {
           ]}
         >
           <View style={styles.examHead}>
-            <SubjectAvatar
-              name={t("onboarding.demo.maths")}
-              color="slate"
-              size={34}
-            />
+            <SubjectAvatar {...demoSubject("ma")} size={34} />
             <Text
               allowFontScaling={false}
-              style={[Type.title3, styles.flex, { color: colors.text }]}
+              style={[Type.title3, { color: colors.text }]}
             >
-              {t("subjects.goal.nextExam")}
+              {t("onboarding.demo.nextExam", { subject: maths })}
             </Text>
           </View>
           <Animated.View
@@ -677,6 +705,27 @@ const StatesScreen = ({ animate, onAnchor }: ScreenProps) => {
           >
             {t("onboarding.demo.states")}
           </Text>
+          <View
+            style={[
+              styles.card,
+              styles.ruleCard,
+              { backgroundColor: colors.card },
+            ]}
+          >
+            <Text
+              allowFontScaling={false}
+              style={[Type.headline, { color: colors.text }]}
+            >
+              {DEMO_RULES.label}
+            </Text>
+            <Text
+              allowFontScaling={false}
+              numberOfLines={2}
+              style={[Type.subhead, { color: colors.textSecondary }]}
+            >
+              {t("onboarding.demo.rules", { source: DEMO_RULES.source })}
+            </Text>
+          </View>
         </Animated.View>
       </Anchor>
     </View>
@@ -786,6 +835,25 @@ const styles = StyleSheet.create({
     fontSize: 64,
     lineHeight: 70,
   },
+  legend: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 18,
+    paddingTop: 12,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  faded: {
+    opacity: 0.4,
+  },
+  ruleCard: {
+    marginTop: 14,
+    gap: 2,
+    alignSelf: "stretch",
+  },
   goalCard: {
     paddingVertical: 16,
     alignItems: "center",
@@ -798,8 +866,8 @@ const styles = StyleSheet.create({
   examHead: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 10,
-    alignSelf: "stretch",
   },
   needBox: {
     borderWidth: 3,

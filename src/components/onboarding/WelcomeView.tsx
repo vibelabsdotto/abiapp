@@ -49,8 +49,11 @@ import { PhoneFrame, phoneGeometry } from "./intro/PhoneFrame";
 const PHONE_SHARE = 0.66;
 const MAX_PHONE_WIDTH = 330;
 /** Height of the fades at the stage edges. */
-const FADE = 48;
+const FADE = 56;
 const CAMERA_MS = 750;
+/** How deep into a fade a phone edge may reach in a close-up (share). */
+const EDGE_IN_FADE = 0.4;
+const MAX_ZOOM = 1.45;
 const CAMERA_EASING = Easing.bezier(0.45, 0, 0.2, 1);
 
 const BEAT_KEYS: Record<IntroBeat, string> = {
@@ -165,7 +168,18 @@ export const WelcomeView = ({
           const centre =
             geometry.frame +
             (anchor.y + anchor.height / 2) * geometry.contentScale;
-          moveTo(key.zoom, -key.zoom * (centre - geometry.height / 2));
+          const offset = centre - geometry.height / 2;
+          // Close-ups keep both phone edges inside the fades, so no corner
+          // or cut line shows; zoom in a little further if centring the
+          // anchor would pull an edge into the clear part of the stage.
+          const edgeZoom =
+            (stage.height / 2 - FADE * EDGE_IN_FADE) /
+            (geometry.height / 2 - Math.abs(offset));
+          const nextZoom =
+            edgeZoom > 0
+              ? Math.min(MAX_ZOOM, Math.max(key.zoom, edgeZoom))
+              : key.zoom;
+          moveTo(nextZoom, -nextZoom * offset);
         },
         // Anchors report on the first layout pass of the beat's screen.
         Math.max(key.at, 60),
@@ -189,6 +203,7 @@ export const WelcomeView = ({
     ready,
     reduceMotion,
     shift,
+    stage.height,
     zoom,
   ]);
 
@@ -395,6 +410,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: FADE,
+    // Above the tilted phone: its 3D transform would otherwise lift a
+    // corner over the fade on iOS.
+    zIndex: 100,
   },
   fadeTop: {
     top: 0,
