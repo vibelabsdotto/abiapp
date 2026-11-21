@@ -1,8 +1,11 @@
 // Section - iOS inset-grouped block: optional header (with trailing
 // action), a card holding the rows with inset hairline separators, and an
 // optional footer. Separators are inserted between children automatically.
+// Explanations go into `info`: an info icon next to the title (below the
+// card without a title) shows them on tap. `footer` is for short status
+// lines that must always be visible.
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -15,9 +18,14 @@ import {
 import { useThemeStore } from "@stores/themeStore";
 import { FontScale, Radius, Type } from "@constants/typography";
 
+import { InfoButton, InfoNote, InfoText } from "./InfoNote";
+
 export interface SectionProps {
   title?: string;
+  /** Always visible line below the card (status, counts). */
   footer?: string;
+  /** Explanation behind an info icon. */
+  info?: string;
   /** Trailing header action, e.g. "Alle anzeigen". */
   action?: { title: string; onPress: () => void };
   /**
@@ -34,6 +42,7 @@ export interface SectionProps {
 export const Section = ({
   title,
   footer,
+  info,
   action,
   variant = "grouped",
   separatorInset = 16,
@@ -42,22 +51,32 @@ export const Section = ({
 }: SectionProps) => {
   const colors = useThemeStore((state) => state.colors);
   const items = React.Children.toArray(children).filter(Boolean);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
     <View style={[styles.section, style]}>
       {title || action ? (
         <View style={styles.header}>
           {title ? (
-            <Text
-              accessibilityRole="header"
-              maxFontSizeMultiplier={FontScale.heading}
-              // Android otherwise splits hyphenated compounds inside a part
-              // ("…-tec / hnisch") instead of after a hyphen (as ListRow).
-              android_hyphenationFrequency="normal"
-              style={[Type.title3, styles.title, { color: colors.text }]}
-            >
-              {title}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text
+                accessibilityRole="header"
+                maxFontSizeMultiplier={FontScale.heading}
+                // Android otherwise splits hyphenated compounds inside a part
+                // ("…-tec / hnisch") instead of after a hyphen (as ListRow).
+                android_hyphenationFrequency="normal"
+                style={[Type.title3, styles.title, { color: colors.text }]}
+              >
+                {title}
+              </Text>
+              {info ? (
+                <InfoButton
+                  open={infoOpen}
+                  topic={title}
+                  onPress={() => setInfoOpen((value) => !value)}
+                />
+              ) : null}
+            </View>
           ) : (
             <View />
           )}
@@ -70,7 +89,7 @@ export const Section = ({
             >
               <Text
                 maxFontSizeMultiplier={FontScale.heading}
-                style={[Type.subhead, styles.action, { color: colors.text }]}
+                style={[Type.subhead, styles.action, { color: colors.accent }]}
               >
                 {action.title}
               </Text>
@@ -113,6 +132,10 @@ export const Section = ({
           {footer}
         </Text>
       ) : null}
+      {info && title && infoOpen ? (
+        <InfoText style={styles.footer}>{info}</InfoText>
+      ) : null}
+      {info && !title ? <InfoNote text={info} style={styles.note} /> : null}
     </View>
   );
 };
@@ -125,11 +148,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     // Large text: the action moves below the title instead of squeezing it.
     flexWrap: "wrap",
-    alignItems: "baseline",
+    alignItems: "center",
     justifyContent: "space-between",
     columnGap: 12,
     rowGap: 2,
     paddingHorizontal: 4,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 1,
+    gap: 8,
   },
   title: {
     flexShrink: 1,
@@ -153,5 +182,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 16,
+  },
+  note: {
+    paddingHorizontal: 12,
   },
 });

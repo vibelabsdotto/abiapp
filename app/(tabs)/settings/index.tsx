@@ -41,6 +41,7 @@ import {
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
 import { ScreenLayout } from "@components/common/ScreenLayout";
+import { AccentPicker } from "@components/settings/AccentPicker";
 import { SettingsIcon } from "@components/settings/SettingsIcon";
 import type { MenuSymbol } from "@constants/menuIcons";
 import {
@@ -394,7 +395,7 @@ export default function SettingsScreen() {
       {profile ? (
         <Section
           title={t("settings.goal")}
-          footer={t("settings.goalFooter")}
+          info={t("settings.goalFooter")}
           separatorInset={48}
         >
           <ListRow
@@ -428,6 +429,7 @@ export default function SettingsScreen() {
             />
           }
         />
+        <AccentPicker />
         <NativeMenu
           title={t("settings.chooseLanguage")}
           actions={languageActions}
@@ -448,7 +450,7 @@ export default function SettingsScreen() {
 
       <Section
         title={t("settings.data")}
-        footer={t("settings.dataFooter")}
+        info={t("settings.dataFooter")}
         separatorInset={48}
       >
         <ListRow
@@ -524,7 +526,7 @@ export default function SettingsScreen() {
       {__DEV__ ? (
         <Section
           title={t("settings.developer")}
-          footer={t("settings.developerFooter")}
+          info={t("settings.developerFooter")}
           separatorInset={48}
         >
           <NativeMenu

@@ -132,7 +132,7 @@ export default function RulesScreen() {
 
         <Section
           title={t("rules.assumptions")}
-          footer={t("rules.assumptionsFooter")}
+          info={t("rules.assumptionsFooter")}
           variant="plain"
         >
           <View style={[styles.card, { backgroundColor: colors.card }]}>

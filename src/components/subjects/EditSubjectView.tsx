@@ -3,12 +3,11 @@
 // exam slot (link to the setup flow) and removal.
 
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Check } from "lucide-react-native";
 
 import {
-  Icon,
+  ColorSwatch,
   IssueBanner,
   ListRow,
   SUBJECT_COLOR_KEYS,
@@ -237,7 +236,7 @@ export const EditSubjectView = ({
         {labels.length > 0 ? (
           <Section
             title={t("subjects.subjectEditor.halfYears")}
-            footer={t("subjects.subjectEditor.halfYearsFooter")}
+            info={t("subjects.subjectEditor.halfYearsFooter")}
           >
             {labels.map((label, halfYear) => (
               <FormSwitchRow
@@ -261,13 +260,15 @@ export const EditSubjectView = ({
           </Section>
         ) : null}
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.examWeight")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.examWeight")}
+          info={t("subjects.subjectEditor.examWeightFooter", {
+            exam: draft.examWeightPercent,
+            other: 100 - draft.examWeightPercent,
+            default: ruleset?.defaults.examWeightPercent ?? 50,
+          })}
+          variant="plain"
+        >
           <SegmentedControl<number>
             options={presets.map((percent) => ({
               value: percent,
@@ -277,28 +278,13 @@ export const EditSubjectView = ({
             onChange={(examWeightPercent) => update({ examWeightPercent })}
             accessibilityLabel={t("subjects.subjectEditor.examWeight")}
           />
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("subjects.subjectEditor.examWeightFooter", {
-              exam: draft.examWeightPercent,
-              other: 100 - draft.examWeightPercent,
-              default: ruleset?.defaults.examWeightPercent ?? 50,
-            })}
-          </Text>
-        </View>
+        </Section>
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.color")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.color")}
+          info={t("subjects.subjectEditor.colorFooter")}
+          variant="plain"
+        >
           <View style={[styles.colors, { backgroundColor: colors.card }]}>
             <ColorSwatch
               color={null}
@@ -316,16 +302,7 @@ export const EditSubjectView = ({
               />
             ))}
           </View>
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("subjects.subjectEditor.colorFooter")}
-          </Text>
-        </View>
+        </Section>
 
         <Section>
           <FormRow
@@ -356,52 +333,6 @@ export const EditSubjectView = ({
   );
 };
 
-/** One colour choice; `color: null` is "Keine" (neutral). */
-const ColorSwatch = ({
-  color,
-  selected,
-  label,
-  onPress,
-}: {
-  color: string | null;
-  selected: boolean;
-  label: string;
-  onPress: () => void;
-}) => {
-  const colors = useThemeStore((state) => state.colors);
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={{ checked: selected }}
-      hitSlop={4}
-      style={({ pressed }) => [
-        styles.swatchRing,
-        { borderColor: selected ? colors.text : "transparent" },
-        pressed && styles.pressed,
-      ]}
-    >
-      <View
-        style={[
-          styles.swatch,
-          color === null
-            ? [styles.none, { borderColor: colors.textTertiary }]
-            : { backgroundColor: color },
-        ]}
-      >
-        {color === null ? (
-          <View
-            style={[styles.noneSlash, { backgroundColor: colors.textTertiary }]}
-          />
-        ) : selected ? (
-          <Icon icon={Check} size={16} color={colors.accentForeground} />
-        ) : null}
-      </View>
-    </Pressable>
-  );
-};
-
 const styles = StyleSheet.create({
   block: {
     gap: 10,
@@ -420,29 +351,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-  },
-  swatchRing: {
-    padding: 2,
-    borderRadius: 20,
-    borderWidth: 2,
-  },
-  swatch: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  none: {
-    borderWidth: 1.5,
-    overflow: "hidden",
-  },
-  noneSlash: {
-    width: 1.5,
-    height: 40,
-    transform: [{ rotate: "45deg" }],
-  },
-  pressed: {
-    opacity: 0.6,
   },
 });

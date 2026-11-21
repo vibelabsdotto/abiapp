@@ -139,7 +139,7 @@ export const GradeHero = ({
           <ArchGauge
             width={gaugeWidth}
             progress={progress}
-            color={failed ? colors.error : colors.text}
+            color={failed ? colors.error : colors.accent}
             trackColor={colors.separator}
             surfaceColor={colors.background}
             markers={markers}

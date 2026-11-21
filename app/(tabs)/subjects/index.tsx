@@ -10,6 +10,7 @@ import { BookOpen } from "lucide-react-native";
 import { ScreenLayout } from "@components/common/ScreenLayout";
 import {
   EmptyState,
+  InfoNote,
   IssueBanner,
   PointsBadge,
   Section,
@@ -293,15 +294,7 @@ export default function SubjectsScreen() {
           </Section>
         ) : null}
 
-        <Text
-          style={[
-            Type.footnote,
-            styles.legend,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("subjects.list.legend")}
-        </Text>
+        <InfoNote text={t("subjects.list.legend")} style={styles.legend} />
       </ScreenLayout>
     </>
   );
@@ -318,7 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   legend: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 8,
   },
 });

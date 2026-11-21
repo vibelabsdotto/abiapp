@@ -40,6 +40,7 @@ export const en: Translations = {
     noValue: "No value yet",
     source: {
       official: "official",
+      settled: "from grades",
       grades: "Prognosis",
       estimate: "Estimate",
       none: "No value yet",
@@ -66,6 +67,10 @@ export const en: Translations = {
       error: "Error",
       warning: "Note",
       info: "Info",
+    },
+    info: {
+      show: "Show explanation",
+      hide: "Hide explanation",
     },
     halfYear: "Half-year {{name}}",
     progress: "{{value}} of {{max}}",

@@ -40,15 +40,10 @@ export const StatTile = ({
   accessibilityLabel,
 }: StatTileProps) => {
   const colors = useThemeStore((state) => state.colors);
-  // Monochrome: only `error` (deficit, not admitted) is red.
-  const toneColor: Record<StatTone, string> = {
-    default: colors.text,
-    accent: colors.text,
-    success: colors.text,
-    warning: colors.text,
-    error: colors.error,
-  };
-  const valueColor = toneColor[tone];
+  // Monochrome: only `error` (deficit, not admitted) is red. The bar takes
+  // the accent the student picked, the number stays ink.
+  const valueColor = tone === "error" ? colors.error : colors.text;
+  const barColor = tone === "error" ? colors.error : colors.accent;
   const captionLines =
     caption === undefined
       ? []
@@ -101,7 +96,7 @@ export const StatTile = ({
           value={progress.value}
           max={progress.max}
           markers={progress.markers}
-          color={valueColor}
+          color={barColor}
         />
       ) : null}
       {captionLines.length > 0 ? (

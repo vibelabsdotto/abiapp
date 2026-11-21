@@ -6,7 +6,7 @@ import React, { useDeferredValue, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { ModalHeader, ScreenLayout } from "@components/common";
-import { formatGrade } from "@components/ui";
+import { InfoNote, formatGrade } from "@components/ui";
 import { Fact } from "@components/abitur/parts";
 import { DestructiveAction } from "@components/overview/DestructiveAction";
 import {
@@ -166,15 +166,7 @@ export default function GoalEditorScreen() {
           onChange={setSelected}
         />
 
-        <Text
-          style={[
-            Type.footnote,
-            styles.footer,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("goalEditor.explain")}
-        </Text>
+        <InfoNote text={t("goalEditor.explain")} style={styles.footer} />
 
         {initial !== null ? (
           <DestructiveAction

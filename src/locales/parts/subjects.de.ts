@@ -68,6 +68,10 @@ export const subjectsDE = {
       resultLabel: "Halbjahresergebnis {{halfYear}}",
       source: {
         official: "Amtliches Halbjahresergebnis vom Zeugnis",
+        settled: {
+          one: "Schnitt aus {{count}} Note, zählt als Ergebnis",
+          other: "Schnitt aus {{count}} Noten, zählt als Ergebnis",
+        },
         grades: {
           one: "Prognose aus {{count}} Note",
           other: "Prognose aus {{count}} Noten",
@@ -117,6 +121,8 @@ export const subjectsDE = {
         "Mit einer einzelnen Note reicht es nicht mehr. Mehrere gute Noten können es noch schaffen.",
       officialReached: "Erreicht, amtlich {{points}}",
       officialMissed: "Verfehlt, amtlich {{points}}",
+      settledReached: "Erreicht mit {{points}}",
+      settledMissed: "Verfehlt mit {{points}}",
     },
     inclusion: {
       title: "Block I",
@@ -202,6 +208,8 @@ export const subjectsDE = {
         "Die Punkte von deinem Zeugnis ersetzen die Prognose aus deinen Noten.",
       prognosis: "Prognose aus deinen Noten: {{value}}, zählt als {{points}}.",
       noPrognosis: "In diesem Halbjahr hast du noch keine Noten eingetragen.",
+      settled:
+        "Das Halbjahr ist vorbei. Ohne Eintrag zählt der Schnitt aus deinen Noten: {{value}}, also {{points}}.",
       removeResult: "Ergebnis entfernen",
       targetFooter:
         "Mit Ziel siehst du im Fach, wie viele Punkte du in der nächsten Klausur brauchst.",
@@ -218,7 +226,6 @@ export const subjectsDE = {
       add: "Hinzufügen",
       selected: "{{count}} gewählt",
       catalogTitle: "Katalog {{state}}",
-      catalogFooter: "Du kannst mehrere Fächer auf einmal auswählen.",
       allAdded:
         "Alle Fächer aus dem Katalog von {{state}} sind schon angelegt.",
       customRow: "Eigenes Fach anlegen",

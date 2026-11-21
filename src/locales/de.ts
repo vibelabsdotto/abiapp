@@ -43,6 +43,7 @@ export const de = {
     noValue: "Noch kein Wert",
     source: {
       official: "amtlich",
+      settled: "aus Noten",
       grades: "Prognose",
       estimate: "Schätzung",
       none: "Noch kein Wert",
@@ -69,6 +70,10 @@ export const de = {
       error: "Fehler",
       warning: "Hinweis",
       info: "Info",
+    },
+    info: {
+      show: "Erklärung anzeigen",
+      hide: "Erklärung ausblenden",
     },
     halfYear: "Halbjahr {{name}}",
     progress: "{{value}} von {{max}}",

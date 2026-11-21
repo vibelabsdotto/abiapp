@@ -171,16 +171,11 @@ const CatalogPicker = ({
             {t("subjects.subjectEditor.allAdded", { state: stateName })}
           </Text>
         ) : (
-          groups.map((group, index) => (
+          groups.map((group) => (
             <Section
               key={group.field}
               title={t(`subjects.fields.${group.field}`)}
               separatorInset={60}
-              footer={
-                index === groups.length - 1
-                  ? t("subjects.subjectEditor.catalogFooter")
-                  : undefined
-              }
             >
               {group.entries.map((entry) => {
                 const isOn = selected.includes(entry.key);
@@ -345,32 +340,22 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
           ))}
         </Section>
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.tags")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.tags")}
+          info={t("subjects.subjectEditor.tagsFooter")}
+          variant="plain"
+        >
           <ChoiceChips
             options={tagOptions}
             selected={(value) => tags.includes(value as SubjectTag)}
             onToggle={toggleTag}
           />
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              {
-                color: tags.length === 0 ? colors.error : colors.textSecondary,
-              },
-            ]}
-          >
-            {tags.length === 0
-              ? t("subjects.subjectEditor.tagsRequired")
-              : t("subjects.subjectEditor.tagsFooter")}
-          </Text>
-        </View>
+          {tags.length === 0 ? (
+            <Text style={[Type.footnote, styles.note, { color: colors.error }]}>
+              {t("subjects.subjectEditor.tagsRequired")}
+            </Text>
+          ) : null}
+        </Section>
 
         <View style={styles.block}>
           <Text

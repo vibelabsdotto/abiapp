@@ -41,7 +41,7 @@ export const RulesetVersionPicker = ({
   if (!state || versions.length === 0) return null;
 
   return (
-    <Section title={t("setup.version")} footer={t("setup.versionFooter")}>
+    <Section title={t("setup.version")} info={t("setup.versionFooter")}>
       <ListRow
         title={t("setup.versionAuto")}
         subtitle={

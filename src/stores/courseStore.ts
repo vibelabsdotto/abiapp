@@ -52,6 +52,8 @@ import {
   type SubjectRecord,
 } from "@services/database";
 
+import { defaultSubjectColor } from "@utils/subjectColor";
+
 import { defaultHalfYearsOf, requireRuleset } from "./domainAccess";
 import { useProfileStore } from "./profileStore";
 
@@ -238,6 +240,15 @@ export const useCourseStore = create<CourseState>()((set, get) => {
         const created = await insertSubject(db, {
           ...input,
           examWeightPercent,
+          // `color: null` is an explicit "no colour"; without the field the
+          // subject gets its default colour.
+          color:
+            input.color !== undefined
+              ? input.color
+              : defaultSubjectColor(
+                  input,
+                  get().subjects.map((existing) => existing.color),
+                ),
         });
         await ensureCourses(db, created.id, count);
         return created;
@@ -265,10 +276,16 @@ export const useCourseStore = create<CourseState>()((set, get) => {
         return entry;
       });
       const count = ruleset.halfYears.length;
+      const usedColors = get().subjects.map((subject) => subject.color);
       const created = await writeTransaction(async (db) => {
         const result: SubjectRecord[] = [];
         for (const entry of entries) {
           if (existing.has(entry.key)) continue;
+          const color = defaultSubjectColor(
+            { catalogKey: entry.key, tags: entry.tags },
+            usedColors,
+          );
+          usedColors.push(color);
           const subject = await insertSubject(db, {
             catalogKey: entry.key,
             name: entry.name,
@@ -280,6 +297,7 @@ export const useCourseStore = create<CourseState>()((set, get) => {
                 ? "elevated"
                 : "basic",
             examWeightPercent: ruleset.defaults.examWeightPercent,
+            color,
           });
           await ensureCourses(db, subject.id, count, defaultHalfYearsOf(entry));
           result.push(subject);

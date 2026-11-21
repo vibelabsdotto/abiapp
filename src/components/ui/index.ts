@@ -4,6 +4,7 @@
 export { ArchGauge, type ArchGaugeProps, type ArchMarker } from "./ArchGauge";
 export { CheckRow, type CheckRowProps } from "./CheckRow";
 export { Chip, type ChipProps, type ChipTone } from "./Chip";
+export { ColorSwatch, type ColorSwatchProps } from "./ColorSwatch";
 export { EmptyState, type EmptyStateProps } from "./EmptyState";
 export { GradeHero, type GradeHeroProps } from "./GradeHero";
 export {
@@ -12,6 +13,13 @@ export {
   type HalfYearValue,
 } from "./HalfYearStrip";
 export { Icon, iconStroke, type IconProps, type IconSize } from "./Icon";
+export {
+  InfoButton,
+  InfoNote,
+  InfoText,
+  type InfoButtonProps,
+  type InfoNoteProps,
+} from "./InfoNote";
 export { IssueBanner, type IssueBannerProps } from "./IssueBanner";
 export { ListRow, type ListRowMenu, type ListRowProps } from "./ListRow";
 export {

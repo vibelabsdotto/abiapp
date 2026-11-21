@@ -8,6 +8,7 @@ import type { TargetAnalysis } from "@domain/index";
 import type { AbiturEvaluation, EngineInput, Issue } from "@domain/model";
 import { useCourseStore } from "@stores/courseStore";
 import {
+  currentHalfYearOf,
   evaluateCached,
   selectEngineInput,
   targetAnalysisCached,
@@ -33,6 +34,7 @@ export function useEngineInput(): EngineInput | null {
         grades,
         results,
         extras,
+        currentHalfYear: currentHalfYearOf(profile, courses),
       }),
     [profile, subjects, courses, grades, results, extras],
   );

@@ -104,7 +104,7 @@ export const SubjectPicker = ({
 
       <Section
         title={t("setup.subjects.custom")}
-        footer={
+        info={
           hasOrphans
             ? t("setup.subjects.orphanFooter", { state: ruleset.stateName })
             : t("setup.subjects.customFooter")

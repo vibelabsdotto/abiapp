@@ -2,12 +2,13 @@
 // half-year goal of one course. Both are drafts until "Sichern".
 
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { BookOpen } from "lucide-react-native";
 
 import {
   EmptyState,
+  InfoNote,
   IssueBanner,
   ListRow,
   PointsPicker,
@@ -24,8 +25,6 @@ import { usePrognosis } from "@hooks/usePrognosis";
 import { useHalfYearLabels } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
-import { useThemeStore } from "@stores/themeStore";
-import { Type } from "@constants/typography";
 
 type Mode = "result" | "target";
 
@@ -36,7 +35,6 @@ export default function CourseResultScreen() {
     mode?: string;
   }>();
   const { t, locale } = useTranslation();
-  const colors = useThemeStore((state) => state.colors);
   const labels = useHalfYearLabels();
   const subjectId = params.subjectId ?? "";
   const halfYearParam = Number(params.halfYear);
@@ -109,10 +107,15 @@ export default function CourseResultScreen() {
   const taken = course?.taken ?? true;
   const prognosisText =
     prognosis.exact !== null && prognosis.points !== null
-      ? t("subjects.courseResult.prognosis", {
-          value: formatExact(prognosis.exact, locale),
-          points: prognosis.points,
-        })
+      ? t(
+          prognosis.courseValue?.fromGrades
+            ? "subjects.courseResult.settled"
+            : "subjects.courseResult.prognosis",
+          {
+            value: formatExact(prognosis.exact, locale),
+            points: prognosis.points,
+          },
+        )
       : t("subjects.courseResult.noPrognosis");
 
   return (
@@ -161,15 +164,11 @@ export default function CourseResultScreen() {
         {mode === "result" ? (
           <View style={styles.block}>
             <PointsPicker value={official} onChange={setOfficial} />
-            <Text
-              style={[
-                Type.footnote,
-                styles.note,
-                { color: colors.textSecondary },
-              ]}
-            >
-              {t("subjects.courseResult.resultFooter")} {prognosisText}
-            </Text>
+            <InfoNote
+              label={prognosisText}
+              text={t("subjects.courseResult.resultFooter")}
+              style={styles.note}
+            />
             {official !== null ? (
               <Section>
                 <ListRow
@@ -183,15 +182,10 @@ export default function CourseResultScreen() {
         ) : (
           <View style={styles.block}>
             <PointsPicker value={target} onChange={setTarget} />
-            <Text
-              style={[
-                Type.footnote,
-                styles.note,
-                { color: colors.textSecondary },
-              ]}
-            >
-              {t("subjects.courseResult.targetFooter")}
-            </Text>
+            <InfoNote
+              text={t("subjects.courseResult.targetFooter")}
+              style={styles.note}
+            />
             {target !== null ? (
               <Section>
                 <ListRow

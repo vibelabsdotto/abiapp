@@ -69,6 +69,10 @@ export const subjectsEN = {
       resultLabel: "Semester result {{halfYear}}",
       source: {
         official: "Official half-year result from your report card",
+        settled: {
+          one: "Average of {{count}} grade, counts as the result",
+          other: "Average of {{count}} grades, counts as the result",
+        },
         grades: {
           one: "Prognosis from {{count}} grade",
           other: "Prognosis from {{count}} grades",
@@ -117,6 +121,8 @@ export const subjectsEN = {
         "A single grade is no longer enough. Several good grades can still get you there.",
       officialReached: "Reached, official {{points}}",
       officialMissed: "Missed, official {{points}}",
+      settledReached: "Reached with {{points}}",
+      settledMissed: "Missed with {{points}}",
     },
     inclusion: {
       title: "Block I",
@@ -201,6 +207,8 @@ export const subjectsEN = {
         "The points from your report card replace the prognosis from your grades.",
       prognosis: "Prognosis from your grades: {{value}}, counts as {{points}}.",
       noPrognosis: "You have not entered any grades for this semester yet.",
+      settled:
+        "This semester is over. Without an entry, the average of your grades counts: {{value}}, so {{points}}.",
       removeResult: "Remove result",
       targetFooter:
         "With a goal, the subject shows how many points you need in the next exam.",
@@ -217,7 +225,6 @@ export const subjectsEN = {
       add: "Add",
       selected: "{{count}} selected",
       catalogTitle: "Catalog {{state}}",
-      catalogFooter: "You can select several subjects at once.",
       allAdded: "All subjects from the {{state}} catalog are already added.",
       customRow: "Create custom subject",
       customRowHint: "For subjects that are not in the catalog",

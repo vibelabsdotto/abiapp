@@ -60,3 +60,6 @@ yarn-error.*
 .agents/
 .claude/
 skills-lock.json
+
+# agent-device fallback capture
+snapshot-fallback.png

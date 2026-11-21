@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
-import { Chip, ProgressBar, formatGrade } from "@components/ui";
+import { Chip, InfoButton, ProgressBar, formatGrade } from "@components/ui";
 import type { AbiturEvaluation } from "@domain/model";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
@@ -272,23 +272,33 @@ export const Bullets = ({
   );
 };
 
-/** Section heading with a secondary line, larger than Section titles. */
+/**
+ * Section heading with a secondary line, larger than Section titles. With
+ * `info` an info icon sits next to the title; the owner shows the text.
+ */
 export const BlockTitle = ({
   title,
   subtitle,
+  info,
 }: {
   title: string;
   subtitle?: string;
+  info?: { open: boolean; onToggle: () => void };
 }) => {
   const colors = useThemeStore((state) => state.colors);
   return (
     <View style={styles.blockTitle}>
-      <Text
-        accessibilityRole="header"
-        style={[Type.title2, { color: colors.text }]}
-      >
-        {title}
-      </Text>
+      <View style={styles.blockTitleRow}>
+        <Text
+          accessibilityRole="header"
+          style={[Type.title2, styles.blockTitleText, { color: colors.text }]}
+        >
+          {title}
+        </Text>
+        {info ? (
+          <InfoButton open={info.open} topic={title} onPress={info.onToggle} />
+        ) : null}
+      </View>
       {subtitle ? (
         <Text style={[Type.subhead, { color: colors.textSecondary }]}>
           {subtitle}
@@ -412,5 +422,13 @@ const styles = StyleSheet.create({
     gap: 2,
     paddingHorizontal: 4,
     marginTop: 8,
+  },
+  blockTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  blockTitleText: {
+    flexShrink: 1,
   },
 });
