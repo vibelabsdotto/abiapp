@@ -7,11 +7,16 @@
 //    Firebase comes from CocoaPods as static libraries, and its Swift pods
 //    (FirebaseCoreInternal) import ObjC pods such as GoogleUtilities that only
 //    expose module maps with modular headers enabled.
+// 3. `$RNFirebaseAnalyticsWithoutAdIdSupport = true`: the app shows no ads, so
+//    FirebaseAnalytics/IdentitySupport (IDFA) stays out of the binary. Android
+//    counterpart: firebase.json and android.blockedPermissions (AD_ID).
 // Only applied when Firebase is active (see app.config.ts).
 
 const { withAppDelegate, withPodfile } = require("expo/config-plugins");
 
 const MODULAR_HEADERS = "use_modular_headers! # abiapp: Firebase via CocoaPods";
+const NO_AD_ID =
+  "$RNFirebaseAnalyticsWithoutAdIdSupport = true # abiapp: no IDFA";
 const SUPER_LAUNCH =
   /^([ \t]*)(return super\.application\(application, didFinishLaunchingWithOptions)/m;
 
@@ -40,21 +45,28 @@ const withFirebaseAppDelegate = (config) =>
     return appDelegateConfig;
   });
 
-const withFirebaseModularHeaders = (config) =>
+const withFirebasePodfile = (config) =>
   withPodfile(config, (podfileConfig) => {
-    const { contents } = podfileConfig.modResults;
-    if (!contents.includes("use_modular_headers!")) {
+    let contents = podfileConfig.modResults.contents;
+    const additions = [
+      contents.includes("use_modular_headers!") ? null : MODULAR_HEADERS,
+      contents.includes("$RNFirebaseAnalyticsWithoutAdIdSupport")
+        ? null
+        : NO_AD_ID,
+    ].filter(Boolean);
+    if (additions.length > 0) {
       const updated = contents.replace(
         /^(platform :ios.*)$/m,
-        `$1\n${MODULAR_HEADERS}`,
+        `$1\n${additions.join("\n")}`,
       );
       if (updated === contents) {
         throw new Error("withFirebaseIos: `platform :ios` line not found");
       }
-      podfileConfig.modResults.contents = updated;
+      contents = updated;
     }
+    podfileConfig.modResults.contents = contents;
     return podfileConfig;
   });
 
 module.exports = (config) =>
-  withFirebaseModularHeaders(withFirebaseAppDelegate(config));
+  withFirebasePodfile(withFirebaseAppDelegate(config));
