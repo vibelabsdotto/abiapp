@@ -41,7 +41,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 
 ## Annahmen, wo die Verordnung offen ist
 
-- **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“.
+- **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“. Zusatzkurse Geschichte/Sozialwissenschaften sind zwei aufeinanderfolgende Kurse (auch Q1 bei Fortführung, § 11 Abs. 3 Nr. 5). NW-2030: Ist das 5. Abiturfach in Q2 nicht belegt, gilt es als Referenzfach des Projektkurses (nur 2 Kurse Q1, § 26 Abs. 2); ist es durchgehend belegt, rechnet die App mit 4 Kursen. Nicht modelliert: § 28 Abs. 4/5 (2027: § 26 Abs. 4/5) für neu einsetzende zweite Fremdsprachen, Vertiefungskurse, instrumental-/vokalpraktische Kurse.
 - **SN:** Informatik ersetzt eine Naturwissenschaft nur, wenn ohne sie eine fehlt (§ 42 Abs. 1 S. 4, § 43 Abs. 3): bei einer NW oder bei zwei NW ohne zweite Fremdsprache, ohne in Klasse 10 begonnene Fremdsprache und ohne Fremdsprachen-LK. Befreiungen nach § 42 Abs. 4/5 erkennt die App nicht.
 - **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt.
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
