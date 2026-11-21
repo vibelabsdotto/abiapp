@@ -13,7 +13,7 @@ import {
   saveSubjectsDraft,
   showError,
 } from "@components/setup";
-import { useSubjectsDraft } from "@hooks/useSetupFlows";
+import { subjectsNote, useSubjectsDraft } from "@hooks/useSetupFlows";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
 
@@ -45,14 +45,7 @@ export default function OnboardingSubjectsScreen() {
       totalSteps={ONBOARDING_TOTAL_STEPS}
       intro={t("onboarding.subjects.intro")}
       keyboardAware
-      footerNote={
-        draft.canSave
-          ? t("setup.subjects.selected", { count: draft.selectedCount })
-          : t("setup.subjects.minHint", {
-              count: draft.selectedCount,
-              min: draft.minimum,
-            })
-      }
+      footerNote={subjectsNote(draft)}
       primary={{
         title: t("onboarding.next"),
         disabled: !draft.canSave,
