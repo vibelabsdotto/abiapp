@@ -17,7 +17,10 @@ import {
 import { SettingsIcon } from "@components/settings/SettingsIcon";
 import { ListRow, Section } from "@components/ui";
 import { useTranslation } from "@locales/index";
-import { setCloudBackupEnabled } from "@services/cloudBackup/cloudSync";
+import {
+  setCloudBackupEnabled,
+  setGoogleDriveConnected,
+} from "@services/cloudBackup/cloudSync";
 import {
   availableProviders,
   providerById,
@@ -42,6 +45,7 @@ export function CloudBackupSection() {
   const errorMessage = useCloudBackupStore((state) => state.errorMessage);
   const safetyCopy = useCloudBackupStore((state) => state.safetyCopy);
   const devProvider = useCloudBackupStore((state) => state.devProvider);
+  const driveConnected = useCloudBackupStore((state) => state.driveConnected);
   const provider = providerById(devProvider);
   const providers = availableProviders();
 
@@ -63,7 +67,10 @@ export function CloudBackupSection() {
   }
 
   const cloud = cloudName();
+  const drive = provider.id === "googleDrive";
+  const on = drive ? enabled && driveConnected : enabled;
   const statusText = (() => {
+    if (drive && !driveConnected) return t("cloudBackup.drive.notConnected");
     switch (status) {
       case "synced":
         return lastSyncedAt
@@ -77,9 +84,9 @@ export function CloudBackupSection() {
         return t(`cloudBackup.status.${status}`);
     }
   })();
-  const problem = enabled && PROBLEMS.includes(status);
+  const problem = on && PROBLEMS.includes(status);
   const footer =
-    !enabled || !problem
+    !on || !problem
       ? undefined
       : status === "error"
         ? (errorMessage ?? undefined)
@@ -88,8 +95,8 @@ export function CloudBackupSection() {
 
   return (
     <Section
-      title={cloud}
-      info={t("cloudBackup.info")}
+      title={drive ? t("cloudBackup.android.section") : cloud}
+      info={t(drive ? "cloudBackup.drive.info" : "cloudBackup.info")}
       footer={footer}
       separatorInset={48}
     >
@@ -99,9 +106,9 @@ export function CloudBackupSection() {
         accessibilityLabel={`${title}, ${statusText}`}
         leading={
           <SettingsIcon
-            icon={!enabled ? CloudOff : problem ? CloudAlert : Cloud}
+            icon={!on ? CloudOff : problem ? CloudAlert : Cloud}
             tone={
-              enabled && (status === "error" || status === "tooLarge")
+              on && (status === "error" || status === "tooLarge")
                 ? "destructive"
                 : "default"
             }
@@ -109,14 +116,18 @@ export function CloudBackupSection() {
         }
         trailing={
           <Switch
-            value={enabled}
-            onValueChange={(value) => void setCloudBackupEnabled(value)}
+            value={on}
+            onValueChange={(value) =>
+              void (drive
+                ? setGoogleDriveConnected(value)
+                : setCloudBackupEnabled(value))
+            }
             trackColor={{ true: colors.accent }}
             accessibilityLabel={title}
           />
         }
       />
-      {enabled && status === "conflict" ? (
+      {on && status === "conflict" ? (
         <ListRow
           title={t("cloudBackup.resolve")}
           leading={<SettingsIcon icon={GitCompareArrows} />}
@@ -132,6 +143,13 @@ export function CloudBackupSection() {
           })}
           leading={<SettingsIcon icon={History} />}
           onPress={() => void restoreSafetyCopyInteractive()}
+        />
+      ) : null}
+      {drive ? (
+        <ListRow
+          title={t("cloudBackup.android.title")}
+          value={t("cloudBackup.android.value")}
+          leading={<SettingsIcon icon={Cloud} />}
         />
       ) : null}
       {__DEV__ && providers.length > 1 ? (

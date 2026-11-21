@@ -7,16 +7,20 @@
 // - devFolder: development builds only. A JSON file in the app's documents
 //   folder stands in for the cloud, so upload, take-over, conflict and
 //   restore can be played through on a simulator without an Apple account.
-// Android has no provider here: Auto Backup (plugins/withAndroidBackupRules)
-// restores the app data on reinstall and on a new phone.
+// - googleDrive: Android, opt-in (googleDrive.ts). Without it Android has
+//   only Auto Backup (plugins/withAndroidBackupRules), which restores the
+//   app data on reinstall and on a new phone.
 
 import { Platform } from "react-native";
 import { requireOptionalNativeModule, type EventSubscription } from "expo";
 import { Directory, File, Paths } from "expo-file-system";
 
+import { useCloudBackupStore } from "@stores/cloudBackupStore";
+
+import { createGoogleDriveProvider } from "./googleDrive";
 import { MAX_SNAPSHOT_BYTES } from "./syncLogic";
 
-export type CloudProviderId = "icloud" | "devFolder";
+export type CloudProviderId = "icloud" | "googleDrive" | "devFolder";
 
 export type CloudAvailability =
   | "available"
@@ -110,6 +114,10 @@ const icloud: CloudProvider | null = native
     }
   : null;
 
+const googleDrive = createGoogleDriveProvider(
+  () => useCloudBackupStore.getState().driveConnected,
+);
+
 /** Development stand-in: <documents>/dev-cloud/snapshot.json. */
 const devFolderFile = () =>
   new File(new Directory(Paths.document, "dev-cloud"), "snapshot.json");
@@ -138,6 +146,7 @@ const devFolder: CloudProvider = {
 export function availableProviders(): CloudProvider[] {
   const list: CloudProvider[] = [];
   if (icloud) list.push(icloud);
+  if (googleDrive) list.push(googleDrive);
   if (__DEV__) list.push(devFolder);
   return list;
 }

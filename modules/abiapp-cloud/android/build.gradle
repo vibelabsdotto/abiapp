@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'to.vibelabs'
+version = '1.0.0'
+
+android {
+  namespace "to.vibelabs.abiappcloud"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
+
+dependencies {
+  // Identity AuthorizationClient: OAuth access token for drive.appdata
+  // without a separate sign-in SDK.
+  implementation 'com.google.android.gms:play-services-auth:21.5.0'
+}

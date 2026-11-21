@@ -85,9 +85,14 @@ export const backupDE = {
       value: "Automatisch",
       info: "Android sichert AbiApp automatisch in deinem Google-Konto, wenn die Sicherung in den Systemeinstellungen an ist (etwa einmal am Tag im WLAN). Auf einem neuen Android-Gerät mit demselben Konto sind deine Daten nach der Installation wieder da. Einen laufenden Abgleich zwischen zwei Android-Geräten gibt es nicht; dafür bleibt der Export als Datei.",
     },
+    drive: {
+      notConnected: "Nicht verbunden",
+      info: "Mit Google Drive gleicht AbiApp deine Fächer, Noten und Prüfungen zwischen deinen Android-Geräten ab. Die Daten liegen in einem versteckten App-Ordner deines eigenen Google Drive, den nur AbiApp sieht, nicht bei uns. Beim Einschalten fragt Google einmal je Gerät nach deiner Zustimmung. Unabhängig davon sichert Android die App über dein Google-Konto (Android-Sicherung).",
+    },
     dev: {
       provider: "Cloud-Anbieter",
       icloud: "iCloud",
+      googleDrive: "Google Drive",
       devFolder: "Testordner",
     },
   },

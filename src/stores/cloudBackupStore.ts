@@ -66,6 +66,8 @@ interface PersistedCloudState {
   safetyCopy: SafetyCopyInfo | null;
   /** Development builds: iCloud or the local test folder. */
   devProvider: CloudProviderId | null;
+  /** Android: the user granted Google Drive access (switch). */
+  driveConnected: boolean;
 }
 
 interface CloudBackupState extends PersistedCloudState {
@@ -87,6 +89,7 @@ const PERSISTED_DEFAULTS: PersistedCloudState = {
   declinedRevision: null,
   safetyCopy: null,
   devProvider: null,
+  driveConnected: false,
 };
 
 export const useCloudBackupStore = create<CloudBackupState>()(
@@ -113,6 +116,7 @@ export const useCloudBackupStore = create<CloudBackupState>()(
         declinedRevision: state.declinedRevision,
         safetyCopy: state.safetyCopy,
         devProvider: state.devProvider,
+        driveConnected: state.driveConnected,
       }),
       merge: (persisted, current) => ({
         ...current,

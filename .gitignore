@@ -63,3 +63,6 @@ skills-lock.json
 
 # agent-device fallback capture
 snapshot-fallback.png
+
+# Gradle output of local Expo modules
+modules/*/android/build/

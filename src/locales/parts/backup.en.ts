@@ -85,9 +85,14 @@ export const backupEN = {
       value: "Automatic",
       info: "Android backs up AbiApp to your Google Account automatically when backup is on in the system settings (about once a day on Wi-Fi). On a new Android device with the same account your data is back after installing. There is no live sync between two Android devices; the backup file export covers that.",
     },
+    drive: {
+      notConnected: "Not connected",
+      info: "With Google Drive, AbiApp syncs your subjects, grades and exams between your Android devices. The data lives in a hidden app folder of your own Google Drive that only AbiApp sees, not with us. When you turn it on, Google asks for your consent once per device. Independently, Android backs up the app to your Google Account (Android backup).",
+    },
     dev: {
       provider: "Cloud provider",
       icloud: "iCloud",
+      googleDrive: "Google Drive",
       devFolder: "Test folder",
     },
   },

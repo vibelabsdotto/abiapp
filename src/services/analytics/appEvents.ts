@@ -83,7 +83,7 @@ interface EventParams {
   /** Data taken over from the cloud copy: automatically, after a conflict, on a fresh install, or back to the safety copy. */
   cloud_backup_applied: {
     source: "auto" | "conflict" | "offer" | "undo";
-    provider: "icloud" | "devFolder";
+    provider: "icloud" | "googleDrive" | "devFolder";
   };
   cloud_backup_toggled: { enabled: boolean };
   onboarding_source: { source: AcquisitionSource | "skipped" };

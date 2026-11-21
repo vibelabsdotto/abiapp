@@ -37,6 +37,7 @@ import { useExamStore } from "@stores/examStore";
 import { useProfileStore } from "@stores/profileStore";
 import { createId } from "@utils/id";
 
+import { connectGoogleDrive, disconnectGoogleDrive } from "./googleDrive";
 import { providerById, type CloudProvider } from "./providers";
 import {
   decideSync,
@@ -566,6 +567,25 @@ export async function restoreSafetyCopy(): Promise<void> {
     });
   }
   await syncNow("change");
+}
+
+/**
+ * Android switch "Google Drive": asks Google for access (consent sheet on
+ * the first time per device), or revokes it.
+ */
+export async function setGoogleDriveConnected(on: boolean): Promise<boolean> {
+  if (on) {
+    const granted = await connectGoogleDrive();
+    store.setState({ driveConnected: granted, enabled: true });
+    track(ANALYTICS_EVENTS.cloudBackupToggled, { enabled: granted });
+    await syncNow("manual");
+    return granted;
+  }
+  store.setState({ driveConnected: false, conflict: null, restoreOffer: null });
+  track(ANALYTICS_EVENTS.cloudBackupToggled, { enabled: false });
+  await disconnectGoogleDrive();
+  await syncNow("manual");
+  return false;
 }
 
 export async function setCloudBackupEnabled(enabled: boolean): Promise<void> {

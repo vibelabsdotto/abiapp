@@ -57,6 +57,24 @@ adb shell bmgr backupnow com.max.mannstein.abisax
 adb uninstall com.max.mannstein.abisax && adb install <apk>   # Restore beim Installieren
 ```
 
+## Google Drive (Cloud-Backup auf Android, Branch `feat/cloud-backup-drive`)
+
+Android gleicht die Daten über eine Datei im versteckten `appDataFolder` des eigenen Google Drive ab. Der Scope ist `drive.appdata`, nicht sensibel, Google-Verifizierung und CASA sind nicht nötig. Den Token holt `modules/abiapp-cloud` über `Identity.getAuthorizationClient` (`play-services-auth`), die Drive-Aufrufe laufen als REST aus JS. Sichtbar ist der Schalter nur mit `EXPO_PUBLIC_GOOGLE_DRIVE_ENABLED=1`.
+
+Einmalig in der Google Cloud Console (Projekt `abisax-506cd` oder ein eigenes):
+
+1. „Google Drive API“ aktivieren.
+2. „Google Auth Platform“: Branding ausfüllen. App-Name „AbiApp“, Support-Mail, Datenschutz-URL, autorisierte Domain.
+3. Data Access: Scope `.../auth/drive.appdata` hinzufügen.
+4. Audience: auf „In production“ stellen. Bei nicht sensiblen Scopes geht das ohne Prüfung; sonst dürfen nur Testnutzer zustimmen.
+5. Clients: je ein OAuth-Client vom Typ „Android“ mit Paket `com.max.mannstein.abisax` und den SHA-1-Werten
+   - des Play-App-Signing-Keys (Play Console → App-Integrität),
+   - des Upload-Keys (`34:8C:B7:F8:55:5B:C1:27:29:9E:7C:8E:ED:2C:DB:DE:B6:D6:C3:58`) für lokal signierte Release-Builds,
+   - des Debug-Keystores für Dev-Clients (`keytool -list -v -keystore android/app/debug.keystore -storepass android`).
+6. `.env.local`: `EXPO_PUBLIC_GOOGLE_DRIVE_ENABLED=1`. Danach Store-Build (das native Modul mit `play-services-auth` gibt es nur dort).
+
+Den Client-Schlüssel nennt der Code nicht; Google ordnet die App über Paket und SHA-1 zu. Ein Fehler „DEVELOPER_ERROR“ beim Zustimmen heißt: SHA-1 oder Paket fehlt im Client.
+
 ## Android-Upload-Key (Reset vom 21.11.2026)
 
 Der Upload-Key der alten MAUI-App ist nicht auffindbar. Am 21.11.2026 gegen 01:05 wurde in der Play Console ein Reset auf den neuen Key beantragt (Grund „Upload-Key verloren“). Neues Zertifikat: SHA-1 `34:8C:B7:F8:55:5B:C1:27:29:9E:7C:8E:ED:2C:DB:DE:B6:D6:C3:58`. Der alte Key hatte SHA-1 `8C:D8:D5:62:CB:AB:52:82:33:4D:23:F0:8D:9E:91:0C:44:2F:F1:10`.
