@@ -35,7 +35,7 @@ import {
   requireRuleset,
   tryDomain,
 } from "./domainAccess";
-import { selectEngineInput } from "./engineInput";
+import { currentHalfYearOf, selectEngineInput } from "./engineInput";
 import { useExamStore } from "./examStore";
 import { usePreferencesStore } from "./preferencesStore";
 import { useProfileStore } from "./profileStore";
@@ -72,6 +72,7 @@ export function getEngineInputSnapshot() {
     grades,
     results,
     extras,
+    currentHalfYear: currentHalfYearOf(profile, courses),
   });
 }
 

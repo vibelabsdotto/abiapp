@@ -230,6 +230,13 @@ export interface EngineInput {
    * e.g. Bavarian W-Seminar paper or a Facharbeit. Points 0..15 or null.
    */
   extras: Record<string, number | null>;
+  /**
+   * Index of the half-year the student is in. Half-years before it are
+   * finished: a course there without report-card value counts with the
+   * rounded prognosis from its grades as the result (source "official",
+   * `fromGrades`). Omitted: every value from grades stays a prognosis.
+   */
+  currentHalfYear?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -253,6 +260,11 @@ export interface CourseValue {
    * none: nothing known.
    */
   source: ValueSource;
+  /**
+   * Only with source "official": no report-card value was entered, the
+   * half-year is finished and its grades count as the result.
+   */
+  fromGrades?: boolean;
 }
 
 export interface IncludedCourse {

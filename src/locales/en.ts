@@ -40,6 +40,7 @@ export const en: Translations = {
     noValue: "No value yet",
     source: {
       official: "official",
+      settled: "from grades",
       grades: "Prognosis",
       estimate: "Estimate",
       none: "No value yet",

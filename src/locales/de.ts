@@ -43,6 +43,7 @@ export const de = {
     noValue: "Noch kein Wert",
     source: {
       official: "amtlich",
+      settled: "aus Noten",
       grades: "Prognose",
       estimate: "Schätzung",
       none: "Noch kein Wert",

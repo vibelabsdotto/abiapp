@@ -25,6 +25,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 
 - Halbjahresprognose: gewichteter Schnitt je Notenart, dann Klausuranteil, **einmal** kaufmännisch auf ganze Punkte gerundet.
 - Kurswert: amtliches Halbjahresergebnis schlägt Prognose; ohne Noten wird geschätzt (Schnitt der anderen Halbjahre des Fachs, sonst Gesamtschnitt) und als Schätzung markiert.
+- Abgeschlossene Halbjahre: Halbjahre vor `EngineInput.currentHalfYear` (Schulkalender, App-Schicht `currentHalfYearOf`) sind vorbei. Ein Kurs dort ohne Zeugnisnote, aber mit Noten zählt mit der gerundeten Prognose als Ergebnis (`source: "official"`, `fromGrades: true`) und ist in der Zielanalyse nicht mehr offen. Eine eingetragene Zeugnisnote geht vor, geänderte Noten ändern den Wert. Ohne `currentHalfYear` (Tests, Website-Rechner) bleibt jeder Notenschnitt eine Prognose.
 - Block I: `E_I = roundHalfUp(P · 40 / S)` als Ganzzahlbruch. Bei S = 40 ist E_I = P.
 - Note nur ganzzahlig: `tenths = max(floor((1020 − E) / 18), 10)`, E < 300 → keine Note. Nie die Gleitkommaformel `17/3 − E/180` verwenden.
 - Schriftlich + zusätzliche mündliche Prüfung mit der Landesformel und Landesrundung (z. B. erst nach der Multiplikation runden, in HE/TH abrunden).

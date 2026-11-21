@@ -109,10 +109,15 @@ export default function CourseResultScreen() {
   const taken = course?.taken ?? true;
   const prognosisText =
     prognosis.exact !== null && prognosis.points !== null
-      ? t("subjects.courseResult.prognosis", {
-          value: formatExact(prognosis.exact, locale),
-          points: prognosis.points,
-        })
+      ? t(
+          prognosis.courseValue?.fromGrades
+            ? "subjects.courseResult.settled"
+            : "subjects.courseResult.prognosis",
+          {
+            value: formatExact(prognosis.exact, locale),
+            points: prognosis.points,
+          },
+        )
       : t("subjects.courseResult.noPrognosis");
 
   return (
