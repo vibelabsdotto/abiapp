@@ -86,7 +86,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: "com.max.mannstein.abisax",
     // Store build numbers; vibe-release raises them past the store maximum.
-    buildNumber: "22",
+    buildNumber: "23",
     // iOS 18+/26 home-screen appearances: the same ink tile in light and
     // dark, grayscale on black for tinted (the system applies the tint).
     icon: {
