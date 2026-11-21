@@ -18,11 +18,9 @@ export default function OnboardingLayout() {
     <Stack screenOptions={screenOptions}>
       <Stack.Screen
         name="index"
-        options={{
-          title: "",
-          headerLargeTitleEnabled: false,
-          headerTransparent: true,
-        }}
+        // The intro draws its own top: no header (on Android the header's
+        // background covered the first line of the claim).
+        options={{ title: "", headerShown: false }}
       />
       {/* Story pages carry their heading in the content: it wraps. */}
       <Stack.Screen
