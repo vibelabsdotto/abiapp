@@ -30,7 +30,8 @@ export const setupDE = {
       "Vorschläge sind in dieser Version nicht verfügbar.",
     about: "Über AbiApp",
     version: "Version",
-    privacy: "Alle Daten bleiben auf deinem Gerät. Kein Konto, keine Cloud.",
+    privacy:
+      "Deine Daten liegen auf deinem Gerät und im Backup deines eigenen iCloud- oder Google-Kontos. Kein Konto bei uns, kein Server von uns.",
     profile: "Profil",
     state: "Bundesland",
     abiturYear: "Abiturjahrgang",

@@ -26,6 +26,8 @@ export const ANALYTICS_EVENTS = {
   backupExported: "backup_exported",
   backupRestored: "backup_restored",
   dataDeleted: "data_deleted",
+  cloudBackupApplied: "cloud_backup_applied",
+  cloudBackupToggled: "cloud_backup_toggled",
   onboardingSource: "onboarding_source",
   clippingShown: "clipping_shown",
   clippingOpened: "clipping_opened",
@@ -78,6 +80,12 @@ interface EventParams {
   backup_exported: undefined;
   backup_restored: undefined;
   data_deleted: undefined;
+  /** Data taken over from the cloud copy: automatically, after a conflict, on a fresh install, or back to the safety copy. */
+  cloud_backup_applied: {
+    source: "auto" | "conflict" | "offer" | "undo";
+    provider: "icloud" | "devFolder";
+  };
+  cloud_backup_toggled: { enabled: boolean };
   onboarding_source: { source: AcquisitionSource | "skipped" };
   clipping_shown: { placement: ClippingPlacement };
   clipping_opened: { placement: ClippingPlacement };

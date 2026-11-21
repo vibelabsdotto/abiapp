@@ -141,7 +141,7 @@ export async function exportBackup(): Promise<{
 // Import
 // ---------------------------------------------------------------------------
 
-const summarize = (backup: BackupFile): BackupSummary => {
+export const summarizeBackup = (backup: BackupFile): BackupSummary => {
   const profile = backup.data.profile[0];
   return {
     exportedAt: backup.exportedAt,
@@ -171,7 +171,7 @@ export function checkBackup(value: unknown): BackupParseResult {
   });
   if (errors.length > 0) return { ok: false, errors };
   const backup = value as BackupFile;
-  return { ok: true, backup, summary: summarize(backup), warnings };
+  return { ok: true, backup, summary: summarizeBackup(backup), warnings };
 }
 
 /** Parses and validates backup file content. */
@@ -215,8 +215,12 @@ export async function pickBackupFile(): Promise<
 /**
  * Replaces all data with the backup in one transaction (old data stays if
  * anything fails) and reloads the stores. Validates again before writing.
+ * `track: false` for take-overs from the cloud backup (own events).
  */
-export async function restoreBackup(backup: BackupFile): Promise<void> {
+export async function restoreBackup(
+  backup: BackupFile,
+  options: { track?: boolean } = {},
+): Promise<void> {
   const check = checkBackup(backup);
   if (!check.ok) {
     throw new Error(
@@ -228,7 +232,7 @@ export async function restoreBackup(backup: BackupFile): Promise<void> {
     await insertAllTables(db, backup.data);
   });
   await loadAllStores();
-  track(ANALYTICS_EVENTS.backupRestored);
+  if (options.track !== false) track(ANALYTICS_EVENTS.backupRestored);
 }
 
 // ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ Arbeitsregeln für Agents in diesem Repo. Führende Quelle für Projektkontext; 
 
 ## Projekt
 
-AbiApp ist ein kostenloser Abiturrechner für alle 16 Bundesländer (Expo SDK 58, React Native, Expo Router mit NativeTabs, Zustand, expo-sqlite). Alles läuft lokal auf dem Gerät: kein Konto, kein Backend, keine KI. Die App ersetzt AbiSax und läuft unter derselben Store-Identität `com.max.mannstein.abisax` (iOS und Android). Open Source unter MIT.
+AbiApp ist ein kostenloser Abiturrechner für alle 16 Bundesländer (Expo SDK 58, React Native, Expo Router mit NativeTabs, Zustand, expo-sqlite). Alles läuft lokal auf dem Gerät: kein eigenes Konto, kein eigenes Backend, keine KI. Ein automatisches Backup liegt im eigenen iCloud- bzw. Google-Konto des Schülers. Die App ersetzt AbiSax und läuft unter derselben Store-Identität `com.max.mannstein.abisax` (iOS und Android). Open Source unter MIT.
 
 ## Befehle
 
@@ -20,7 +20,7 @@ npm run lint                # ESLint + Kontrast- und Menü-Icon-Check
 npm run format:check
 ```
 
-Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufzeit-Eval in der laufenden Dev-App: `node scripts/app-eval.mjs <ausdruck.js> '<Simulatorname>'`; Dev-Helfer unter `globalThis.__abiapp` (`seedDemoData({ state, abiturYear })`, `backup`, `setup`, `stores`).
+Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufzeit-Eval in der laufenden Dev-App: `node scripts/app-eval.mjs <ausdruck.js> '<Simulatorname>'`; Dev-Helfer unter `globalThis.__abiapp` (`seedDemoData({ state, abiturYear })`, `backup`, `cloud`, `setup`, `stores`); `cloud.simulateOtherDevice({ concurrent })` spielt ein zweites Gerät gegen den Testordner-Anbieter.
 
 ## Release und OTA
 
@@ -32,10 +32,10 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 ## Harte Regeln
 
 - Tests nur für reine Logik ohne React-Native-Imports (Vitest, `npm test`): Domain (`src/domain/**/*.test.ts`, je Ruleset durchgerechnete Beispiele mit exakter Gleichheit von E_I, E_II, Gesamt und Note), `src/utils/**/*.test.ts` und reine Funktionen in `src/services/**/*.test.ts` (z. B. `clipping.ts`). Keine UI-, Snapshot- oder Coverage-Tests. UI wird über Type-Check, Lint und echte Simulator-/Emulator-Durchläufe verifiziert.
-- Kein Login, keine Cloud-Synchronisation, keine Bezahlfunktionen, keine KI-Funktionen.
+- Kein eigenes Konto und kein eigenes Backend. Abgleich nur über das eigene iCloud- bzw. Google-Konto des Nutzers (Cloud-Backup). Keine Bezahlfunktionen, keine KI-Funktionen.
 - `ios/` und `android/` sind generiert (Continuous Native Generation). Native Änderungen nur über `app.config.ts` und `plugins/`. `prebuild --clean` verwirft alles Generierte.
 - Bundle-ID/Paket nicht ändern (Store-Update der bestehenden App).
-- Keine neuen nativen Dependencies ohne Rücksprache; jede braucht einen neuen Dev-Client-Build.
+- Keine neuen nativen Dependencies ohne Rücksprache; jede braucht einen neuen Dev-Client-Build. Eigene native Module liegen unter `modules/` (Expo-Autolinking).
 - SQLite-Migrationen in `src/services/database/` nur anhängen, nie geänderte oder umsortierte Migrationen ausliefern.
 - Ruleset-IDs (`SN-2027`) und Katalog-Keys (`de`, `ma`, …) nie umbenennen: Sie stehen in den Nutzerdatenbanken und Backups.
 - `GoogleService-Info.plist`, `google-services.json`, `.env.local` sind lokal und gitignored. Ohne die Firebase-Dateien baut die App, Analytics ist dann ein No-op.
@@ -48,6 +48,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 - Datenschicht: Repositories in `src/services/database/repositories/`, Stores in `src/stores/` (Fachdaten nur in SQLite, UI-Einstellungen in AsyncStorage). `useEvaluation()` baut den Engine-Input memoisiert; `targetAnalysis` ist teurer und nur memoisiert/verzögert aufrufen.
 - Store-Aktionen werfen `DataValidationError` mit deutscher Meldung; die UI zeigt sie als Toast.
 - Analytics nur über `src/services/analytics/appEvents.ts` (fire-and-forget). Firebase erhebt keine Geräte-Kennungen außer der App-Instanz-ID: `firebase.json` schaltet Werbe-ID, SSAID (Android), IDFV (iOS), die Werbenetzwerk-Registrierung und die Werbe-Einwilligungen ab, `app.config.ts` blockt `AD_ID`, `plugins/withFirebaseIos.js` lässt IdentitySupport weg. Änderungen daran ändern die Datenschutzangaben in beiden Stores und auf abi-app.io. Parameter enthalten nie Noten, Fachnamen, Freitexte oder andere persönliche Daten, nur Länder, Ruleset-IDs, Zähler und Enum-Werte.
+- Cloud-Backup (`src/services/cloudBackup/`): Snapshot = Backup-Datei aus `backupService` plus `cloud`-Metadaten (Revision, Eltern-Revision, Inhalts-Hash, Gerätetyp). Die Entscheidung (hochladen, übernehmen, fragen, Wiederherstellung anbieten) ist allein `decideSync` in `syncLogic.ts` (rein, Vitest); neue Fälle dort mit Test. Abgleich-Metadaten nur in AsyncStorage (`cloudBackupStore`), nie in SQLite. Vor jedem Übernehmen schreibt die App eine Sicherheitskopie (`files/cloud-backup/previous.json`). Anbieter: iOS iCloud Key-Value-Store (`modules/abiapp-cloud`, Wert zlib-komprimiert, Limit 1 MB), in Dev-Builds zusätzlich ein Testordner. Android: Auto Backup mit Regeln aus `plugins/withAndroidBackupRules.js`, kein laufender Abgleich. Texte nennen Gerätetypen („von einem iPad“), nie Gerätenamen.
 - Bei zustand `persist` in `onRehydrateStorage` immer `setState` verwenden, nie den State mutieren (sonst hängt der Release-Build).
 - Routen: Root-Stack in `app/_layout.tsx` registriert alle Modals; das Onboarding steuert `Stack.Protected` über den Profil-Store. Tab-Roots sind eigene Stacks mit Large Title.
 - Texte: `src/locales/de.ts` ist die Quelle der Wahrheit, `en.ts` wird dagegen typgeprüft. Bereichstexte liegen in `src/locales/parts/<bereich>.{de,en}.ts`. Engine-Texte (Checks, Issues, Annahmen) sind deutsch.

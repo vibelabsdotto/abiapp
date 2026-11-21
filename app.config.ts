@@ -97,6 +97,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...(IOS_GOOGLE_SERVICES_FILE
       ? { googleServicesFile: IOS_GOOGLE_SERVICES_FILE }
       : {}),
+    // iCloud key-value storage for the cloud backup (modules/abiapp-cloud).
+    // Needs the iCloud capability on the App ID; no container.
+    entitlements: {
+      "com.apple.developer.ubiquity-kvstore-identifier":
+        "$(TeamIdentifierPrefix)$(CFBundleIdentifier)",
+    },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       CFBundleDevelopmentRegion: "de",
@@ -165,6 +171,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "./plugins/withAndroidNavigationBarTheme.js",
     // Material drawables for native menu icons (src/constants/menuIcons.ts).
     "./plugins/withAndroidMenuIcons.js",
+    // Auto Backup rules: grades and settings, never the export cache.
+    "./plugins/withAndroidBackupRules.js",
     ...firebasePlugins,
   ],
   experiments: {

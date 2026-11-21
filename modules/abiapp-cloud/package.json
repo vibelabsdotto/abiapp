@@ -1,0 +1,8 @@
+{
+  "name": "abiapp-cloud",
+  "version": "1.0.0",
+  "description": "iCloud key-value storage for the AbiApp cloud backup",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "private": true
+}

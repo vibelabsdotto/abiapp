@@ -36,6 +36,7 @@ import {
   ACTION_TOAST_TYPE,
   type ActionToastProps,
 } from "@components/common/actionToast";
+import { CloudBackupHost } from "@components/backup/CloudBackupHost";
 import { ErrorBoundary } from "@components/common/ErrorBoundary";
 import { VIBEUPDATE_APP_ID } from "@constants/config";
 import { Radius } from "@constants/typography";
@@ -350,6 +351,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <ErrorBoundary>
         <AppProvider>
+          <CloudBackupHost />
           <RootLayoutNav />
         </AppProvider>
       </ErrorBoundary>
