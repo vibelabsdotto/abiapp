@@ -13,10 +13,16 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
+import {
+  evaluate,
+  getRulesetSummary,
+  halfYearPrognosis,
+  requiredNextGrade,
+} from "@domain/index";
 import type {
   AbiturEvaluation,
   CourseLevel,
+  EngineGrade,
   EngineInput,
   EngineSubject,
   ExamSlot,
@@ -421,5 +427,66 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     );
     const e = evaluate(build(subs, TYPICAL_EXAMS, SEMINAR));
     expect(errors(e)).toContain("exam.arts.oral");
+  });
+});
+
+describe("Bayern: Halbjahresleistung is never rounded up to 1 point (GSO § 29 Abs. 2 Satz 5)", () => {
+  const g = (kind: "exam" | "other", points: number): EngineGrade => ({
+    id: `${kind}${points}`,
+    kind,
+    points,
+    weight: 1,
+  });
+  // Schulaufgabe 1, kleine Leistungsnachweise 0, 1:1 → 0,5.
+  const half = [g("exam", 1), g("other", 0)];
+
+  it("prognosis: 0,5 → 0 in Bayern, 1 elsewhere and without ruleset", () => {
+    expect(halfYearPrognosis(half, 50, RS)).toEqual({ exact: 0.5, points: 0 });
+    expect(halfYearPrognosis(half, 50, "HE-2027")).toEqual({
+      exact: 0.5,
+      points: 1,
+    });
+    expect(halfYearPrognosis(half, 50)).toEqual({ exact: 0.5, points: 1 });
+    // Exactly 1,0 stays 1 (no rounding up involved).
+    expect(
+      halfYearPrognosis([g("exam", 1), g("other", 1)], 50, RS).points,
+    ).toBe(1);
+    // 1,5 is rounded normally to 2.
+    expect(
+      halfYearPrognosis([g("exam", 2), g("other", 1)], 50, RS).points,
+    ).toBe(2);
+  });
+
+  it("required next grade: 1 point needs an average of at least 1,0 in Bayern", () => {
+    // Schulaufgabe 0; next kleiner Leistungsnachweis p: Ø = p / 2.
+    // Bayern: p / 2 ≥ 1 → p = 2. Elsewhere p / 2 ≥ 0,5 → p = 1.
+    const exam0 = [g("exam", 0)];
+    expect(requiredNextGrade(exam0, 50, "other", 1, RS)).toEqual({
+      points: 2,
+      status: "reachable",
+    });
+    expect(requiredNextGrade(exam0, 50, "other", 1, "HE-2027")).toEqual({
+      points: 1,
+      status: "reachable",
+    });
+    expect(requiredNextGrade(exam0, 50, "other", 1)).toEqual({
+      points: 1,
+      status: "reachable",
+    });
+  });
+
+  it("prognosis and engine count the same value", () => {
+    const input = build(typical(), TYPICAL_EXAMS, SEMINAR);
+    const course = input.courses.find(
+      (c) => c.subjectId === "ch" && c.halfYear === 3,
+    );
+    if (!course) throw new Error("missing course");
+    course.officialPoints = null;
+    course.grades = half;
+    const value = evaluate(input).courses.find(
+      (c) => c.subjectId === "ch" && c.halfYear === 3,
+    );
+    expect(value?.points).toBe(halfYearPrognosis(half, 50, RS).points);
+    expect(value?.points).toBe(0);
   });
 });
