@@ -30,6 +30,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
+import { CloudRestoreOffer, useCloudRestoreOffer } from "@components/backup";
 import { Button } from "@components/common/Button";
 import { Type } from "@constants/typography";
 import { useTranslation } from "@locales/index";
@@ -83,6 +84,7 @@ export const WelcomeView = ({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const cloudOffer = useCloudRestoreOffer().offer;
   const [stage, setStage] = useState({ width: 0, height: 0 });
   const [beatIndex, setBeatIndex] = useState(0);
   const [focused, setFocused] = useState(true);
@@ -328,20 +330,28 @@ export const WelcomeView = ({
       <View
         style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}
       >
-        <Button
-          title={t("onboarding.welcome.start")}
-          onPress={onStart}
-          disabled={restoring}
-          size="large"
-          fullWidth
-        />
-        <Button
-          title={t("onboarding.welcome.restore")}
-          onPress={onRestore}
-          loading={restoring}
-          variant="ghost"
-          fullWidth
-        />
+        {cloudOffer ? (
+          // A backup in the student's own cloud comes first: restore it or
+          // decline, then the normal start buttons return.
+          <CloudRestoreOffer />
+        ) : (
+          <>
+            <Button
+              title={t("onboarding.welcome.start")}
+              onPress={onStart}
+              disabled={restoring}
+              size="large"
+              fullWidth
+            />
+            <Button
+              title={t("onboarding.welcome.restore")}
+              onPress={onRestore}
+              loading={restoring}
+              variant="ghost"
+              fullWidth
+            />
+          </>
+        )}
         <Text
           style={[
             Type.footnote,
