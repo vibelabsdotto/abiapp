@@ -9,7 +9,7 @@
     "ios": "expo run:ios --port 8090",
     "android": "expo run:android --port 8090",
     "prebuild": "expo prebuild --clean",
-    "lint": "expo lint && npm run check:contrast && npm run check:menu-icons",
+    "lint": "expo lint && npm run check:contrast && npm run check:menu-icons && npm run check:vectors",
     "lint:fix": "expo lint --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
@@ -20,7 +20,8 @@
     "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mts",
     "icons:tabs": "node scripts/generate-tab-icons.mjs",
     "check:menu-icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-menu-icons.mts",
-    "icons:android": "node scripts/generate-android-menu-icons.mjs"
+    "icons:android": "node scripts/generate-android-menu-icons.mjs",
+    "check:vectors": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-vectors.mts"
   },
   "dependencies": {
     "@expo/ui": "~58.0.21",

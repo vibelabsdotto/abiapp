@@ -11,33 +11,33 @@
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M12 3v18" />
+        android:pathData="M12 3 v18" />
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="m19 8 3 8a5 5 0 0 1-6 0zV7" />
+        android:pathData="m19 8 3 8 a5 5 0 0 1 -6 0 z V7" />
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1" />
+        android:pathData="M3 7 h1 a17 17 0 0 0 8 -2 17 17 0 0 0 8 2 h1" />
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="m5 8 3 8a5 5 0 0 1-6 0zV7" />
+        android:pathData="m5 8 3 8 a5 5 0 0 1 -6 0 z V7" />
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FF000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M7 21h10" />
+        android:pathData="M7 21 h10" />
 </vector>
