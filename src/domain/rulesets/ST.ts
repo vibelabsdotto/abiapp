@@ -1,6 +1,8 @@
-// Sachsen-Anhalt, Abitur ab 2027 (Oberstufenverordnung OberStV ST 2013, Fassung ab 01.08.2023).
+// Sachsen-Anhalt, Abitur ab 2027 (Oberstufenverordnung vom 03.12.2013,
+// §§ 20, 38, Anlagen 1 und 2 in der ab 01.08.2023 gültigen Fassung, zuletzt
+// geändert am 12.07.2023).
 
-import type { EngineSubject, ExamSlot, Issue } from "../model";
+import type { EngineSubject, ExamSlot, Issue, RuleCheck } from "../model";
 import type {
   ExamComponentDef,
   Requirement,
@@ -24,7 +26,9 @@ import {
   limit,
   oneOf,
   requireFieldsCovered,
+  taken,
 } from "./helpers";
+import { courseKey } from "../engine/context";
 import { roundHalfUpFrac } from "../engine/math";
 
 const NW = ["bio", "ch", "ph"];
@@ -113,6 +117,71 @@ function requirements(ctx: RuleContext): Requirement[] {
   );
   return reqs;
 }
+
+/**
+ * § 16 Abs. 1, 7 and Anlage 2: courses with 0 points do not fulfil a
+ * Belegungsverpflichtung, and without it there is no admission (§ 27
+ * Abs. 3), even if the course is not included. Durchgängig belegpflichtig:
+ * Deutsch, Mathematik, Geschichte, the eA subjects, the exam subjects, one
+ * continued FS and one NW plus a second FS or NW, Kunst or Musik,
+ * Geographie or Sozialkunde, Religion or Ethik, Sport. The fifth
+ * Wahlpflichtfach is left out (the choice is open).
+ */
+function zeroBelegCheck(ctx: RuleContext, predicted: boolean): RuleCheck {
+  const zeros = (s: EngineSubject) =>
+    ctx.takenHalfYears(s.id).filter((hy) => ctx.points(s.id, hy) === 0);
+  const zeroFree = (s: EngineSubject) => zeros(s).length === 0;
+  const bad = new Set<EngineSubject>();
+  const exam = new Set(examSubjectsWithSlot(ctx).map((s) => s.id));
+  for (const s of taken(
+    ctx,
+    (x) =>
+      x.level === "elevated" ||
+      exam.has(x.id) ||
+      hasKey(x, "de", "ma", "ge", "sp"),
+  )) {
+    if (!zeroFree(s)) bad.add(s);
+  }
+  for (const group of [
+    byKey(ctx, "ku", "mu"),
+    byKey(ctx, "geo", "pol"),
+    byKey(ctx, "rel_ev", "rel_kath", "eth"),
+  ]) {
+    if (group.length > 0 && !group.some(zeroFree))
+      for (const x of group) bad.add(x);
+  }
+  // Anlage 2 Fn. 3: one FS and one NW, plus a second FS or a second NW.
+  const fsnw = (fs: EngineSubject[], nw: EngineSubject[]) =>
+    fs.length >= 1 && nw.length >= 1 && fs.length + nw.length >= 3;
+  const fs = continuedLanguages(ctx);
+  const nw = byKey(ctx, ...NW);
+  if (fsnw(fs, nw) && !fsnw(fs.filter(zeroFree), nw.filter(zeroFree))) {
+    for (const x of [...fs, ...nw]) if (!zeroFree(x)) bad.add(x);
+  }
+  const courses = [...bad].flatMap((x) => zeros(x).map((hy) => ({ x, hy })));
+  const known = ctx.subjects.some((x) =>
+    ctx.takenHalfYears(x.id).some((hy) => ctx.points(x.id, hy) !== null),
+  );
+  return {
+    id: "block1.zeroTaken",
+    label: "Kein Pflichtkurs mit 0 Punkten (erfüllt die Belegung nicht)",
+    passed: known ? courses.length === 0 : null,
+    detail: courses.length
+      ? courses
+          .map(({ x, hy }) => `${x.name} ${ctx.ruleset.halfYears[hy]}`)
+          .join(", ")
+      : null,
+    predicted:
+      predicted ||
+      courses.some(
+        ({ x, hy }) =>
+          ctx.values.get(courseKey(x.id, hy))?.source !== "official",
+      ),
+  };
+}
+
+/** Minimum Belegung (Anlage 2): 3 Kern-, 3 Profil-, 5 Wahlpflichtfächer, four halves each. */
+const MIN_TAKEN = 44;
 
 /** Number of taken P1/P2 courses below 5 points: they count twice when doubled (assumption). */
 function doubledDeficits(ctx: RuleContext): number {
@@ -294,15 +363,16 @@ export const ST_2027: Ruleset = {
     "Qualifikationsphase 11/1 bis 12/2 mit drei Fächern auf erhöhtem Niveau (eA) aus Deutsch, Mathematik, Fremdsprachen und Naturwissenschaften.",
     "Block I: 36 bis 40 Kurshalbjahre, einfach gewertet. Wahlweise zählen P1 und P2 doppelt (A = Anzahl + 8). Punkte = Summe / A × 40, ab 0,5 aufgerundet. Die App wählt die beste Variante.",
     "Pflicht: Deutsch, Mathematik, Geschichte, Profil-Fremdsprache, Profil-Naturwissenschaft und alle Prüfungsfächer je 4, Musik oder Kunst 2, eine neu begonnene Fremdsprache 2.",
-    "Zulassung: mindestens 200 Punkte, höchstens 20 % von A unter 5 Punkten, kein eingebrachter Kurs mit 0 Punkten, mindestens 2 Kurshalbjahre mehr belegt als eingebracht.",
-    "Block II: P1 und P2 schriftlich auf eA, P3 und P4 schriftlich auf gA, P5 mündlich, alle vierfach. Eine besondere Lernleistung kann P4 ersetzen.",
+    "Zulassung: mindestens 200 Punkte, höchstens 20 % von A unter 5 Punkten, kein eingebrachter Kurs mit 0 Punkten, mindestens 2 Kurshalbjahre mehr belegt als eingebracht. Ein Pflichtkurs mit 0 Punkten (auch Sport, Religion/Ethik) erfüllt die Belegung nicht und verhindert die Zulassung.",
+    "Block II: P1 und P2 schriftlich auf eA, P3 und P4 schriftlich auf gA, P5 mündlich, alle vierfach. Eine besondere Lernleistung (Dokumentation zu Kolloquium 2 : 1) kann P3 oder P4 ersetzen.",
     "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, gerundet (Anlage 3).",
     "Bestehen: Block II mindestens 100 Punkte, jede schriftliche Prüfung mindestens 4 Punkte vierfach, drei Prüfungen mit je 20 Punkten, darunter P1 oder P2.",
     "Gesamt mindestens 300 von 900 Punkten, Note nach Anlage 4.",
   ],
   sources: [
     {
-      title: "Oberstufenverordnung Sachsen-Anhalt (OberStV ST)",
+      title:
+        "Oberstufenverordnung Sachsen-Anhalt vom 03.12.2013, zuletzt geändert am 12.07.2023",
       section: "§§ 15, 16, 20, 27, 33, 37–40; Anlagen 2–4",
       url: "https://www.landesrecht.sachsen-anhalt.de/bsst/document/jlr-NNLST000042BE",
     },
@@ -349,14 +419,20 @@ export const ST_2027: Ruleset = {
       let takenCount = 0;
       for (const s of ctx.subjects)
         takenCount += ctx.takenHalfYears(s.id).length;
+      // § 38 Abs. 1 Satz 2. With the minimum Belegung (44) it always holds
+      // (at most 40 included), so a shortfall means courses are missing.
+      const ok = takenCount >= sel.count + 2;
       return [
         {
           id: "block1.takenMargin",
           label: "Mindestens 2 Kurshalbjahre mehr belegt als eingebracht",
-          passed: takenCount >= sel.count + 2,
-          detail: `${takenCount} belegt, ${sel.count} eingebracht`,
+          passed: ok ? true : takenCount < MIN_TAKEN ? null : false,
+          detail: ok
+            ? `${takenCount} belegt, ${sel.count} eingebracht`
+            : `Erst ${takenCount} Kurshalbjahre angelegt, belegt werden mindestens ${MIN_TAKEN}`,
           predicted,
         },
+        zeroBelegCheck(ctx, predicted),
       ];
     },
   },
