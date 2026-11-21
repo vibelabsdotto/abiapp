@@ -15,7 +15,7 @@ npm start                   # Metro (Dev-Client), Port 8090, signiert das Dev-Ma
 npm run ios                 # Dev-Client bauen + starten (ohne eigenen Bundler)
 npm run android
 npm run type-check
-npm test                    # Vitest, nur src/domain
+npm test                    # Vitest, reine Logik (src/domain, src/utils, src/services)
 npm run lint                # ESLint + Kontrast- und Menü-Icon-Check
 npm run format:check
 ```
@@ -30,7 +30,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 
 ## Harte Regeln
 
-- Tests nur für die reine Domain-Schicht (`src/domain/**/*.test.ts`, Vitest, `npm test`): je Ruleset durchgerechnete Beispiele mit exakter Gleichheit von E_I, E_II, Gesamt und Note. Keine UI-, Snapshot- oder Coverage-Tests. UI wird über Type-Check, Lint und echte Simulator-/Emulator-Durchläufe verifiziert.
+- Tests nur für reine Logik ohne React-Native-Imports (Vitest, `npm test`): Domain (`src/domain/**/*.test.ts`, je Ruleset durchgerechnete Beispiele mit exakter Gleichheit von E_I, E_II, Gesamt und Note), `src/utils/**/*.test.ts` und reine Funktionen in `src/services/**/*.test.ts` (z. B. `clipping.ts`). Keine UI-, Snapshot- oder Coverage-Tests. UI wird über Type-Check, Lint und echte Simulator-/Emulator-Durchläufe verifiziert.
 - Kein Login, keine Cloud-Synchronisation, keine Bezahlfunktionen, keine KI-Funktionen.
 - `ios/` und `android/` sind generiert (Continuous Native Generation). Native Änderungen nur über `app.config.ts` und `plugins/`. `prebuild --clean` verwirft alles Generierte.
 - Bundle-ID/Paket nicht ändern (Store-Update der bestehenden App).

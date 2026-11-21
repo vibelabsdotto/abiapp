@@ -62,7 +62,7 @@ Checks:
 ```bash
 npm run type-check
 npm run lint
-npm test                     # Vitest, rules engine in src/domain only
+npm test                     # Vitest, pure logic (src/domain, src/utils, src/services)
 npm run format:check
 npx expo-doctor
 ```
