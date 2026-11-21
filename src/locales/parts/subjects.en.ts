@@ -17,10 +17,6 @@ export const subjectsEN = {
       errorTitle: "Could not save",
       unknownError: "Unknown error. Please try again.",
       missingSubject: "This subject no longer exists.",
-      discardTitle: "Discard changes?",
-      discardMessage: "Your changes will be lost.",
-      discardConfirm: "Discard",
-      keepEditing: "Keep editing",
     },
     list: {
       add: "Add subject",
@@ -165,7 +161,6 @@ export const subjectsEN = {
       deleted: "Grade deleted",
       undo: "Restore",
       restored: "Grade restored",
-      a11y: "{{title}}, {{points}} points",
     },
     gradeEditor: {
       titleNew: "New grade",
