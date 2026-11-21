@@ -1,13 +1,13 @@
-// Step numbers of the onboarding flow (welcome and done are not counted).
+// Progress of the onboarding flow: the question, the mirror pages of this
+// run and the setup steps (welcome and result are not counted).
 
-export const ONBOARDING_STEPS = {
-  state: 1,
-  year: 2,
-  goal: 3,
-  subjects: 4,
-  levels: 5,
-  exams: 6,
-  source: 7,
-} as const;
+import { selectMirrorCount, useOnboardingStory } from "@stores/onboardingStory";
+import { stepProgress, type OnboardingStepId } from "@utils/onboardingStory";
 
-export const ONBOARDING_TOTAL_STEPS = 7;
+export const useStepProgress = (
+  id: OnboardingStepId,
+): { step: number; totalSteps: number } => {
+  const mirrors = useOnboardingStory(selectMirrorCount);
+  const { step, total } = stepProgress(id, mirrors);
+  return { step, totalSteps: total };
+};
