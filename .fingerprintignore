@@ -1,0 +1,2 @@
+# Kotlin daemon session files inside node_modules change the Android build-time fingerprint.
+**/.kotlin/**/*
