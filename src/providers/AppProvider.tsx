@@ -18,7 +18,6 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 
 import { initDatabase } from "@services/database/database";
-import { registerDevTools } from "@services/demo/devTools";
 import { useLanguageStore } from "@stores/languageStore";
 import { usePreferencesStore } from "@stores/preferencesStore";
 import { loadAllStores } from "@stores/setupActions";
@@ -29,7 +28,13 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
   // Already hidden (e.g. Fast Refresh); nothing to do.
 });
 
-registerDevTools();
+// Dev helpers on globalThis.__abiapp; the import is dropped from release
+// bundles together with the __DEV__ branch.
+if (__DEV__) {
+  void import("@services/demo/devTools").then(({ registerDevTools }) =>
+    registerDevTools(),
+  );
+}
 
 type PersistedStore = {
   persist: {

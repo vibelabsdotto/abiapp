@@ -69,7 +69,6 @@ import {
   pickBackupFile,
   restoreBackup,
 } from "@services/backup/backupService";
-import { seedDemoData } from "@services/demo/demoData";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
 import { useLanguageStore } from "@stores/languageStore";
@@ -288,19 +287,23 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleSeed = async (code: string) => {
-    const state = states.find((item) => item.code === code);
-    if (!state) return;
-    try {
-      await seedDemoData({
-        state: state.code as StateCode,
-        abiturYear: profile?.abiturYear ?? 2027,
-      });
-      showSuccess(t("settings.seedDemoDone", { state: state.name }));
-    } catch (error) {
-      showError(t("settings.seedDemoFailed"), error);
-    }
-  };
+  // Development builds only; release bundles drop the demo module.
+  const handleSeed = __DEV__
+    ? async (code: string) => {
+        const state = states.find((item) => item.code === code);
+        if (!state) return;
+        try {
+          const { seedDemoData } = await import("@services/demo/demoData");
+          await seedDemoData({
+            state: state.code as StateCode,
+            abiturYear: profile?.abiturYear ?? 2027,
+          });
+          showSuccess(t("settings.seedDemoDone", { state: state.name }));
+        } catch (error) {
+          showError(t("settings.seedDemoFailed"), error);
+        }
+      }
+    : undefined;
 
   const handleResetOnboarding = async () => {
     try {
@@ -542,7 +545,7 @@ export default function SettingsScreen() {
           <NativeMenu
             title={t("settings.seedDemoFor")}
             actions={demoActions}
-            onSelect={(id) => void handleSeed(id)}
+            onSelect={(id) => void handleSeed?.(id)}
             fullWidth
             trigger={
               <ListRow
