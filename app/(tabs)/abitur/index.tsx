@@ -1,9 +1,16 @@
 // Abitur tab: total, Block I (summary + inclusion matrix), Block II (exam
 // components), special achievements, admission/pass checklist, rules link.
 
-import React from "react";
-import { Platform, StyleSheet, View } from "react-native";
-import { router, Stack, type Href } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Platform,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type ScrollViewInstance,
+} from "react-native";
+import { router, Stack, useLocalSearchParams, type Href } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { CircleAlert } from "lucide-react-native";
 
 import { ScreenLayout } from "@components/common";
@@ -29,8 +36,41 @@ import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { examVariantOf } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 
+/**
+ * `?focus=checks` (Übersicht, "Alle anzeigen"): scroll so that "Zulassung
+ * und Bestehen" starts right below the header. Follows the section while
+ * the content above still lays out, then clears the parameter so a later
+ * tab tap keeps the normal top position.
+ */
+function useChecklistFocus() {
+  const { focus } = useLocalSearchParams<{ focus?: string }>();
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const headerHeight = useHeaderHeight();
+  const [sectionY, setSectionY] = useState<number | null>(null);
+  const active = focus === "checks";
+
+  useEffect(() => {
+    if (!active || sectionY === null) return;
+    // iOS: content starts below the translucent header (automatic inset).
+    const inset = Platform.OS === "ios" ? headerHeight : 0;
+    scrollRef.current?.scrollTo({ y: sectionY - inset, animated: true });
+  }, [active, sectionY, headerHeight]);
+
+  useEffect(() => {
+    if (!active) return;
+    const timer = setTimeout(() => router.setParams({ focus: undefined }), 800);
+    return () => clearTimeout(timer);
+  }, [active]);
+
+  const onSectionLayout = (event: LayoutChangeEvent) =>
+    setSectionY(event.nativeEvent.layout.y);
+
+  return { scrollRef, onSectionLayout };
+}
+
 export default function AbiturScreen() {
   const { t } = useTranslation();
+  const { scrollRef, onSectionLayout } = useChecklistFocus();
   const toolbarTint = useToolbarTint();
   const data = useAbiturData();
   const { evaluation, input, ruleset } = data;
@@ -98,7 +138,10 @@ export default function AbiturScreen() {
   return (
     <>
       {toolbar}
-      <ScreenLayout contentContainerStyle={styles.content}>
+      <ScreenLayout
+        contentContainerStyle={styles.content}
+        scrollRef={scrollRef}
+      >
         <RulesetBanner ruleset={ruleset} />
         {issues.length > 0 ? (
           <View style={styles.issues}>
@@ -135,7 +178,9 @@ export default function AbiturScreen() {
           variant={variant}
         />
         <ExtrasSection ruleset={ruleset} extras={input.extras} />
-        <Checklist evaluation={evaluation} />
+        <View onLayout={onSectionLayout}>
+          <Checklist evaluation={evaluation} />
+        </View>
         <RulesLink ruleset={ruleset} />
       </ScreenLayout>
     </>

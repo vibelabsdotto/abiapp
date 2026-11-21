@@ -10,6 +10,7 @@ import {
   StyleSheet,
   View,
   type RefreshControlProps,
+  type ScrollViewInstance,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -25,6 +26,8 @@ interface ScreenLayoutProps {
   padding?: boolean;
   contentContainerStyle?: StyleProp<ViewStyle>;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  /** Ref to the root ScrollView (scroll targets, e.g. ?focus=checks). */
+  scrollRef?: React.Ref<ScrollViewInstance>;
 }
 
 export const ScreenLayout = ({
@@ -33,6 +36,7 @@ export const ScreenLayout = ({
   padding = true,
   contentContainerStyle,
   refreshControl,
+  scrollRef,
 }: ScreenLayoutProps) => {
   const colors = useThemeStore((state) => state.colors);
   const background = { backgroundColor: colors.background };
@@ -55,6 +59,7 @@ export const ScreenLayout = ({
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={[styles.flex, background]}
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={[

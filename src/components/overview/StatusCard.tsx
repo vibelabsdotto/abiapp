@@ -21,6 +21,9 @@ import { Type } from "@constants/typography";
 import { allChecks, isMissingSubjectIssue, statusItems } from "./data";
 
 const openAbitur = () => router.navigate("/abitur");
+/** "Alle anzeigen": the Abitur tab scrolled to "Zulassung und Bestehen". */
+const openChecklist = () =>
+  router.navigate({ pathname: "/abitur", params: { focus: "checks" } });
 const openSubjectSetup = () => router.push("/setup/subjects" as Href);
 
 export const StatusCard = ({
@@ -57,7 +60,7 @@ export const StatusCard = ({
   return (
     <Section
       title={t("home.status.title")}
-      action={{ title: t("home.status.all"), onPress: openAbitur }}
+      action={{ title: t("home.status.all"), onPress: openChecklist }}
       separatorInset={50}
     >
       <Pressable
