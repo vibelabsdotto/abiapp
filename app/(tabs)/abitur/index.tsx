@@ -7,6 +7,7 @@ import { router, Stack, type Href } from "expo-router";
 import { CircleAlert } from "lucide-react-native";
 
 import { ScreenLayout } from "@components/common";
+import { RulesetUnavailable } from "@components/overview/RulesetUnavailable";
 import { EmptyState, IssueBanner } from "@components/ui";
 import { BlockIISection } from "@components/abitur/BlockIISection";
 import { BlockISection } from "@components/abitur/BlockISection";
@@ -70,7 +71,7 @@ export default function AbiturScreen() {
     return (
       <>
         {toolbar}
-        <ScreenLayout>{null}</ScreenLayout>
+        <ScreenLayout>{input ? <RulesetUnavailable /> : null}</ScreenLayout>
       </>
     );
   }
@@ -83,7 +84,7 @@ export default function AbiturScreen() {
           <EmptyState
             icon={CircleAlert}
             title={t("home.error.title")}
-            message={data.error ?? t("home.error.message")}
+            message={t("home.error.message")}
           />
         </ScreenLayout>
       </>

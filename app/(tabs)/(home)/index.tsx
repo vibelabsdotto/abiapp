@@ -7,6 +7,7 @@ import { router, Stack } from "expo-router";
 import { CircleAlert } from "lucide-react-native";
 
 import { ScreenLayout } from "@components/common";
+import { RulesetUnavailable } from "@components/overview/RulesetUnavailable";
 import { EmptyState, GradeHero } from "@components/ui";
 import { BlockTiles } from "@components/overview/BlockTiles";
 import { CurrentHalfYear } from "@components/overview/CurrentHalfYear";
@@ -57,7 +58,7 @@ export default function HomeScreen() {
     return (
       <>
         {toolbar}
-        <ScreenLayout>{null}</ScreenLayout>
+        <ScreenLayout>{input ? <RulesetUnavailable /> : null}</ScreenLayout>
       </>
     );
   }
@@ -70,7 +71,7 @@ export default function HomeScreen() {
           <EmptyState
             icon={CircleAlert}
             title={t("home.error.title")}
-            message={data.error ?? t("home.error.message")}
+            message={t("home.error.message")}
           />
         </ScreenLayout>
       </>

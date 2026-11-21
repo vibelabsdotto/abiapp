@@ -70,6 +70,12 @@ export const overviewEN = {
       title: "Calculation not possible",
       message: "AbiApp could not calculate your average right now.",
     },
+    rulesetUnavailable: {
+      title: "Rule version not available",
+      message:
+        "This app version does not know your rule version {{id}}. Update AbiApp or choose another rule version.",
+      action: "Choose rule version",
+    },
   },
   abitur: {
     title: "Abitur",
