@@ -10,9 +10,8 @@ import { OnboardingSummary } from "@components/onboarding/OnboardingSummary";
 import { OnboardingStep, showError } from "@components/setup";
 import { isMissingSubjectIssue } from "@components/overview/data";
 import {
-  ArchGauge,
+  GradeHero,
   IssueBanner,
-  formatGrade,
   useSubjectVisualResolver,
 } from "@components/ui";
 import { Type } from "@constants/typography";
@@ -25,11 +24,8 @@ import { useProfileStore } from "@stores/profileStore";
 import { completeOnboarding } from "@stores/setupActions";
 import { useThemeStore } from "@stores/themeStore";
 
-/** Same fill as the app icon: the arch ends at the 1,0 mark (823/900). */
-const BRAND_PROGRESS = 823 / 900;
-
 export default function OnboardingDoneScreen() {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
   const targetTenths = useProfileStore(
     (state) => state.profile?.targetTenths ?? null,
@@ -75,36 +71,39 @@ export default function OnboardingDoneScreen() {
         onPress: () => void finish(null),
       }}
     >
-      <View style={styles.hero}>
-        <ArchGauge
-          width={96}
-          progress={BRAND_PROGRESS}
-          strokeRatio={0.5}
-          legRatio={0.85}
-          crossbar
-          color={colors.accent}
-          trackColor={colors.accentLight}
-        />
-        <Text
-          accessibilityRole="header"
-          style={[Type.title2, styles.center, { color: colors.text }]}
-        >
-          {targetTenths === null
-            ? t("onboarding.done.heading")
-            : t("onboarding.done.goalHeading", {
-                grade: formatGrade(targetTenths, locale),
-              })}
-        </Text>
-        <Text
-          style={[Type.body, styles.center, { color: colors.textSecondary }]}
-        >
-          {targetTenths === null
-            ? t("onboarding.done.text")
-            : t("onboarding.done.goalText", {
-                points: minPointsForGrade(targetTenths),
-              })}
-        </Text>
-      </View>
+      {targetTenths === null ? (
+        <View style={styles.neutral}>
+          <Text
+            accessibilityRole="header"
+            style={[Type.title2, styles.center, { color: colors.text }]}
+          >
+            {t("onboarding.done.heading")}
+          </Text>
+          <Text
+            style={[Type.body, styles.center, { color: colors.textSecondary }]}
+          >
+            {t("onboarding.done.text")}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.goal}>
+          {/* The goal as a result: the overview's arch in its estimate
+              form (dashed), the target grade in the middle. */}
+          <GradeHero
+            gradeTenths={targetTenths}
+            totalPoints={minPointsForGrade(targetTenths)}
+            predicted
+            basis="estimate"
+            label={t("onboarding.done.goalLabel")}
+            legend={false}
+          />
+          <Text
+            style={[Type.body, styles.center, { color: colors.textSecondary }]}
+          >
+            {t("onboarding.done.goalText")}
+          </Text>
+        </View>
+      )}
       {missing.length > 0 ? (
         <View style={styles.issues}>
           {missing.map((issue, index) => (
@@ -124,11 +123,14 @@ export default function OnboardingDoneScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
+  neutral: {
     alignItems: "center",
     gap: 10,
     paddingTop: 8,
     paddingHorizontal: 8,
+  },
+  goal: {
+    gap: 4,
   },
   center: {
     textAlign: "center",

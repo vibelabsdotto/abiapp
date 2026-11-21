@@ -45,9 +45,12 @@ export const setupEN = {
     exportFailed: "Export failed",
     importTitle: "Replace your data?",
     importMessage:
-      "Backup from {{date}}\n{{profile}}\n{{subjects}} subjects, {{grades}} grades, {{official}} half-year results, {{exams}} exam results\n\nYour current data will be replaced completely.",
+      "Backup from {{date}}\n{{profile}}\n{{subjects}} subjects, {{grades}} grades, {{official}} half-year results, {{exams}} exam results",
+    importReplace: "Your current data will be replaced completely.",
     importConfirm: "Replace",
-    importDone: "Backup imported",
+    restoreTitle: "Restore backup?",
+    restoreConfirm: "Restore",
+    importDone: "Backup restored",
     importInvalid: "Not a valid backup",
     importFailed: "Import failed",
     importNoProfile: "No profile",
@@ -86,7 +89,7 @@ export const setupEN = {
     step: "Step {{step}} of {{total}}",
     fixIssue: "You can continue once the note in the list is resolved.",
     welcome: {
-      claim: "Your Abitur. Calculated.",
+      claim: "Your Abitur.\nCalculated.",
       text: "AbiApp calculates your average with the rules of your state.",
       freeTitle: "Free",
       freeText: "No subscription, no in-app purchases.",
@@ -147,9 +150,8 @@ export const setupEN = {
       title: "Done",
       heading: "All set",
       text: "Enter your first grade. The overview shows your average right away.",
-      goalHeading: "Your goal: {{grade}}",
-      goalText:
-        "You need {{points}} points for it. Enter your first grade to see where you stand.",
+      goalLabel: "Your goal",
+      goalText: "Enter your first grade to see where you stand.",
       firstGrade: "Enter first grade",
       examsLater:
         "Your exam subjects are still open. You can set them in Settings.",

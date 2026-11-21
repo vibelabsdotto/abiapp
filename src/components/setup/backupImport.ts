@@ -6,6 +6,7 @@ import { Alert } from "react-native";
 import { listStates } from "@domain/index";
 import { t, type LanguageCode } from "@locales/index";
 import { pickBackupFile, restoreBackup } from "@services/backup/backupService";
+import { useCourseStore } from "@stores/courseStore";
 import { useProfileStore } from "@stores/profileStore";
 
 import { confirmAsync, showError, showSuccess } from "./setupUi";
@@ -35,23 +36,32 @@ export async function importBackupInteractive(
     const backupState = listStates().find(
       (state) => state.code === summary.state,
     );
+    // A fresh install has nothing to lose: restore, not "replace".
+    const hasData =
+      useProfileStore.getState().profile !== null ||
+      useCourseStore.getState().subjects.length > 0;
+    const contents = t("settings.importMessage", {
+      date: new Date(summary.exportedAt).toLocaleString(
+        language === "de" ? "de-DE" : "en-US",
+        { dateStyle: "medium", timeStyle: "short" },
+      ),
+      profile: backupState
+        ? `${backupState.name} · ${summary.abiturYear ?? ""}`
+        : t("settings.importNoProfile"),
+      subjects: summary.subjects,
+      grades: summary.grades,
+      official: summary.officialResults,
+      exams: summary.examResults,
+    });
     const confirmed = await confirmAsync({
-      title: t("settings.importTitle"),
-      message: t("settings.importMessage", {
-        date: new Date(summary.exportedAt).toLocaleString(
-          language === "de" ? "de-DE" : "en-US",
-          { dateStyle: "medium", timeStyle: "short" },
-        ),
-        profile: backupState
-          ? `${backupState.name} · ${summary.abiturYear ?? ""}`
-          : t("settings.importNoProfile"),
-        subjects: summary.subjects,
-        grades: summary.grades,
-        official: summary.officialResults,
-        exams: summary.examResults,
-      }),
-      confirm: t("settings.importConfirm"),
-      destructive: true,
+      title: t(hasData ? "settings.importTitle" : "settings.restoreTitle"),
+      message: hasData
+        ? `${contents}\n\n${t("settings.importReplace")}`
+        : contents,
+      confirm: t(
+        hasData ? "settings.importConfirm" : "settings.restoreConfirm",
+      ),
+      destructive: hasData,
     });
     if (!confirmed) return false;
     await restoreBackup(result.backup);

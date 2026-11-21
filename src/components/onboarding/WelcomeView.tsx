@@ -1,21 +1,22 @@
-// Welcome: app icon, name, claim and the three promises (free, no
-// account, data stays on the device). One button starts the flow; a text
-// link restores a backup (new phone).
+// Welcome: the claim is the hero ("Dein Abi." / "Ausgerechnet.", left
+// aligned, as large as the width allows), the mark small above it, one
+// sentence and the three promises (free, no account, data stays on the
+// device) below. One button starts the flow; a text link restores a backup
+// (new phone).
 
 import React from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gift, LockKeyhole, UserX, type LucideIcon } from "lucide-react-native";
 
 import { Button } from "@components/common/Button";
 import { Card } from "@components/common/Card";
+import { BrandMark } from "@components/onboarding/BrandMark";
+import { FitHeadline } from "@components/onboarding/FitHeadline";
 import { Icon } from "@components/ui";
 import { Radius, Type } from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
-
-const ICON_LIGHT = require("@assets/images/icon.png");
-const ICON_DARK = require("@assets/images/icon-dark.png");
 
 const PROMISES: {
   icon: LucideIcon;
@@ -51,7 +52,6 @@ export const WelcomeView = ({
   restoring = false,
 }: WelcomeViewProps) => {
   const colors = useThemeStore((state) => state.colors);
-  const isDark = useThemeStore((state) => state.isDark);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -63,24 +63,12 @@ export const WelcomeView = ({
         contentContainerStyle={styles.content}
       >
         <View style={styles.brand}>
-          <Image
-            source={isDark ? ICON_DARK : ICON_LIGHT}
-            style={styles.icon}
-            accessibilityIgnoresInvertColors
-            accessible={false}
+          <BrandMark height={24} color={colors.text} />
+          <FitHeadline
+            text={t("onboarding.welcome.claim")}
+            color={colors.text}
           />
-          <Text
-            accessibilityRole="header"
-            style={[Type.largeTitle, styles.center, { color: colors.text }]}
-          >
-            AbiApp
-          </Text>
-          <Text style={[Type.title3, styles.center, { color: colors.text }]}>
-            {t("onboarding.welcome.claim")}
-          </Text>
-          <Text
-            style={[Type.body, styles.center, { color: colors.textSecondary }]}
-          >
+          <Text style={[Type.body, { color: colors.textSecondary }]}>
             {t("onboarding.welcome.text")}
           </Text>
         </View>
@@ -142,18 +130,8 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   brand: {
-    alignItems: "center",
-    gap: 10,
-  },
-  icon: {
-    width: 72,
-    height: 72,
-    borderRadius: 16,
-    borderCurve: "continuous",
-    marginBottom: 8,
-  },
-  center: {
-    textAlign: "center",
+    alignItems: "flex-start",
+    gap: 8,
   },
   promise: {
     flexDirection: "row",

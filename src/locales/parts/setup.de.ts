@@ -45,9 +45,12 @@ export const setupDE = {
     exportFailed: "Export fehlgeschlagen",
     importTitle: "Daten ersetzen?",
     importMessage:
-      "Backup vom {{date}}\n{{profile}}\n{{subjects}} Fächer, {{grades}} Noten, {{official}} Halbjahresergebnisse, {{exams}} Prüfungsergebnisse\n\nDeine aktuellen Daten werden vollständig ersetzt.",
+      "Backup vom {{date}}\n{{profile}}\n{{subjects}} Fächer, {{grades}} Noten, {{official}} Halbjahresergebnisse, {{exams}} Prüfungsergebnisse",
+    importReplace: "Deine aktuellen Daten werden vollständig ersetzt.",
     importConfirm: "Ersetzen",
-    importDone: "Backup importiert",
+    restoreTitle: "Backup wiederherstellen?",
+    restoreConfirm: "Wiederherstellen",
+    importDone: "Backup wiederhergestellt",
     importInvalid: "Kein gültiges Backup",
     importFailed: "Import fehlgeschlagen",
     importNoProfile: "Ohne Profil",
@@ -86,7 +89,7 @@ export const setupDE = {
     step: "Schritt {{step}} von {{total}}",
     fixIssue: "Weiter geht es, sobald der Hinweis in der Liste erledigt ist.",
     welcome: {
-      claim: "Dein Abi. Ausgerechnet.",
+      claim: "Dein Abi.\nAusgerechnet.",
       text: "AbiApp rechnet deinen Schnitt nach den Regeln deines Bundeslandes.",
       freeTitle: "Kostenlos",
       freeText: "Ohne Abo, ohne In-App-Käufe.",
@@ -146,9 +149,8 @@ export const setupDE = {
       title: "Fertig",
       heading: "Alles bereit",
       text: "Trage deine erste Note ein. Die Übersicht zeigt dir sofort deinen Schnitt.",
-      goalHeading: "Dein Ziel: {{grade}}",
-      goalText:
-        "Dafür brauchst du {{points}} Punkte. Trage deine erste Note ein, dann siehst du, wo du stehst.",
+      goalLabel: "Dein Ziel",
+      goalText: "Trage deine erste Note ein, dann siehst du, wo du stehst.",
       firstGrade: "Erste Note eintragen",
       examsLater:
         "Die Prüfungsfächer fehlen noch. Du kannst sie in den Einstellungen festlegen.",
