@@ -440,13 +440,12 @@ describe("Bayern: Halbjahresleistung is never rounded up to 1 point (GSO § 29 A
   // Schulaufgabe 1, kleine Leistungsnachweise 0, 1:1 → 0,5.
   const half = [g("exam", 1), g("other", 0)];
 
-  it("prognosis: 0,5 → 0 in Bayern, 1 elsewhere and without ruleset", () => {
+  it("prognosis: 0,5 → 0 in Bayern, 1 elsewhere", () => {
     expect(halfYearPrognosis(half, 50, RS)).toEqual({ exact: 0.5, points: 0 });
     expect(halfYearPrognosis(half, 50, "HE-2027")).toEqual({
       exact: 0.5,
       points: 1,
     });
-    expect(halfYearPrognosis(half, 50)).toEqual({ exact: 0.5, points: 1 });
     // Exactly 1,0 stays 1 (no rounding up involved).
     expect(
       halfYearPrognosis([g("exam", 1), g("other", 1)], 50, RS).points,
@@ -466,10 +465,6 @@ describe("Bayern: Halbjahresleistung is never rounded up to 1 point (GSO § 29 A
       status: "reachable",
     });
     expect(requiredNextGrade(exam0, 50, "other", 1, "HE-2027")).toEqual({
-      points: 1,
-      status: "reachable",
-    });
-    expect(requiredNextGrade(exam0, 50, "other", 1)).toEqual({
       points: 1,
       status: "reachable",
     });

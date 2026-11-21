@@ -73,9 +73,11 @@ export const fallbackCourseValue = (
   const own = grades
     .filter((g) => g.subjectId === subject.id && g.halfYear === halfYear)
     .map(({ id, kind, points, weight }) => ({ id, kind, points, weight }));
-  const prognosis = tryDomain(() =>
-    halfYearPrognosis(own, subject.examWeightPercent, rulesetId),
-  ).value;
+  const prognosis = rulesetId
+    ? tryDomain(() =>
+        halfYearPrognosis(own, subject.examWeightPercent, rulesetId),
+      ).value
+    : null;
   if (prognosis && prognosis.points !== null) {
     return {
       subjectId: subject.id,
