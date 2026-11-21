@@ -24,20 +24,20 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      tintColor={colors.text}
+      tintColor={colors.accent}
       // iOS keeps the system (Liquid Glass) bar; Android gets explicit app
       // colors, otherwise Material 3 tints the active pill lavender.
       backgroundColor={isAndroid ? colors.tabBar : undefined}
       iconColor={
         isAndroid
-          ? { default: colors.tabBarInactive, selected: colors.text }
+          ? { default: colors.tabBarInactive, selected: colors.accent }
           : undefined
       }
       labelStyle={
         isAndroid
           ? {
               default: { color: colors.tabBarInactive },
-              selected: { color: colors.text },
+              selected: { color: colors.accent },
             }
           : undefined
       }

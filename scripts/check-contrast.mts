@@ -3,10 +3,13 @@
 // Runs as part of `npm run lint`. Fails when a text token drops below
 // 4.5:1 on a surface it is used on, or a `*OnSolid` below 4.5:1 on its
 // `*Solid`, in light or dark. Subject accents need 3:1 (icons) on their
-// tinted tile and on the card.
+// tinted tile and on the card. A picked accent (src/constants/accents.ts) is
+// text and button colour, so it needs 4.5:1 on every surface and under its
+// foreground.
 //
 //   node scripts/check-contrast.mts
 
+import { AccentForeground, AccentPalette } from "../src/constants/accents.ts";
 import { Colors } from "../src/constants/colors.ts";
 import {
   SubjectPalette,
@@ -97,6 +100,22 @@ for (const mode of ["light", "dark"] as const) {
   expect(`${mode}.pointsTopSolid on card`, c.pointsTopSolid, c.card, 3);
   expect(`${mode}.tabBarInactive on tabBar`, c.tabBarInactive, c.tabBar, 4.5);
 
+  for (const [key, value] of Object.entries(AccentPalette)) {
+    const accent = value[mode];
+    for (const [name, surface] of Object.entries(surfaces)) {
+      expect(`${mode}.accent.${key} on ${name}`, accent, surface, 4.5);
+    }
+    expect(`${mode}.accent.${key} on accentLight`, accent, c.accentLight, 4.5);
+    expect(
+      `${mode}.accentForeground on accent.${key}`,
+      AccentForeground[mode],
+      accent,
+      4.5,
+    );
+    // The arch and the active tab sit on the page; the track must stay apart.
+    expect(`${mode}.accent.${key} on gaugeTrack`, accent, c.gaugeTrack, 3);
+  }
+
   for (const [key, value] of Object.entries(SubjectPalette)) {
     const accent = value[mode];
     const tile = subjectTile(accent, c.card, mode);
@@ -107,7 +126,7 @@ for (const mode of ["light", "dark"] as const) {
 
 if (failures.length > 0) {
   console.error(
-    `Contrast check failed (src/constants/colors.ts, src/components/ui/subjectPalette.ts):\n  ${failures.join("\n  ")}`,
+    `Contrast check failed (src/constants/colors.ts, src/constants/accents.ts, src/components/ui/subjectPalette.ts):\n  ${failures.join("\n  ")}`,
   );
   process.exit(1);
 }

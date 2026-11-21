@@ -41,6 +41,7 @@ import {
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
 import { ScreenLayout } from "@components/common/ScreenLayout";
+import { AccentPicker } from "@components/settings/AccentPicker";
 import { SettingsIcon } from "@components/settings/SettingsIcon";
 import type { MenuSymbol } from "@constants/menuIcons";
 import {
@@ -428,6 +429,7 @@ export default function SettingsScreen() {
             />
           }
         />
+        <AccentPicker />
         <NativeMenu
           title={t("settings.chooseLanguage")}
           actions={languageActions}

@@ -70,7 +70,7 @@ export const Section = ({
             >
               <Text
                 maxFontSizeMultiplier={FontScale.heading}
-                style={[Type.subhead, styles.action, { color: colors.text }]}
+                style={[Type.subhead, styles.action, { color: colors.accent }]}
               >
                 {action.title}
               </Text>

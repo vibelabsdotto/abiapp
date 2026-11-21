@@ -4,6 +4,7 @@
 export { ArchGauge, type ArchGaugeProps, type ArchMarker } from "./ArchGauge";
 export { CheckRow, type CheckRowProps } from "./CheckRow";
 export { Chip, type ChipProps, type ChipTone } from "./Chip";
+export { ColorSwatch, type ColorSwatchProps } from "./ColorSwatch";
 export { EmptyState, type EmptyStateProps } from "./EmptyState";
 export { GradeHero, type GradeHeroProps } from "./GradeHero";
 export {

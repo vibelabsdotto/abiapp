@@ -3,12 +3,11 @@
 // exam slot (link to the setup flow) and removal.
 
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Check } from "lucide-react-native";
 
 import {
-  Icon,
+  ColorSwatch,
   IssueBanner,
   ListRow,
   SUBJECT_COLOR_KEYS,
@@ -356,52 +355,6 @@ export const EditSubjectView = ({
   );
 };
 
-/** One colour choice; `color: null` is "Keine" (neutral). */
-const ColorSwatch = ({
-  color,
-  selected,
-  label,
-  onPress,
-}: {
-  color: string | null;
-  selected: boolean;
-  label: string;
-  onPress: () => void;
-}) => {
-  const colors = useThemeStore((state) => state.colors);
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={{ checked: selected }}
-      hitSlop={4}
-      style={({ pressed }) => [
-        styles.swatchRing,
-        { borderColor: selected ? colors.text : "transparent" },
-        pressed && styles.pressed,
-      ]}
-    >
-      <View
-        style={[
-          styles.swatch,
-          color === null
-            ? [styles.none, { borderColor: colors.textTertiary }]
-            : { backgroundColor: color },
-        ]}
-      >
-        {color === null ? (
-          <View
-            style={[styles.noneSlash, { backgroundColor: colors.textTertiary }]}
-          />
-        ) : selected ? (
-          <Icon icon={Check} size={16} color={colors.accentForeground} />
-        ) : null}
-      </View>
-    </Pressable>
-  );
-};
-
 const styles = StyleSheet.create({
   block: {
     gap: 10,
@@ -420,29 +373,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-  },
-  swatchRing: {
-    padding: 2,
-    borderRadius: 20,
-    borderWidth: 2,
-  },
-  swatch: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  none: {
-    borderWidth: 1.5,
-    overflow: "hidden",
-  },
-  noneSlash: {
-    width: 1.5,
-    height: 40,
-    transform: [{ rotate: "45deg" }],
-  },
-  pressed: {
-    opacity: 0.6,
   },
 });
