@@ -14,92 +14,35 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary, validateSetup } from "@domain/index";
-import type { AbiturEvaluation, EngineInput, ExamSlot } from "@domain/model";
-
-type Points = number | null; // null = course not taken
-
-interface Spec {
-  key: string;
-  lf?: boolean;
-  slot?: ExamSlot;
-  hy: Points[];
-}
-
-interface Opts {
-  exams?: Partial<Record<ExamSlot, [number, number?]>>;
-  variant?: string;
-}
-
-function build(rulesetId: string, specs: Spec[], opts: Opts = {}): EngineInput {
-  const cat = getRulesetSummary(rulesetId).catalog;
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: specs.map((s) => {
-      const c = cat.find((x) => x.key === s.key);
-      if (!c) throw new Error(`catalog key ${s.key} missing in ${rulesetId}`);
-      return {
-        id: s.key,
-        catalogKey: s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lf ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: specs.flatMap((s) =>
-      s.hy.map((p, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: p !== null,
-        officialPoints: p,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(opts.exams ?? {}).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: v[0],
-      oralPoints: v[1] ?? null,
-    })),
-    extras: {},
-  };
-}
-
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-
-const included = (e: AbiturEvaluation, key: string) =>
-  e.blockI.included
-    .filter((c) => c.subjectId === key)
-    .map((c) => c.halfYear)
-    .sort();
-
-const replace = (specs: Spec[], key: string, hy: Points[]) =>
-  specs.map((s) => (s.key === key ? { ...s, hy } : s));
+import { evaluate, validateSetup } from "@domain/index";
+import {
+  build,
+  replace,
+  check,
+  included,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 // ---------------------------------------------------------------------------
 // Typical case. LK Deutsch, Englisch; P3 Mathematik (schriftlich), P4
 // Geschichte (mündlich). 36 GK taken.
 // ---------------------------------------------------------------------------
 const TYPICAL: Spec[] = [
-  { key: "de", lf: true, slot: "P1", hy: [10, 11, 12, 11] },
-  { key: "en", lf: true, slot: "P2", hy: [9, 9, 10, 10] },
-  { key: "ma", slot: "P3", hy: [8, 8, 9, 9] },
-  { key: "ge", slot: "P4", hy: [10, 10, 10, 10] },
-  { key: "bio", hy: [7, 8, 8, 9] },
-  { key: "ch", hy: [6, 6, 7, 7] },
-  { key: "ku", hy: [12, 12, 11, 11] },
-  { key: "fr", hy: [6, 6, 7, 7] },
-  { key: "pol", hy: [9, 9, 9, 9] },
-  { key: "sp", hy: [13, 13, 13, 13] },
-  { key: "sem", hy: [11, 11, 11, 11] },
+  { key: "de", lk: true, slot: "P1", p: [10, 11, 12, 11] },
+  { key: "en", lk: true, slot: "P2", p: [9, 9, 10, 10] },
+  { key: "ma", slot: "P3", p: [8, 8, 9, 9] },
+  { key: "ge", slot: "P4", p: [10, 10, 10, 10] },
+  { key: "bio", p: [7, 8, 8, 9] },
+  { key: "ch", p: [6, 6, 7, 7] },
+  { key: "ku", p: [12, 12, 11, 11] },
+  { key: "fr", p: [6, 6, 7, 7] },
+  { key: "pol", p: [9, 9, 9, 9] },
+  { key: "sp", p: [13, 13, 13, 13] },
+  { key: "sem", p: [11, 11, 11, 11] },
 ];
-const EXAMS: Opts["exams"] = { P1: [11], P2: [10], P3: [8, 6], P4: [12] };
+const EXAMS: Exams = { P1: [11], P2: [10], P3: [8, 6], P4: [12] };
 
 describe("BB typical case", () => {
   it("BB-2028: 8 LK doubled + 28 GK, 448 · 40 / 44 = 407,27 → 407", () => {
@@ -107,7 +50,7 @@ describe("BB typical case", () => {
     // 20 others: Sp 13 × 4, Ku 12, 12, 11, 11, Sem 11 × 4, PB 9 × 4,
     // Bio 9, 8, 8, 7 (Naturwissenschaft) = 52 + 46 + 44 + 36 + 32 = 210.
     // P = 164 + 284 = 448.
-    const e = evaluate(build("BB-2028", TYPICAL, { exams: EXAMS }));
+    const e = evaluate(build("BB-2028", TYPICAL, EXAMS));
     expect(e.blockI.weightedSum).toBe(448);
     expect(e.blockI.weightSum).toBe(44);
     expect(e.blockI.points).toBe(407);
@@ -127,7 +70,7 @@ describe("BB typical case", () => {
   it("BB-2027: 30 GK, 462 · 40 / 46 = 401,74 → 402", () => {
     // Two more GK: the next best are two 7s → GK 284 + 14 = 298, P = 462.
     // 402 + 202 = 604 → 2,3 (606–589).
-    const e = evaluate(build("BB-2027", TYPICAL, { exams: EXAMS }));
+    const e = evaluate(build("BB-2027", TYPICAL, EXAMS));
     expect(e.blockI.weightedSum).toBe(462);
     expect(e.blockI.weightSum).toBe(46);
     expect(e.blockI.points).toBe(402);
@@ -149,10 +92,7 @@ describe("BB typical case", () => {
     //   = 44 + 40 + 29 + 48 + 46 = 207 (§ 27 Abs. 3: Arbeit und Kolloquium
     //   gleichwertig). 407 + 207 = 614 → 2,2.
     const e = evaluate(
-      build("BB-2028", TYPICAL, {
-        variant: "bll",
-        exams: { ...EXAMS, P5: [11, 12] },
-      }),
+      build("BB-2028", TYPICAL, { ...EXAMS, P5: [11, 12] }, { variant: "bll" }),
     );
     expect(e.blockII.components.map((c) => c.weighted)).toEqual([
       44, 40, 29, 48, 46,
@@ -191,16 +131,16 @@ describe("BB-2028 two natural sciences with two courses each", () => {
 // ---------------------------------------------------------------------------
 function deficits(de: Points[], bio: Points[]): Spec[] {
   return [
-    { key: "de", lf: true, slot: "P1", hy: de },
-    { key: "en", lf: true, slot: "P2", hy: [10, 10, 10, 10] },
-    { key: "ma", slot: "P3", hy: [4, 4, 8, 8] },
-    { key: "ge", slot: "P4", hy: [4, 4, 8, 8] },
-    { key: "bio", hy: bio },
-    { key: "ku", hy: [8, 8, null, null] },
-    { key: "fr", hy: [8, 8, null, null] },
-    { key: "pol", hy: [8, 8, 8, 8] },
-    { key: "sp", hy: [8, 8, 8, 8] },
-    { key: "sem", hy: [8, 8, 8, 8] },
+    { key: "de", lk: true, slot: "P1", p: de },
+    { key: "en", lk: true, slot: "P2", p: [10, 10, 10, 10] },
+    { key: "ma", slot: "P3", p: [4, 4, 8, 8] },
+    { key: "ge", slot: "P4", p: [4, 4, 8, 8] },
+    { key: "bio", p: bio },
+    { key: "ku", p: [8, 8, null, null] },
+    { key: "fr", p: [8, 8, null, null] },
+    { key: "pol", p: [8, 8, 8, 8] },
+    { key: "sp", p: [8, 8, 8, 8] },
+    { key: "sem", p: [8, 8, 8, 8] },
   ];
 }
 const EIGHT: Points[] = [8, 8, 8, 8];
@@ -242,9 +182,7 @@ describe("BB-2028 deficit limits", () => {
 describe("BB-2028 Null-Punkte-Regel", () => {
   it("Sport 0 in one half-year: not admitted", () => {
     const e = evaluate(
-      build("BB-2028", replace(TYPICAL, "sp", [13, 0, 13, 13]), {
-        exams: EXAMS,
-      }),
+      build("BB-2028", replace(TYPICAL, "sp", [13, 0, 13, 13]), EXAMS),
     );
     expect(check(e, "block1.zeroTaken")).toBe(false);
     expect(e.blockI.admitted).toBe(false);
@@ -252,9 +190,11 @@ describe("BB-2028 Null-Punkte-Regel", () => {
 
   it("0 in a third foreign language next to two complete ones: admitted", () => {
     const e = evaluate(
-      build("BB-2028", [...TYPICAL, { key: "ru", hy: [0, 5, null, null] }], {
-        exams: EXAMS,
-      }),
+      build(
+        "BB-2028",
+        [...TYPICAL, { key: "ru", p: [0, 5, null, null] }],
+        EXAMS,
+      ),
     );
     expect(check(e, "block1.zeroTaken")).toBe(true);
     expect(e.blockI.points).toBe(407);
@@ -266,8 +206,8 @@ describe("BB-2028 Null-Punkte-Regel", () => {
 // Block II minimum conditions (§ 30 Abs. 6).
 // ---------------------------------------------------------------------------
 describe("BB Block II minimum conditions", () => {
-  const run = (id: string, exams: Opts["exams"]) =>
-    evaluate(build(id, TYPICAL, { exams })).blockII;
+  const run = (id: string, exams: Exams) =>
+    evaluate(build(id, TYPICAL, exams)).blockII;
 
   it.each(["BB-2027", "BB-2028"])(
     "%s: only two exams with 5 points → not passed",

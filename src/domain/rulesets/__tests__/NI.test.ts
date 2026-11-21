@@ -12,93 +12,24 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary, validateSetup } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  EngineCourse,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
-
-type Row = [
-  key: string,
-  points: (number | null)[],
-  opts?: { ea?: boolean; slot?: ExamSlot },
-];
-
-function build(
-  rulesetId: string,
-  rows: Row[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  examVariantId: string | null = null,
-): EngineInput {
-  const cat = getRulesetSummary(rulesetId).catalog;
-  const subjects: EngineSubject[] = [];
-  const courses: EngineCourse[] = [];
-  for (const [key, pts, o = {}] of rows) {
-    const c = cat.find((x) => x.key === key);
-    if (!c) throw new Error(`unknown catalog key ${key}`);
-    subjects.push({
-      id: key,
-      catalogKey: key,
-      name: c.name,
-      field: c.field,
-      tags: c.tags,
-      level: o.ea ? "elevated" : "basic",
-      examSlot: o.slot ?? null,
-      examWeightPercent: 50,
-    });
-    pts.forEach((p, halfYear) =>
-      courses.push({
-        subjectId: key,
-        halfYear,
-        taken: p !== null,
-        officialPoints: p,
-        inclusion: "auto",
-        grades: [],
-        targetPoints: null,
-      }),
-    );
-  }
-  return {
-    rulesetId,
-    examVariantId,
-    subjects,
-    courses,
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras: {},
-  };
-}
-
-const result = (e: AbiturEvaluation) => ({
-  blockI: e.blockI.points,
-  blockII: e.blockII.points,
-  total: e.total.points,
-  grade: e.total.gradeTenths,
-  admitted: e.blockI.admitted,
-  passed: e.total.passed,
-});
-
-const includedOf = (e: AbiturEvaluation, subjectId: string) =>
-  e.blockI.included
-    .filter((c) => c.subjectId === subjectId)
-    .map((c) => c.halfYear);
-
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
+import { evaluate, validateSetup } from "@domain/index";
+import {
+  build,
+  replace,
+  check,
+  included,
+  outcome,
+  type Row,
+  type Exams,
+} from "./build";
 
 // Mathematisch-naturwissenschaftlicher Schwerpunkt (VO-GO § 10 Abs. 2 Nr. 4):
 // P1 Mathematik, P2 Physik (Schwerpunktfächer, doppelt), P3 Englisch (eA),
 // P4 Deutsch (gA schriftlich), P5 Geschichte (gA mündlich).
 const SCIENCE: Row[] = [
-  ["ma", [10, 11, 12, 11], { ea: true, slot: "P1" }], // 44
-  ["ph", [9, 10, 10, 11], { ea: true, slot: "P2" }], // 40
-  ["en", [8, 9, 9, 10], { ea: true, slot: "P3" }], // 36
+  ["ma", [10, 11, 12, 11], { lk: true, slot: "P1" }], // 44
+  ["ph", [9, 10, 10, 11], { lk: true, slot: "P2" }], // 40
+  ["en", [8, 9, 9, 10], { lk: true, slot: "P3" }], // 36
   ["de", [9, 9, 10, 10], { slot: "P4" }], // 38
   ["ge", [11, 11, 12, 12], { slot: "P5" }], // 46
   ["bio", [12, 12, 13, 13]], // 50, weitere NW (Anlage 3 Fn. 6)
@@ -109,17 +40,13 @@ const SCIENCE: Row[] = [
   ["sem", [12, 13, 11, null]], // best 2: 25
   ["sp", [13, 13, 14, 14]], // no exam subject: at most 3 (§ 15 Abs. 8)
 ];
-const SCIENCE_EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const SCIENCE_EXAMS: Exams = {
   P1: [11],
   P2: [10],
   P3: [9],
   P4: [10],
   P5: [12],
 };
-
-function replace(rows: Row[], key: string, points: (number | null)[]): Row[] {
-  return rows.map((r) => (r[0] === key ? [r[0], points, r[2]] : r));
-}
 
 describe("NI-2027", () => {
   it("typical case: 36 results, P1 and P2 doubled", () => {
@@ -130,7 +57,7 @@ describe("NI-2027", () => {
     // (35 results: round(40 · 464 / 43) = 432, same E, lower P/S).
     // E_II = 4 · (11 + 10 + 9 + 10 + 12) = 208. Total 640 → 2,1 (625–642).
     const e = evaluate(build("NI-2027", SCIENCE, SCIENCE_EXAMS));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 432,
       blockII: 208,
       total: 640,
@@ -140,8 +67,8 @@ describe("NI-2027", () => {
     });
     expect(e.blockI.countIncluded).toBe(36);
     expect(e.blockI.weightSum).toBe(44);
-    expect(includedOf(e, "sp")).toHaveLength(3);
-    expect(includedOf(e, "bio")).toHaveLength(4);
+    expect(included(e, "sp")).toHaveLength(3);
+    expect(included(e, "bio")).toHaveLength(4);
   });
 
   it("7 deficits force 35 results although 32 would score more", () => {
@@ -179,7 +106,7 @@ describe("NI-2027", () => {
       [6, 6, 6, 6],
     ).filter((r) => r[0] !== "sp");
     const e = evaluate(build("NI-2027", rows, SCIENCE_EXAMS));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 364,
       blockII: 208,
       total: 572,
@@ -230,9 +157,9 @@ describe("NI-2027", () => {
     //    freely → 36 results, P = 450, S = 44 → round(18000 / 44) = 409.
     // E_II = 4 · 50 = 200, total 609 → 2,2 (607–624).
     const rows: Row[] = [
-      ["en", [10, 10, 10, 10], { ea: true, slot: "P1" }],
-      ["fr", [10, 10, 10, 10], { ea: true, slot: "P2" }],
-      ["ge", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["en", [10, 10, 10, 10], { lk: true, slot: "P1" }],
+      ["fr", [10, 10, 10, 10], { lk: true, slot: "P2" }],
+      ["ge", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["ma", [10, 10, 10, 10], { slot: "P4" }],
       ["pol", [10, 10, 10, 10], { slot: "P5" }],
       ["de", [10, 10, 10, 10]],
@@ -251,7 +178,7 @@ describe("NI-2027", () => {
         P5: [10],
       }),
     );
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 409,
       blockII: 200,
       total: 609,
@@ -259,8 +186,8 @@ describe("NI-2027", () => {
       admitted: true,
       passed: true,
     });
-    expect(includedOf(e, "ch")).toEqual([0, 1, 2, 3]);
-    expect(includedOf(e, "bio")).toHaveLength(2);
+    expect(included(e, "ch")).toEqual([0, 1, 2, 3]);
+    expect(included(e, "bio")).toHaveLength(2);
   });
 
   it("gesellschaftswissenschaftlicher Schwerpunkt: no PoWi duty with Erdkunde, 2 results of a further NW", () => {
@@ -272,9 +199,9 @@ describe("NI-2027", () => {
     // round(15760 / 41) = 384, same E, higher P/S. PoWi 2, 2 stays out.
     // E_II = 200, total 584 → 2,4.
     const rows: Row[] = [
-      ["ge", [10, 10, 10, 10], { ea: true, slot: "P1" }],
-      ["de", [10, 10, 10, 10], { ea: true, slot: "P2" }],
-      ["geo", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["ge", [10, 10, 10, 10], { lk: true, slot: "P1" }],
+      ["de", [10, 10, 10, 10], { lk: true, slot: "P2" }],
+      ["geo", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["en", [10, 10, 10, 10], { slot: "P4" }],
       ["bio", [10, 10, 10, 10], { slot: "P5" }],
       ["ma", [8, 8, 8, 8]],
@@ -293,7 +220,7 @@ describe("NI-2027", () => {
         P5: [10],
       }),
     );
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 384,
       blockII: 200,
       total: 584,
@@ -301,8 +228,8 @@ describe("NI-2027", () => {
       admitted: true,
       passed: true,
     });
-    expect(includedOf(e, "pol")).toEqual([]);
-    expect(includedOf(e, "ch")).toEqual([0, 1]);
+    expect(included(e, "pol")).toEqual([]);
+    expect(included(e, "ch")).toEqual([0, 1]);
   });
 
   it("supplementary oral exam: round((8s + 4m) / 3), three exams with 20+", () => {
@@ -319,7 +246,7 @@ describe("NI-2027", () => {
     expect(e.blockII.components.map((c) => c.weighted)).toEqual([
       20, 19, 20, 16, 28,
     ]);
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 432,
       blockII: 103,
       total: 535,
@@ -345,10 +272,15 @@ describe("NI-2027", () => {
     // round((88 + 52) / 3) = round(46.67) = 47.
     // E_II = 4 · (11 + 10 + 9 + 12) + 47 = 215, total 432 + 215 = 647 → 2,0.
     const e = evaluate(
-      build("NI-2027", SCIENCE, { ...SCIENCE_EXAMS, P4: [11, 13] }, "bll"),
+      build(
+        "NI-2027",
+        SCIENCE,
+        { ...SCIENCE_EXAMS, P4: [11, 13] },
+        { variant: "bll" },
+      ),
     );
     expect(e.blockII.components[3].weighted).toBe(47);
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 432,
       blockII: 215,
       total: 647,
@@ -373,7 +305,7 @@ describe("NI-2027", () => {
     // Einführungsphase: 2 Spanisch results join the mandatory set.
     const rows: Row[] = [...SCIENCE, ["fs_new", [3, 3, 6, 6]]];
     const e = evaluate(build("NI-2027", rows, SCIENCE_EXAMS));
-    expect(includedOf(e, "fs_new")).toEqual([2, 3]);
+    expect(included(e, "fs_new")).toEqual([2, 3]);
     // Typical case plus Spanisch 6 + 6 instead of the two weakest free
     // results: mandatory 34 (S = 42), P = 423 + 12 = 435, free 14 + 14
     // → P = 463, S = 44 → round(18520 / 44) = round(420.91) = 421.
@@ -390,7 +322,7 @@ describe("NI-2027", () => {
       ["fs_new", [3, 3, 6, 6]],
     ];
     const e = evaluate(build("NI-2027", rows, SCIENCE_EXAMS));
-    expect(includedOf(e, "fs_new")).toEqual([]);
+    expect(included(e, "fs_new")).toEqual([]);
     expect(e.blockI.points).toBe(432);
   });
 
@@ -406,7 +338,7 @@ describe("NI-2027", () => {
     ];
     const e = evaluate(build("NI-2027", rows, SCIENCE_EXAMS));
     expect(e.blockI.points).toBe(428);
-    expect(includedOf(e, "paed")).toHaveLength(3);
+    expect(included(e, "paed")).toHaveLength(3);
     expect(e.blockI.assumptions?.some((a) => a.includes("Pädagogik"))).toBe(
       true,
     );
@@ -415,9 +347,9 @@ describe("NI-2027", () => {
   it("Darstellendes Spiel cannot be P5 next to Kunst as exam subject", () => {
     // VO-GO Anlage 2 Fn. 9.
     const rows: Row[] = [
-      ["ku", [10, 10, 10, 10], { ea: true, slot: "P1" }],
-      ["de", [10, 10, 10, 10], { ea: true, slot: "P2" }],
-      ["en", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["ku", [10, 10, 10, 10], { lk: true, slot: "P1" }],
+      ["de", [10, 10, 10, 10], { lk: true, slot: "P2" }],
+      ["en", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["ma", [10, 10, 10, 10], { slot: "P4" }],
       ["ds", [10, 10, 10, 10], { slot: "P5" }],
     ];
@@ -432,9 +364,9 @@ describe("NI-2027", () => {
 // Exactly 32 results, two Leistungsfächer chosen by the student doubled
 // (S = 40, so E_I = P), at most 6 deficits, 3 of them in the LF.
 const LF2030: Row[] = [
-  ["en", [12, 12, 12, 12], { ea: true, slot: "P1" }], // 48 → doubled
-  ["bio", [9, 9, 9, 9], { ea: true, slot: "P2" }], // 36, single
-  ["ge", [11, 11, 11, 11], { ea: true, slot: "P3" }], // 44 → doubled
+  ["en", [12, 12, 12, 12], { lk: true, slot: "P1" }], // 48 → doubled
+  ["bio", [9, 9, 9, 9], { lk: true, slot: "P2" }], // 36, single
+  ["ge", [11, 11, 11, 11], { lk: true, slot: "P3" }], // 44 → doubled
   ["de", [10, 10, 10, 10], { slot: "P4" }], // 40
   ["ma", [8, 8, 8, 8], { slot: "P5" }], // 32
   ["ku", [10, 10, null, null]], // 20
@@ -443,7 +375,7 @@ const LF2030: Row[] = [
   ["sp", [13, 13, 14, 14]],
   ["ch", [7, 7, 7, 7]],
 ];
-const LF2030_EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const LF2030_EXAMS: Exams = {
   P1: [12],
   P2: [9],
   P3: [11],
@@ -458,7 +390,7 @@ describe("NI-2030 (draft)", () => {
     // (Anlage 3) → 26 results, 352. Six free: Sport 14 + 14 + 13, Rel 10 +
     // 10, Ch 7 → P = 420 = E_I. E_II = 4 · 50 = 200, total 620 → 2,2.
     const e = evaluate(build("NI-2030", LF2030, LF2030_EXAMS));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 420,
       blockII: 200,
       total: 620,

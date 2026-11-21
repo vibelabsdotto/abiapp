@@ -18,87 +18,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
-import type { AbiturEvaluation, EngineInput, ExamSlot } from "@domain/model";
+import { evaluate } from "@domain/index";
 import { buildContext, computeCourseValues } from "../../engine/context";
 import { NW_2027 } from "../NW";
-
-// ---------------------------------------------------------------------------
-// Input builder: one subject per catalog key, official half-year points
-// (null = not taken), exam points as main or [main, oral].
-// ---------------------------------------------------------------------------
-
-interface Subj {
-  key: string;
-  p: (number | null)[];
-  lk?: boolean;
-  slot?: ExamSlot;
-}
-
-type Exams = Partial<Record<ExamSlot, number | [number, number]>>;
-
-function build(
-  rulesetId: string,
-  subjects: Subj[],
-  exams: Exams,
-  opts: { variant?: string; extras?: Record<string, number | null> } = {},
-): EngineInput {
-  const cat = new Map(
-    getRulesetSummary(rulesetId).catalog.map((c) => [c.key, c]),
-  );
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: subjects.map((s) => {
-      const c = cat.get(s.key);
-      if (!c) throw new Error(`unknown catalog key ${s.key}`);
-      return {
-        id: s.key,
-        catalogKey: s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lk ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: subjects.flatMap((s) =>
-      s.p.map((points, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: points !== null,
-        officialPoints: points,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(exams).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: Array.isArray(v) ? v[0] : (v as number),
-      oralPoints: Array.isArray(v) ? v[1] : null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-function outcome(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-
-const all = (n: number) => [n, n, n, n];
-const _ = null;
+import { build, all, _, errors, outcome, type Spec, type Exams } from "./build";
 
 // ---------------------------------------------------------------------------
 // NW-2027: the four examples of the MSB Merkblatt (Stand 08/2018)
@@ -108,7 +31,7 @@ const _ = null;
 // replacement, 4 and 3 points = 2 deficits). Merkblatt: first 35 courses
 // LK 49 · 2 = 98, GK 187 → 285 / 43 · 40 = 265,1; adding CH (7+8+7+8) and SP
 // Q2.2 (9) → 324 / 48 · 40 = 270.
-const merkblatt1: Subj[] = [
+const merkblatt1: Spec[] = [
   { key: "de", lk: true, slot: "P1", p: [6, 7, 6, 7] },
   { key: "en", lk: true, slot: "P2", p: [5, 6, 6, 6] },
   { key: "mu", p: [10, 10, 9, 9] },
@@ -126,7 +49,7 @@ const merkblatt1: Subj[] = [
 // LK 77 · 2 = 154, GK 204 → 358 / 43 · 40 = 333,0 → 333; further courses
 // (8 points) do not improve the result (36 courses: 366 / 44 · 40 = 332,7 →
 // also 333, but the lower exact average).
-const merkblatt2: Subj[] = [
+const merkblatt2: Spec[] = [
   { key: "de", p: [5, 5, 6, 6] },
   { key: "en", lk: true, slot: "P1", p: [7, 9, 7, 8] },
   { key: "la", p: [5, 8, _, _] },
@@ -144,7 +67,7 @@ const merkblatt2: Subj[] = [
 // Beispiel 3: D, M LK; PA 3., PL 4. Abiturfach. 8 deficits, 3 of them in LK
 // (M 4, 4, 4) → at least 38 courses (§ 29 Abs. 3 Nr. 1). Merkblatt:
 // LK 42 · 2 = 84, GK 195 → 279 / 46 · 40 = 242,6 → 243.
-const merkblatt3: Subj[] = [
+const merkblatt3: Spec[] = [
   { key: "de", lk: true, slot: "P1", p: [5, 7, 6, 7] },
   { key: "en", p: [7, 7, 4, 5] },
   { key: "es", p: [6, 6, 4, 4] },
@@ -162,7 +85,7 @@ const merkblatt3: Subj[] = [
 // final grade 13 (counts as two courses). Merkblatt: LK 78 · 2 = 156, GK 267
 // → 423 / 43 · 40 = 393,4 → 393; adding SP Q2.2 (12) → 435 / 44 · 40 = 395,4
 // → 395.
-const merkblatt4: Subj[] = [
+const merkblatt4: Spec[] = [
   { key: "de", p: all(9) },
   { key: "en", lk: true, slot: "P1", p: [10, 10, 11, 11] },
   { key: "ku", slot: "P4", p: all(11) },
@@ -517,7 +440,7 @@ describe("NW beste Einbringung ist nicht die naheliegende", () => {
 // LK Mathematik (P1) and Englisch (P2), Deutsch P3, Geschichte P4 (GW subject,
 // SoWi Zusatzkurse in Q2), Biologie P5 (Präsentationsprüfung), Chemie as ninth
 // subject, Projektkurs in Q2. 40 courses taken.
-const typical2030: Subj[] = [
+const typical2030: Spec[] = [
   { key: "ma", lk: true, slot: "P1", p: [11, 12, 12, 13] }, // 48
   { key: "en", lk: true, slot: "P2", p: [9, 10, 10, 11] }, // 40
   { key: "de", slot: "P3", p: [10, 9, 11, 10] }, // 40
@@ -583,7 +506,7 @@ describe("NW-2030 Defizit-Grenzen (§ 27 Abs. 2 Nr. 1)", () => {
   // P = 2 · (22 + 40) + De 40 + Ge 28 + Bio 40 + Ch 8 + SoWi 20 + PK 20 +
   // 10 · 10 = 380 → E_I = 380 · 40 / 44 = 345,5 → 345.
   // E_II = 4 · 50 = 200, total 545 → 2,6 (552–535).
-  const base: Subj[] = [
+  const base: Spec[] = [
     { key: "ma", lk: true, slot: "P1", p: [4, 4, 4, 10] },
     { key: "en", lk: true, slot: "P2", p: all(10) },
     { key: "de", slot: "P3", p: all(10) },
@@ -597,7 +520,7 @@ describe("NW-2030 Defizit-Grenzen (§ 27 Abs. 2 Nr. 1)", () => {
     { key: "projekt", p: [_, _, 10, 10] },
   ];
   const exams: Exams = { P1: 10, P2: 10, P3: 10, P4: 10, P5: 10 };
-  const replace = (subjects: Subj[], key: string, p: number[]) =>
+  const replace = (subjects: Spec[], key: string, p: number[]) =>
     subjects.map((s) => (s.key === key ? { ...s, p } : s));
 
   it("admits with exactly 7 deficits, 3 of them in LK", () => {

@@ -14,120 +14,45 @@
 import { describe, expect, it } from "vitest";
 
 import { evaluate, getRulesetSummary } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  CourseLevel,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
+import {
+  build,
+  withPoints,
+  check,
+  count,
+  weighted,
+  errors,
+  summary,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 const RS = "TH-2027";
-
-interface Sub {
-  key: string;
-  /** Official points per half-year Q1 … Q4, null = not taken. */
-  pts: (number | null)[];
-  level?: CourseLevel;
-  slot?: ExamSlot;
-}
-
-function build(
-  subs: Sub[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  extras: Record<string, number | null>,
-  examVariantId: string | null = null,
-): EngineInput {
-  const cat = new Map(getRulesetSummary(RS).catalog.map((c) => [c.key, c]));
-  const subjects: EngineSubject[] = subs.map((s) => {
-    const c = cat.get(s.key);
-    if (!c) throw new Error(`unknown subject ${s.key}`);
-    return {
-      id: s.key,
-      catalogKey: s.key,
-      name: c.name,
-      field: c.field,
-      tags: c.tags,
-      level: s.level ?? "basic",
-      examSlot: s.slot ?? null,
-      examWeightPercent: 33,
-    };
-  });
-  return {
-    rulesetId: RS,
-    examVariantId,
-    subjects,
-    courses: subs.flatMap((s) =>
-      s.pts.flatMap((p, halfYear) =>
-        p === null
-          ? []
-          : [
-              {
-                subjectId: s.key,
-                halfYear,
-                taken: true,
-                officialPoints: p,
-                inclusion: "auto" as const,
-                grades: [],
-                targetPoints: null,
-              },
-            ],
-      ),
-    ),
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras,
-  };
-}
-
-function summary(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    deficits: e.blockI.deficits.total,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const count = (e: AbiturEvaluation, id: string) =>
-  e.blockI.included.filter((c) => c.subjectId === id).length;
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-const weighted = (e: AbiturEvaluation, slot: ExamSlot) =>
-  e.blockII.components.find((c) => c.slot === slot)?.weighted;
 
 /**
  * § 76 Abs. 1: eA Deutsch, Mathematik, Englisch (P1–P3 written), gA
  * Geschichte (P4) and Biologie (P5) oral, Chemie (Nr. 9), Geografie
  * (Nr. 10), Kunst, Sport, Ethik: 10 subjects (Seminarfach not entered).
  */
-function typical(over: Partial<Record<string, (number | null)[]>> = {}) {
-  const s: Sub[] = [
-    { key: "de", level: "elevated", slot: "P1", pts: [10, 11, 12, 11] },
-    { key: "ma", level: "elevated", slot: "P2", pts: [9, 9, 10, 8] },
-    { key: "en", level: "elevated", slot: "P3", pts: [13, 12, 13, 14] },
-    { key: "ge", slot: "P4", pts: [7, 8, 9, 10] },
-    { key: "bio", slot: "P5", pts: [8, 9, 7, 8] },
-    { key: "ch", pts: [6, 7, 5, 9] },
-    { key: "geo", pts: [11, 10, 12, 11] },
-    { key: "ku", pts: [13, 13, 14, 15] },
-    { key: "sp", pts: [15, 15, 14, 15] },
-    { key: "eth", pts: [12, 12, 13, 14] },
+function typical(over: Partial<Record<string, Points[]>> = {}) {
+  const s: Spec[] = [
+    { key: "de", lk: true, slot: "P1", p: [10, 11, 12, 11] },
+    { key: "ma", lk: true, slot: "P2", p: [9, 9, 10, 8] },
+    { key: "en", lk: true, slot: "P3", p: [13, 12, 13, 14] },
+    { key: "ge", slot: "P4", p: [7, 8, 9, 10] },
+    { key: "bio", slot: "P5", p: [8, 9, 7, 8] },
+    { key: "ch", p: [6, 7, 5, 9] },
+    { key: "geo", p: [11, 10, 12, 11] },
+    { key: "ku", p: [13, 13, 14, 15] },
+    { key: "sp", p: [15, 15, 14, 15] },
+    { key: "eth", p: [12, 12, 13, 14] },
   ];
-  return s.map((x) => (over[x.key] ? { ...x, pts: over[x.key] ?? x.pts } : x));
+  return withPoints(s, over);
 }
 // Block II: P1 De 9 → 36; P2 Ma 7 + zusätzliche mündliche 9: (14 + 9) · 4/3
 // = 30,67 → Anlage 14 A 30; P3 En 12 → 48; P4 Ge 10 → 40; P5 Bio 11 → 44.
 // Sum 198.
-const EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const EXAMS: Exams = {
   P1: [9],
   P2: [7, 9],
   P3: [12],
@@ -147,7 +72,7 @@ describe("Thüringen (TH-2027)", () => {
     // Ethik 14 + 13 → 125 (10 HJL); 6 free: Sport 15 + 14, Ku 13 + 13,
     // Ethik 12 + 12 = 79. P = 402, E_I = 402 · 40 / 36 = 446,67 → 447.
     // Total 447 + 198 = 645 → Anlage 15: 660–643 = 2,0.
-    const e = evaluate(build(typical(), EXAMS, SEMINAR));
+    const e = evaluate(build(RS, typical(), EXAMS, { extras: SEMINAR }));
     expect(summary(e)).toEqual({
       blockI: 447,
       blockII: 198,
@@ -168,7 +93,9 @@ describe("Thüringen (TH-2027)", () => {
     // P = 402 − 20 − 12 = 370 → 370 · 40 / 36 = 411,11 → 411.
     // Total 411 + 198 = 609 → 2,2 (624–607).
     const seven = evaluate(
-      build(typical({ ma: [4, 4, 4, 4], bio: [4, 4, 4, 8] }), EXAMS, SEMINAR),
+      build(RS, typical({ ma: [4, 4, 4, 4], bio: [4, 4, 4, 8] }), EXAMS, {
+        extras: SEMINAR,
+      }),
     );
     expect(summary(seven)).toEqual({
       blockI: 411,
@@ -182,9 +109,10 @@ describe("Thüringen (TH-2027)", () => {
     // Ge Q1 4 instead of 7: P = 367 → 407,78 → 408, 8 deficits.
     const eight = evaluate(
       build(
+        RS,
         typical({ ma: [4, 4, 4, 4], bio: [4, 4, 4, 8], ge: [4, 8, 9, 10] }),
         EXAMS,
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(eight)).toEqual({
@@ -207,10 +135,17 @@ describe("Thüringen (TH-2027)", () => {
     // Block II 36 + 30 + 48 + 40 + 44 = 198. Total 651 → 2,0.
     const e = evaluate(
       build(
+        RS,
         typical().map((s) => (s.key === "bio" ? { ...s, slot: undefined } : s)),
         { P1: [9], P2: [7, 9], P3: [12], P4: [10] },
-        { seminar_process: 10, seminar_paper: 10, seminar_colloquium: 11 },
-        "seminar",
+        {
+          extras: {
+            seminar_process: 10,
+            seminar_paper: 10,
+            seminar_colloquium: 11,
+          },
+          variant: "seminar",
+        },
       ),
     );
     expect(summary(e)).toEqual({
@@ -229,10 +164,12 @@ describe("Thüringen (TH-2027)", () => {
 
   it("a Seminarfach part with 0 points blocks admission (§ 95 Abs. 3)", () => {
     const e = evaluate(
-      build(typical(), EXAMS, {
-        seminar_process: 12,
-        seminar_paper: 0,
-        seminar_colloquium: 13,
+      build(RS, typical(), EXAMS, {
+        extras: {
+          seminar_process: 12,
+          seminar_paper: 0,
+          seminar_colloquium: 13,
+        },
       }),
     );
     expect(check(e, "block1.seminar")).toBe(false);
@@ -244,7 +181,9 @@ describe("Thüringen (TH-2027)", () => {
     // compulsory (2 deficits). Forced 198 + Ch 6 + Geo 23 + Ku 29 + Sport 30
     // + Ethik 27 = 313; free 6: 15 + 14 + 13 + 13 + 12 + 12 = 79.
     // P = 392 → 392 · 40 / 36 = 435,56 → 436.
-    const weak = evaluate(build(typical({ ch: [3, 3, 3, 3] }), EXAMS, SEMINAR));
+    const weak = evaluate(
+      build(RS, typical({ ch: [3, 3, 3, 3] }), EXAMS, { extras: SEMINAR }),
+    );
     expect(summary(weak)).toMatchObject({
       blockI: 436,
       deficits: 2,
@@ -257,9 +196,10 @@ describe("Thüringen (TH-2027)", () => {
     // Inf 6 + 6 = 200. P = 398 → 442,22 → 442.
     const wahlfach = evaluate(
       build(
-        [...typical({ ch: [3, 3, 3, 3] }), { key: "inf", pts: [6, 6, 6, 6] }],
+        RS,
+        [...typical({ ch: [3, 3, 3, 3] }), { key: "inf", p: [6, 6, 6, 6] }],
         EXAMS,
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(wahlfach)).toMatchObject({
@@ -277,9 +217,10 @@ describe("Thüringen (TH-2027)", () => {
     // + 16 = 172. P = 370 → 411,11 → 411, 2 deficits.
     const sport = evaluate(
       build(
-        [...typical({ sp: [3, 3, 3, 3] }), { key: "inf", pts: [6, 6, 6, 6] }],
+        RS,
+        [...typical({ sp: [3, 3, 3, 3] }), { key: "inf", p: [6, 6, 6, 6] }],
         EXAMS,
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(sport)).toMatchObject({
@@ -297,9 +238,10 @@ describe("Thüringen (TH-2027)", () => {
     // < 100 → not passed although the 20-point rule holds.
     const e = evaluate(
       build(
+        RS,
         typical(),
         { P1: [4, 7], P2: [4, 6], P3: [3], P4: [5], P5: [5] },
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect([weighted(e, "P1"), weighted(e, "P2")]).toEqual([20, 18]);

@@ -15,99 +15,24 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  EngineCourse,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
-
-type Row = [
-  key: string,
-  points: (number | null)[],
-  opts?: { ea?: boolean; slot?: ExamSlot },
-];
-
-function build(
-  rulesetId: string,
-  rows: Row[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  opts: {
-    variant?: string;
-    extras?: Record<string, number | null>;
-  } = {},
-): EngineInput {
-  const cat = getRulesetSummary(rulesetId).catalog;
-  const subjects: EngineSubject[] = [];
-  const courses: EngineCourse[] = [];
-  for (const [key, pts, o = {}] of rows) {
-    const c = cat.find((x) => x.key === key);
-    if (!c) throw new Error(`unknown catalog key ${key}`);
-    subjects.push({
-      id: key,
-      catalogKey: key,
-      name: c.name,
-      field: c.field,
-      tags: c.tags,
-      level: o.ea ? "elevated" : "basic",
-      examSlot: o.slot ?? null,
-      examWeightPercent: 50,
-    });
-    pts.forEach((p, halfYear) =>
-      courses.push({
-        subjectId: key,
-        halfYear,
-        taken: p !== null,
-        officialPoints: p,
-        inclusion: "auto",
-        grades: [],
-        targetPoints: null,
-      }),
-    );
-  }
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects,
-    courses,
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-const result = (e: AbiturEvaluation) => ({
-  blockI: e.blockI.points,
-  blockII: e.blockII.points,
-  total: e.total.points,
-  grade: e.total.gradeTenths,
-  admitted: e.blockI.admitted,
-  passed: e.total.passed,
-});
-
-const includedOf = (e: AbiturEvaluation, subjectId: string) =>
-  e.blockI.included
-    .filter((c) => c.subjectId === subjectId)
-    .map((c) => c.halfYear);
-
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-
-function replace(rows: Row[], key: string, points: (number | null)[]): Row[] {
-  return rows.map((r) => (r[0] === key ? [r[0], points, r[2]] : r));
-}
+import { evaluate } from "@domain/index";
+import type { ExamSlot } from "@domain/model";
+import {
+  build,
+  replace,
+  check,
+  included,
+  outcome,
+  type Row,
+  type Exams,
+} from "./build";
 
 // Official example (MSS, S. 32): LK Englisch, Deutsch, Geschichte; Biologie
 // mündlich (P4). Facharbeit (Deutsch) 13 points, counted twice.
 const EXAMPLE: Row[] = [
-  ["en", [8, 6, 10, 10], { ea: true, slot: "P1" }], // 34 → doubled 68
-  ["de", [11, 8, 10, 9], { ea: true, slot: "P2" }], // 38 → doubled 76
-  ["ge", [10, 6, 7, 7], { ea: true, slot: "P3" }], // 30, lowest LK: single
+  ["en", [8, 6, 10, 10], { lk: true, slot: "P1" }], // 34 → doubled 68
+  ["de", [11, 8, 10, 9], { lk: true, slot: "P2" }], // 38 → doubled 76
+  ["ge", [10, 6, 7, 7], { lk: true, slot: "P3" }], // 30, lowest LK: single
   ["bio", [5, 8, 6, 11], { slot: "P4" }], // 30
   ["mu", [6, 7, 6, 6]], // 7 + 6 (13 is mandatory)
   ["ma", [8, 11, 7, 7]], // 33
@@ -118,7 +43,7 @@ const EXAMPLE: Row[] = [
   ["sk_ek", [5, 5, 5, 8]], // 8 free
 ];
 // Block II example 1 (MSS, S. 34): En 9, De 10, Ge 3 + oral 8, Bio oral 7.
-const EXAMPLE_EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const EXAMPLE_EXAMS: Exams = {
   P1: [9],
   P2: [10],
   P3: [3, 8],
@@ -134,7 +59,7 @@ describe("RP-2027", () => {
     // Block II example 1: 45 + 50 + round(5 · (2 · 3 + 8) / 3 = 23.33) = 23
     // + 35 = 153. Total 518 → 2,7 (517–534).
     const e = evaluate(build("RP-2027", EXAMPLE, EXAMPLE_EXAMS, FACHARBEIT));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 365,
       blockII: 153,
       total: 518,
@@ -144,12 +69,12 @@ describe("RP-2027", () => {
     });
     expect(e.blockI.weightedSum).toBe(402);
     expect(e.blockI.weightSum).toBe(44);
-    expect(includedOf(e, "mu")).toEqual([1, 3]);
-    expect(includedOf(e, "la")).toEqual([0, 2, 3]);
-    expect(includedOf(e, "sk_ek")).toEqual([3]);
-    expect(includedOf(e, "inf")).toEqual([]);
-    expect(includedOf(e, "sp")).toHaveLength(4);
-    expect(includedOf(e, "extra:facharbeit")).toHaveLength(2);
+    expect(included(e, "mu")).toEqual([1, 3]);
+    expect(included(e, "la")).toEqual([0, 2, 3]);
+    expect(included(e, "sk_ek")).toEqual([3]);
+    expect(included(e, "inf")).toEqual([]);
+    expect(included(e, "sp")).toHaveLength(4);
+    expect(included(e, "extra:facharbeit")).toHaveLength(2);
     expect(e.blockII.components.map((c) => c.weighted)).toEqual([
       45, 50, 23, 35,
     ]);
@@ -160,9 +85,9 @@ describe("RP-2027", () => {
     // 4 · (4 + 8) / 3 = 16, Deutsch oral 7 → 28, Geschichte oral 5 → 20.
     // E_II = 140; three exams with 20+ (36, 40, 28, 20).
     const rows: Row[] = [
-      ["en", [10, 10, 10, 10], { ea: true, slot: "P1" }],
-      ["ku", [10, 10, 10, 10], { ea: true, slot: "P2" }],
-      ["bio", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["en", [10, 10, 10, 10], { lk: true, slot: "P1" }],
+      ["ku", [10, 10, 10, 10], { lk: true, slot: "P2" }],
+      ["bio", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["de", [10, 10, 10, 10], { slot: "P4" }],
       ["ge", [10, 10, 10, 10], { slot: "P5" }],
     ];
@@ -193,7 +118,7 @@ describe("RP-2027", () => {
       [4, 8, 6, 11],
     );
     const e = evaluate(build("RP-2027", rows, EXAMPLE_EXAMS, FACHARBEIT));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 341,
       blockII: 153,
       total: 494,
@@ -228,9 +153,9 @@ describe("RP-2027", () => {
     //    455 → round(18200 / 44) = round(413.64) = 414.
     // Block II: 5 · (10 + 10 + 10 + 10) = 200, total 614 → 2,2 (607–624).
     const rows: Row[] = [
-      ["en", [10, 10, 10, 10], { ea: true, slot: "P1" }],
-      ["de", [10, 10, 10, 10], { ea: true, slot: "P2" }],
-      ["ge", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["en", [10, 10, 10, 10], { lk: true, slot: "P1" }],
+      ["de", [10, 10, 10, 10], { lk: true, slot: "P2" }],
+      ["ge", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["ma", [10, 10, 10, 10], { slot: "P4" }],
       ["ph", [1, 15, 15, 15]],
       ["ch", [10, 10, 10, 10]],
@@ -242,7 +167,7 @@ describe("RP-2027", () => {
     const e = evaluate(
       build("RP-2027", rows, { P1: [10], P2: [10], P3: [10], P4: [10] }),
     );
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 414,
       blockII: 200,
       total: 614,
@@ -250,8 +175,8 @@ describe("RP-2027", () => {
       admitted: true,
       passed: true,
     });
-    expect(includedOf(e, "ch")).toEqual([0, 1, 2, 3]);
-    expect(includedOf(e, "ph")).toEqual([1, 2, 3]);
+    expect(included(e, "ch")).toEqual([0, 1, 2, 3]);
+    expect(included(e, "ph")).toEqual([1, 2, 3]);
   });
 
   it("supplementary oral exam: 5 · (2s + m) / 3, two exams with 25+", () => {
@@ -265,7 +190,7 @@ describe("RP-2027", () => {
     expect(e.blockII.components.map((c) => c.weighted)).toEqual([
       20, 20, 25, 35,
     ]);
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 365,
       blockII: 100,
       total: 465,
@@ -313,8 +238,8 @@ describe("RP-2027", () => {
     ];
     const e = evaluate(build("RP-2027", rows, EXAMPLE_EXAMS, FACHARBEIT));
     expect(e.blockI.points).toBe(357);
-    expect(includedOf(e, "fs_new")).toHaveLength(2);
-    expect(includedOf(e, "fs_new")).toContain(3);
+    expect(included(e, "fs_new")).toHaveLength(2);
+    expect(included(e, "fs_new")).toContain(3);
 
     const f = evaluate(
       build(
@@ -345,7 +270,7 @@ describe("RP-2030", () => {
   it("uses the rules from 2027 (no AbiPrO change announced yet)", () => {
     // Same official example as RP-2027: 365 + 153 = 518 → 2,7.
     const e = evaluate(build("RP-2030", EXAMPLE, EXAMPLE_EXAMS, FACHARBEIT));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 365,
       blockII: 153,
       total: 518,

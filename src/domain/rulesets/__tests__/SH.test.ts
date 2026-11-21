@@ -14,99 +14,24 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  EngineCourse,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
-
-type Row = [
-  key: string,
-  points: (number | null)[],
-  opts?: { ea?: boolean; slot?: ExamSlot },
-];
-
-function build(
-  rulesetId: string,
-  rows: Row[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  opts: {
-    variant?: string;
-    extras?: Record<string, number | null>;
-  } = {},
-): EngineInput {
-  const cat = getRulesetSummary(rulesetId).catalog;
-  const subjects: EngineSubject[] = [];
-  const courses: EngineCourse[] = [];
-  for (const [key, pts, o = {}] of rows) {
-    const c = cat.find((x) => x.key === key);
-    if (!c) throw new Error(`unknown catalog key ${key}`);
-    subjects.push({
-      id: key,
-      catalogKey: key,
-      name: c.name,
-      field: c.field,
-      tags: c.tags,
-      level: o.ea ? "elevated" : "basic",
-      examSlot: o.slot ?? null,
-      examWeightPercent: 50,
-    });
-    pts.forEach((p, halfYear) =>
-      courses.push({
-        subjectId: key,
-        halfYear,
-        taken: p !== null,
-        officialPoints: p,
-        inclusion: "auto",
-        grades: [],
-        targetPoints: null,
-      }),
-    );
-  }
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects,
-    courses,
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-const result = (e: AbiturEvaluation) => ({
-  blockI: e.blockI.points,
-  blockII: e.blockII.points,
-  total: e.total.points,
-  grade: e.total.gradeTenths,
-  admitted: e.blockI.admitted,
-  passed: e.total.passed,
-});
-
-const includedOf = (e: AbiturEvaluation, subjectId: string) =>
-  e.blockI.included
-    .filter((c) => c.subjectId === subjectId)
-    .map((c) => c.halfYear);
-
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-
-function replace(rows: Row[], key: string, points: (number | null)[]): Row[] {
-  return rows.map((r) => (r[0] === key ? [r[0], points, r[2]] : r));
-}
+import { evaluate } from "@domain/index";
+import type { ExamSlot } from "@domain/model";
+import {
+  build,
+  replace,
+  check,
+  included,
+  outcome,
+  type Row,
+  type Exams,
+} from "./build";
 
 // MINT-Profil: Profilfach Biologie (eA), Kernfach Mathematik (eA).
 // P1 Mathematik, P2 Deutsch (gA-Kernfach), P3 Biologie, P4 Geschichte (oral).
 const BASE: Row[] = [
-  ["ma", [11, 11, 12, 12], { ea: true, slot: "P1" }], // 46 → 92
+  ["ma", [11, 11, 12, 12], { lk: true, slot: "P1" }], // 46 → 92
   ["de", [9, 9, 10, 10], { slot: "P2" }], // 38
-  ["bio", [12, 12, 13, 13], { ea: true, slot: "P3" }], // 50 → 100
+  ["bio", [12, 12, 13, 13], { lk: true, slot: "P3" }], // 50 → 100
   ["ge", [10, 10, 11, 11], { slot: "P4" }], // 42
   ["en", [8, 8, 9, 9]], // 34, Kern-Fremdsprache
   ["ch", [7, 7, 8, 8]],
@@ -117,7 +42,7 @@ const BASE: Row[] = [
   ["sem", [13, 12, 14, null]], // Profilseminar: 1 result (14)
   ["sp", [14, 14, 13, 15]], // no exam subject: at most 3
 ];
-const EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const EXAMS: Exams = {
   P1: [12],
   P2: [9],
   P3: [13],
@@ -133,7 +58,7 @@ describe("SH-2027", () => {
     // E_I = round(19440 / 44) = round(441.82) = 442.
     // E_II = 5 · (12 + 9 + 13 + 11) = 225. Total 667 → 1,9 (661–678).
     const e = evaluate(build("SH-2027", BASE, EXAMS));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 442,
       blockII: 225,
       total: 667,
@@ -143,7 +68,7 @@ describe("SH-2027", () => {
     });
     expect(e.blockI.countIncluded).toBe(36);
     expect(e.blockI.weightSum).toBe(44);
-    expect(includedOf(e, "sp")).toEqual([0, 1, 3]);
+    expect(included(e, "sp")).toEqual([0, 1, 3]);
   });
 
   it("29 results with 5+ points: 7 deficits are allowed, 8 are not", () => {
@@ -156,7 +81,7 @@ describe("SH-2027", () => {
       [4, 9, 10, 10],
     );
     const e = evaluate(build("SH-2027", rows, EXAMS));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 410,
       blockII: 225,
       total: 635,
@@ -184,9 +109,9 @@ describe("SH-2027", () => {
     //    round(18200 / 44) = round(413.64) = 414.
     // E_II = 5 · 40 = 200, total 614 → 2,2.
     const rows: Row[] = [
-      ["de", [10, 10, 10, 10], { ea: true, slot: "P1" }],
+      ["de", [10, 10, 10, 10], { lk: true, slot: "P1" }],
       ["ma", [10, 10, 10, 10], { slot: "P2" }],
-      ["ge", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["ge", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["en", [10, 10, 10, 10], { slot: "P4" }],
       ["bio", [15, 15, 15, 1]],
       ["ch", [10, 10, 10, 10]],
@@ -200,7 +125,7 @@ describe("SH-2027", () => {
     const e = evaluate(
       build("SH-2027", rows, { P1: [10], P2: [10], P3: [10], P4: [10] }),
     );
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 414,
       blockII: 200,
       total: 614,
@@ -208,8 +133,8 @@ describe("SH-2027", () => {
       admitted: true,
       passed: true,
     });
-    expect(includedOf(e, "ch")).toEqual([0, 1, 2, 3]);
-    expect(includedOf(e, "bio")).toEqual([0, 1, 2]);
+    expect(included(e, "ch")).toEqual([0, 1, 2, 3]);
+    expect(included(e, "bio")).toEqual([0, 1, 2]);
   });
 
   it("oral exam: 5 · (2s + m) / 3, rounded after the multiplication", () => {
@@ -218,7 +143,7 @@ describe("SH-2027", () => {
     // Total 442 + 222 = 664 → 1,9.
     const e = evaluate(build("SH-2027", BASE, { ...EXAMS, P2: [6, 13] }));
     expect(e.blockII.components[1].weighted).toBe(42);
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 442,
       blockII: 222,
       total: 664,
@@ -252,7 +177,7 @@ describe("SH-2027", () => {
     const e = evaluate(
       build("SH-2027", rows, { ...EXAMS, P5: [9] }, { variant: "five" }),
     );
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 437,
       blockII: 216,
       total: 653,
@@ -272,7 +197,7 @@ describe("SH-2027", () => {
     const f = evaluate(
       build("SH-2027", BASE, EXAMS, { variant: "bll", extras: { bll: 14 } }),
     );
-    expect(result(f)).toEqual({
+    expect(outcome(f)).toEqual({
       blockI: 442,
       blockII: 236,
       total: 678,
@@ -292,9 +217,9 @@ describe("SH-2027", () => {
     // P = 450 − 48 = 402 → round(16080 / 45) = round(357.33) = 357.
     // E_II = 4 · 50 = 200, total 557 → 2,5.
     const rows: Row[] = [
-      ["ma", [10, 10, 10, 10], { ea: true, slot: "P1" }],
+      ["ma", [10, 10, 10, 10], { lk: true, slot: "P1" }],
       ["de", [10, 10, 10, 10], { slot: "P2" }],
-      ["phil", [10, 10, 10, 10], { ea: true, slot: "P3" }],
+      ["phil", [10, 10, 10, 10], { lk: true, slot: "P3" }],
       ["ku", [10, 10, 10, 10], { slot: "P4" }],
       ["sp", [10, 10, 10, 10], { slot: "P5" }],
       ["en", [10, 10, 10, 10]],
@@ -313,7 +238,7 @@ describe("SH-2027", () => {
         { variant: "five" },
       ),
     );
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 357,
       blockII: 200,
       total: 557,
@@ -332,7 +257,7 @@ describe("SH-2027", () => {
     // round(438.18) = 438.
     const rows: Row[] = [...BASE, ["fs_new", [3, 3, 6, 6]]];
     const e = evaluate(build("SH-2027", rows, EXAMS));
-    expect(includedOf(e, "fs_new")).toEqual([2, 3]);
+    expect(included(e, "fs_new")).toEqual([2, 3]);
     expect(e.blockI.points).toBe(438);
 
     const f = evaluate(
@@ -346,7 +271,7 @@ describe("SH-2027", () => {
     const g = evaluate(
       build("SH-2027", [...rows, ["fr", [5, 5, 5, 5]]], EXAMS),
     );
-    expect(includedOf(g, "fs_new")).toEqual([]);
+    expect(included(g, "fs_new")).toEqual([]);
     expect(g.blockI.points).toBe(442);
   });
 });
@@ -354,7 +279,7 @@ describe("SH-2027", () => {
 describe("SH-2028", () => {
   it("same calculation as 2027 (only the Belegung of Geo/WiPo changes)", () => {
     const e = evaluate(build("SH-2028", BASE, EXAMS));
-    expect(result(e)).toEqual({
+    expect(outcome(e)).toEqual({
       blockI: 442,
       blockII: 225,
       total: 667,

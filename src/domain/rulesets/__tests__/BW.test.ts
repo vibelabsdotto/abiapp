@@ -14,71 +14,16 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary, validateSetup } from "@domain/index";
-import type { AbiturEvaluation, EngineInput, ExamSlot } from "@domain/model";
-
-type Points = number | null; // null = course not taken
-
-interface Spec {
-  key: string;
-  lf?: boolean;
-  slot?: ExamSlot;
-  hy: Points[];
-}
-
-interface Opts {
-  exams?: Partial<Record<ExamSlot, [number, number?]>>;
-  variant?: string;
-  extras?: Record<string, number | null>;
-}
-
-function build(rulesetId: string, specs: Spec[], opts: Opts = {}): EngineInput {
-  const cat = getRulesetSummary(rulesetId).catalog;
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: specs.map((s) => {
-      const c = cat.find((x) => x.key === s.key);
-      if (!c) throw new Error(`catalog key ${s.key} missing in ${rulesetId}`);
-      return {
-        id: s.key,
-        catalogKey: s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lf ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: specs.flatMap((s) =>
-      s.hy.map((p, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: p !== null,
-        officialPoints: p,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(opts.exams ?? {}).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: v[0],
-      oralPoints: v[1] ?? null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-
-const included = (e: AbiturEvaluation, key: string) =>
-  e.blockI.included
-    .filter((c) => c.subjectId === key)
-    .map((c) => c.halfYear)
-    .sort();
+import { evaluate, validateSetup } from "@domain/index";
+import {
+  build,
+  replace,
+  check,
+  included,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 const IDS = ["BW-2027", "BW-2030"];
 
@@ -88,20 +33,20 @@ const IDS = ["BW-2027", "BW-2030"];
 // Kurse in Klammern sind nicht angerechnet: Musik 3./4. Hj., LuT 3./4. Hj.
 // ---------------------------------------------------------------------------
 const MUSTER: Spec[] = [
-  { key: "de", lf: true, slot: "P1", hy: [11, 9, 11, 10] },
-  { key: "en", hy: [8, 9, 9, 8] },
-  { key: "mu", hy: [8, 9, 7, 7] },
-  { key: "ge", slot: "P5", hy: [11, 9, 10, 12] },
-  { key: "pol", hy: [9, null, null, 5] },
-  { key: "geo", hy: [null, 8, 6, null] },
-  { key: "rel_ev", hy: [9, 9, 10, 10] },
-  { key: "ma", slot: "P4", hy: [7, 6, 5, 6] },
-  { key: "bio", hy: [9, 10, 7, 9] },
-  { key: "ph", lf: true, slot: "P2", hy: [13, 11, 11, 12] },
-  { key: "sp", lf: true, slot: "P3", hy: [10, 9, 9, 10] },
-  { key: "lit", hy: [10, 10, 9, 9] },
+  { key: "de", lk: true, slot: "P1", p: [11, 9, 11, 10] },
+  { key: "en", p: [8, 9, 9, 8] },
+  { key: "mu", p: [8, 9, 7, 7] },
+  { key: "ge", slot: "P5", p: [11, 9, 10, 12] },
+  { key: "pol", p: [9, null, null, 5] },
+  { key: "geo", p: [null, 8, 6, null] },
+  { key: "rel_ev", p: [9, 9, 10, 10] },
+  { key: "ma", slot: "P4", p: [7, 6, 5, 6] },
+  { key: "bio", p: [9, 10, 7, 9] },
+  { key: "ph", lk: true, slot: "P2", p: [13, 11, 11, 12] },
+  { key: "sp", lk: true, slot: "P3", p: [10, 9, 9, 10] },
+  { key: "lit", p: [10, 10, 9, 9] },
 ];
-const MUSTER_EXAMS: Opts["exams"] = {
+const MUSTER_EXAMS: Exams = {
   P1: [10, 11],
   P2: [11],
   P3: [10],
@@ -110,7 +55,7 @@ const MUSTER_EXAMS: Opts["exams"] = {
 };
 
 describe.each(IDS)("%s Zeugnis-Muster (Leitfaden 2028, S. 52)", (id) => {
-  const e = evaluate(build(id, MUSTER, { exams: MUSTER_EXAMS }));
+  const e = evaluate(build(id, MUSTER, MUSTER_EXAMS));
 
   it("Block I: 40 × 452 / 48 = 376,67 → 377", () => {
     // P = 2·41 (De) + 2·47 (Ph) + 38 (Sp) + 34 (En) + 17 (Mu 8+9)
@@ -155,17 +100,17 @@ describe.each(IDS)("%s Zeugnis-Muster (Leitfaden 2028, S. 52)", (id) => {
 // ---------------------------------------------------------------------------
 function deficitCase(ma: Points[], ch: Points[]): Spec[] {
   return [
-    { key: "de", lf: true, slot: "P1", hy: [10, 10, 10, 10] },
-    { key: "en", lf: true, slot: "P2", hy: [9, 9, 9, 9] },
-    { key: "ma", lf: true, slot: "P3", hy: ma },
-    { key: "ge", slot: "P5", hy: [4, 4, 6, 6] },
-    { key: "bio", slot: "P4", hy: [3, 4, 6, 6] },
-    { key: "ch", hy: ch },
-    { key: "ku", hy: [8, 8, 8, 8] },
-    { key: "geo", hy: [7, 7, null, null] },
-    { key: "pol", hy: [null, null, 7, 7] },
-    { key: "rel_ev", hy: [8, 8, 8, 8] },
-    { key: "sp", hy: [9, 9, 9, 9] },
+    { key: "de", lk: true, slot: "P1", p: [10, 10, 10, 10] },
+    { key: "en", lk: true, slot: "P2", p: [9, 9, 9, 9] },
+    { key: "ma", lk: true, slot: "P3", p: ma },
+    { key: "ge", slot: "P5", p: [4, 4, 6, 6] },
+    { key: "bio", slot: "P4", p: [3, 4, 6, 6] },
+    { key: "ch", p: ch },
+    { key: "ku", p: [8, 8, 8, 8] },
+    { key: "geo", p: [7, 7, null, null] },
+    { key: "pol", p: [null, null, 7, 7] },
+    { key: "rel_ev", p: [8, 8, 8, 8] },
+    { key: "sp", p: [9, 9, 9, 9] },
   ];
 }
 
@@ -217,24 +162,28 @@ describe("BW-2027 deficit limits", () => {
 // mandatory instead, and the two 15s of Französisch fill free places.
 // ---------------------------------------------------------------------------
 const CHOICE: Spec[] = [
-  { key: "de", lf: true, slot: "P1", hy: [9, 9, 9, 9] },
-  { key: "ma", lf: true, slot: "P2", hy: [8, 8, 8, 8] },
-  { key: "bio", lf: true, slot: "P3", hy: [7, 7, 7, 7] },
-  { key: "en", slot: "P5", hy: [10, 10, 10, 10] },
-  { key: "fr", hy: [15, 15, 4, 4] },
-  { key: "ch", hy: [6, 6, 6, 6] },
-  { key: "ge", slot: "P4", hy: [4, 4, 4, 6] },
-  { key: "geo", hy: [4, 4, null, null] },
-  { key: "pol", hy: [null, null, 4, 4] },
-  { key: "ku", hy: [8, 8, 8, 8] },
-  { key: "rel_ev", hy: [9, 9, 9, 9] },
-  { key: "sp", hy: [9, 9, 9, 9] },
+  { key: "de", lk: true, slot: "P1", p: [9, 9, 9, 9] },
+  { key: "ma", lk: true, slot: "P2", p: [8, 8, 8, 8] },
+  { key: "bio", lk: true, slot: "P3", p: [7, 7, 7, 7] },
+  { key: "en", slot: "P5", p: [10, 10, 10, 10] },
+  { key: "fr", p: [15, 15, 4, 4] },
+  { key: "ch", p: [6, 6, 6, 6] },
+  { key: "ge", slot: "P4", p: [4, 4, 4, 6] },
+  { key: "geo", p: [4, 4, null, null] },
+  { key: "pol", p: [null, null, 4, 4] },
+  { key: "ku", p: [8, 8, 8, 8] },
+  { key: "rel_ev", p: [9, 9, 9, 9] },
+  { key: "sp", p: [9, 9, 9, 9] },
 ];
 
 describe("BW-2027 second NW instead of the stronger second FS", () => {
   const e = evaluate(
     build("BW-2027", CHOICE, {
-      exams: { P1: [9], P2: [8, 12], P3: [7], P4: [10], P5: [11] },
+      P1: [9],
+      P2: [8, 12],
+      P3: [7],
+      P4: [10],
+      P5: [11],
     }),
   );
 
@@ -269,8 +218,8 @@ describe("BW-2027 second NW instead of the stronger second FS", () => {
 // 0 points in exams: § 27 Abs. 2 Nr. 3 (no exam below 4 points, four times).
 // ---------------------------------------------------------------------------
 describe("BW-2027 null-Punkte-Regel in Block II", () => {
-  const run = (exams: Opts["exams"]) =>
-    evaluate(build("BW-2027", MUSTER, { exams })).blockII;
+  const run = (exams: Exams) =>
+    evaluate(build("BW-2027", MUSTER, exams)).blockII;
 
   it("written 0 + oral 3: 4 · 3 / 3 = 4, passes", () => {
     const b = run({ ...MUSTER_EXAMS, P2: [0, 3] });
@@ -312,14 +261,9 @@ describe("BW-2027 null-Punkte-Regel in Block II", () => {
 // Nr. 1 (belegpflichtige courses, included or not).
 // ---------------------------------------------------------------------------
 describe("BW-2027 null-Punkte-Regel in Block I", () => {
-  const withCourse = (key: string, hy: Points[]) =>
-    MUSTER.map((s) => (s.key === key ? { ...s, hy } : s));
-
   it("Religionslehre 0 in one half-year (belegpflichtig, not needed): not admitted", () => {
     const e = evaluate(
-      build("BW-2027", withCourse("rel_ev", [9, 0, 10, 10]), {
-        exams: MUSTER_EXAMS,
-      }),
+      build("BW-2027", replace(MUSTER, "rel_ev", [9, 0, 10, 10]), MUSTER_EXAMS),
     );
     expect(check(e, "block1.zeroTaken")).toBe(false);
     expect(e.blockI.admitted).toBe(false);
@@ -327,7 +271,7 @@ describe("BW-2027 null-Punkte-Regel in Block I", () => {
 
   it("Musik 3./4. Hj. 0 (belegpflichtig, not included): not admitted", () => {
     const e = evaluate(
-      build("BW-2027", withCourse("mu", [8, 9, 0, 7]), { exams: MUSTER_EXAMS }),
+      build("BW-2027", replace(MUSTER, "mu", [8, 9, 0, 7]), MUSTER_EXAMS),
     );
     expect(check(e, "block1.zeroTaken")).toBe(false);
   });
@@ -338,10 +282,10 @@ describe("BW-2027 null-Punkte-Regel in Block I", () => {
         "BW-2027",
         [
           ...MUSTER,
-          { key: "es", hy: [6, 0, null, null] },
-          { key: "fs_new", hy: [0, 5, null, null] },
+          { key: "es", p: [6, 0, null, null] },
+          { key: "fs_new", p: [0, 5, null, null] },
         ],
-        { exams: MUSTER_EXAMS },
+        MUSTER_EXAMS,
       ),
     );
     expect(check(e, "block1.zeroTaken")).toBe(true);
@@ -351,9 +295,11 @@ describe("BW-2027 null-Punkte-Regel in Block I", () => {
 
   it("Kunst 0 while Musik is complete: admitted (only one of them is belegpflichtig)", () => {
     const e = evaluate(
-      build("BW-2027", [...MUSTER, { key: "ku", hy: [0, 6, 6, 6] }], {
-        exams: MUSTER_EXAMS,
-      }),
+      build(
+        "BW-2027",
+        [...MUSTER, { key: "ku", p: [0, 6, 6, 6] }],
+        MUSTER_EXAMS,
+      ),
     );
     expect(check(e, "block1.zeroTaken")).toBe(true);
   });
@@ -368,8 +314,7 @@ describe("BW-2027 Seminarkurs", () => {
     // Rel 9, 9 tie; the weakest free ones are two 9s): P = 452 − 9 − 9 + 24 = 458.
     // E_I = 458 · 40 / 48 = 381,67 → 382.
     const e = evaluate(
-      build("BW-2027", MUSTER, {
-        exams: MUSTER_EXAMS,
+      build("BW-2027", MUSTER, MUSTER_EXAMS, {
         extras: { seminar_course: 12 },
       }),
     );
@@ -385,11 +330,12 @@ describe("BW-2027 Seminarkurs", () => {
       s.key === "ge" ? { ...s, slot: undefined } : s,
     );
     const e = evaluate(
-      build("BW-2027", specs, {
-        variant: "bll",
-        exams: { P1: [10, 11], P2: [11], P3: [10], P4: [7] },
-        extras: { seminar_course: 13 },
-      }),
+      build(
+        "BW-2027",
+        specs,
+        { P1: [10, 11], P2: [11], P3: [10], P4: [7] },
+        { variant: "bll", extras: { seminar_course: 13 } },
+      ),
     );
     expect(e.blockI.points).toBe(377);
     expect(e.blockII.points).toBe(205);
@@ -413,18 +359,18 @@ describe("BW-2027 Leistungsfach Wirtschaft", () => {
     const ten: Points[] = [10, 10, 10, 10];
     const e = evaluate(
       build("BW-2027", [
-        { key: "de", lf: true, slot: "P1", hy: ten },
-        { key: "ma", lf: true, slot: "P2", hy: ten },
-        { key: "wi", lf: true, slot: "P3", hy: ten },
-        { key: "en", slot: "P5", hy: [9, 9, 9, 9] },
-        { key: "fr", hy: [8, 8, 8, 8] },
-        { key: "bio", hy: [7, 7, 7, 7] },
-        { key: "ku", hy: [6, 6, 6, 6] },
-        { key: "ge", hy: [9, 9, 9, 9] },
-        { key: "geo", slot: "P4", hy: [8, 8, 8, null] },
-        { key: "pol", hy: [7, null, null, null] },
-        { key: "rel_ev", hy: [9, 9, 9, 9] },
-        { key: "sp", hy: [12, 12, 12, 12] },
+        { key: "de", lk: true, slot: "P1", p: ten },
+        { key: "ma", lk: true, slot: "P2", p: ten },
+        { key: "wi", lk: true, slot: "P3", p: ten },
+        { key: "en", slot: "P5", p: [9, 9, 9, 9] },
+        { key: "fr", p: [8, 8, 8, 8] },
+        { key: "bio", p: [7, 7, 7, 7] },
+        { key: "ku", p: [6, 6, 6, 6] },
+        { key: "ge", p: [9, 9, 9, 9] },
+        { key: "geo", slot: "P4", p: [8, 8, 8, null] },
+        { key: "pol", p: [7, null, null, null] },
+        { key: "rel_ev", p: [9, 9, 9, 9] },
+        { key: "sp", p: [12, 12, 12, 12] },
       ]),
     );
     expect(included(e, "geo")).toEqual([0, 1, 2]);
@@ -442,9 +388,9 @@ describe("BW-2027 Informatik as second science (assumption)", () => {
     // = 457, E_I = 457 · 40 / 48 = 380,83 → 381.
     const specs = [
       ...MUSTER.filter((s) => s.key !== "bio"),
-      { key: "inf", hy: [10, 10, 10, 10] },
+      { key: "inf", p: [10, 10, 10, 10] },
     ];
-    const e = evaluate(build("BW-2027", specs, { exams: MUSTER_EXAMS }));
+    const e = evaluate(build("BW-2027", specs, MUSTER_EXAMS));
     expect(e.blockI.points).toBe(381);
     expect(e.blockI.assumptions?.some((a) => a.includes("Informatik"))).toBe(
       true,
