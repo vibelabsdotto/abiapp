@@ -36,6 +36,8 @@ export function createId(): string {
 }
 
 const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
-export const isUuid = (value: string): boolean => UUID_PATTERN.test(value);
+/** Replaces every id from createId in `text` with "[id]". */
+export const redactIds = (text: string): string =>
+  text.replace(UUID_PATTERN, "[id]");

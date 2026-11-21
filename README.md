@@ -17,7 +17,7 @@ AbiApp replaces the earlier AbiSax app and ships under the same store listing.
 
 ## Supported states
 
-Rules cover the Abitur years 2027 to 2030. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
+Rules cover the Abitur years from 2027; later years use the newest version of each state. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
 
 | State                  | Rule versions                      | Confidence                  |
 | ---------------------- | ---------------------------------- | --------------------------- |
@@ -60,6 +60,7 @@ Checks:
 ```bash
 npm run type-check
 npm run lint
+npm test                     # Vitest, rules engine in src/domain only
 npm run format:check
 npx expo-doctor
 ```
@@ -70,7 +71,13 @@ Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `googl
 
 ## Privacy
 
-All grades and settings are stored locally in SQLite on the device. The app sends no grades or personal data anywhere. Optional services in the official builds: anonymous usage statistics (Firebase Analytics), update notes (VibeUpdate) and feature requests that you submit yourself (Featurama). Privacy policy: https://vibelabs.to/de/privacy
+All grades and settings are stored locally on the device (SQLite and AsyncStorage). The app sends no grades, subject names or other personal data anywhere. The official builds use three services:
+
+- Firebase Analytics: anonymous usage events and screen views with state, ruleset id, Abitur year, counts and enum values only (`src/services/analytics/appEvents.ts`), plus the device data Firebase collects itself.
+- VibeUpdate: on start and on return to the app, asks whether a newer version or release notes exist (platform, app id, version, build number, device language).
+- Featurama: only when you open "Feature requests"; loads the list and sends requests, votes and comments you write yourself, with a random voter id and device info (model, OS, screen, language, app version).
+
+Privacy policy: https://vibelabs.to/de/privacy
 
 ## License
 
