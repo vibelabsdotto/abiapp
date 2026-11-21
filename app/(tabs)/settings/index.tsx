@@ -219,23 +219,26 @@ export default function SettingsScreen() {
         );
         return;
       }
-      const { summary } = result;
+      const { summary, warnings } = result;
       const backupState = states.find((state) => state.code === summary.state);
       const confirmed = await confirmAsync({
         title: t("settings.importTitle"),
-        message: t("settings.importMessage", {
-          date: new Date(summary.exportedAt).toLocaleString(
-            locale === "de" ? "de-DE" : "en-US",
-            { dateStyle: "medium", timeStyle: "short" },
-          ),
-          profile: backupState
-            ? `${backupState.name} · ${summary.abiturYear ?? ""}`
-            : t("settings.importNoProfile"),
-          subjects: summary.subjects,
-          grades: summary.grades,
-          official: summary.officialResults,
-          exams: summary.examResults,
-        }),
+        message: [
+          t("settings.importMessage", {
+            date: new Date(summary.exportedAt).toLocaleString(
+              locale === "de" ? "de-DE" : "en-US",
+              { dateStyle: "medium", timeStyle: "short" },
+            ),
+            profile: backupState
+              ? `${backupState.name} · ${summary.abiturYear ?? ""}`
+              : t("settings.importNoProfile"),
+            subjects: summary.subjects,
+            grades: summary.grades,
+            official: summary.officialResults,
+            exams: summary.examResults,
+          }),
+          ...warnings.map((warning) => warning.message),
+        ].join("\n\n"),
         confirm: t("settings.importConfirm"),
         destructive: true,
       });
