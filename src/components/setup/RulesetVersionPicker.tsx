@@ -6,6 +6,7 @@ import React, { useMemo } from "react";
 import { defaultRulesetFor, rulesetsForState } from "@domain/index";
 import type { StateCode } from "@domain/model";
 import { Chip, ListRow, Section } from "@components/ui";
+import { rulesetVersionLabel } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { tryDomain } from "@stores/domainAccess";
 
@@ -45,7 +46,9 @@ export const RulesetVersionPicker = ({
         title={t("setup.versionAuto")}
         subtitle={
           automatic
-            ? t("setup.versionAutoHint", { label: automatic.label })
+            ? t("setup.versionAutoHint", {
+                label: rulesetVersionLabel(automatic),
+              })
             : undefined
         }
         selected={value === null}
@@ -54,7 +57,7 @@ export const RulesetVersionPicker = ({
       {versions.map((ruleset) => (
         <ListRow
           key={ruleset.id}
-          title={ruleset.label}
+          title={rulesetVersionLabel(ruleset)}
           badges={
             isProvisional(ruleset) ? (
               <Chip label={t("settings.draft")} tone="warning" />

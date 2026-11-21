@@ -41,3 +41,14 @@ export function examVariantOf(
     null
   );
 }
+
+/**
+ * Version label without the state ("Abitur ab 2027" instead of
+ * "Sachsen · Abitur ab 2027") for places that show the state right above.
+ */
+export function rulesetVersionLabel(ruleset: RulesetSummary): string {
+  const prefix = `${ruleset.stateName} · `;
+  return ruleset.label.startsWith(prefix)
+    ? ruleset.label.slice(prefix.length)
+    : ruleset.label;
+}

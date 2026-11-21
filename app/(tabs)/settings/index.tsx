@@ -63,7 +63,11 @@ import { isFeaturamaConfigured } from "@constants/config";
 import { listStates } from "@domain/index";
 import type { StateCode } from "@domain/model";
 import { useSetupIssues } from "@hooks/useEvaluation";
-import { examVariantOf, useRuleset } from "@hooks/useRuleset";
+import {
+  examVariantOf,
+  rulesetVersionLabel,
+  useRuleset,
+} from "@hooks/useRuleset";
 import { useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
 import { deleteAllData, exportBackup } from "@services/backup/backupService";
@@ -321,7 +325,9 @@ export default function SettingsScreen() {
           />
           <ListRow
             title={t("settings.ruleset")}
-            subtitle={ruleset?.label ?? profile.rulesetId}
+            subtitle={
+              ruleset ? rulesetVersionLabel(ruleset) : profile.rulesetId
+            }
             badges={
               ruleset && isProvisional(ruleset) ? (
                 <Chip label={t("settings.draft")} tone="warning" />

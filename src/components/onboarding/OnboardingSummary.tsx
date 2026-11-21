@@ -9,7 +9,7 @@ import {
   elevatedPlural,
 } from "@components/setup";
 import { IssueBanner, ListRow, Section } from "@components/ui";
-import { useRuleset } from "@hooks/useRuleset";
+import { useRuleset, rulesetVersionLabel } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
@@ -53,7 +53,7 @@ export const OnboardingSummary = () => {
         />
         <ListRow
           title={t("settings.abiturYear")}
-          subtitle={ruleset.label}
+          subtitle={rulesetVersionLabel(ruleset)}
           value={String(profile.abiturYear)}
         />
         <ListRow
