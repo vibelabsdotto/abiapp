@@ -1,12 +1,14 @@
-// Welcome: a motion intro in real time, no film. The claim on top, a phone
-// that floats in from below with a slight tilt, comes to rest and plays
-// four beats of the real app UI (where you stand, what counts, what you
-// still need, 16 states); one short line per beat below it, then a calm
-// loop. Everything follows light/dark, the accent and the language. The
-// buttons are there from the first frame. Reduce Motion: a still
-// composition (phone at rest on the first beat).
+// Welcome: a motion intro in real time, no film. The claim on top; a phone
+// floats in from below (tilted about 8° around the vertical axis and 4°
+// back), settles on a spring and never stands still (a calm float). Per
+// beat the camera moves in on what the beat is about (the arch, the
+// courses that count, the points the next exam needs, the 16 states) while
+// the content animates. Below the stage one line per beat with four dots,
+// then a calm loop. Everything follows light/dark, the accent and the
+// language. The buttons are there from the first frame. Reduce Motion: a
+// still composition (whole phone at rest on the first beat).
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,7 +28,6 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { Button } from "@components/common/Button";
@@ -34,23 +35,23 @@ import { FontScale, Type } from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 
-import { INTRO_BEATS, IntroScreen, type IntroBeat } from "./intro/IntroScreens";
-import { PhoneFrame, phoneHeightFor } from "./intro/PhoneFrame";
+import {
+  BEAT_MS,
+  CAMERA,
+  INTRO_BEATS,
+  IntroScreen,
+  type AnchorMap,
+  type IntroBeat,
+} from "./intro/IntroScreens";
+import { PhoneFrame, phoneGeometry } from "./intro/PhoneFrame";
 
-/** How long each beat stays (the loop runs at the same pace). */
-const BEAT_MS = 3200;
-/** The first beat starts once the phone has nearly settled. */
-const FIRST_BEAT_DELAY = 650;
-/** Widest phone relative to the screen width. */
-const MAX_PHONE_SHARE = 0.74;
-/**
- * The phone may run off the bottom of the stage (it fades out there), but
- * at least this share of it stays visible.
- */
-const MIN_VISIBLE = 0.62;
-/** Height of the fade at the bottom edge of the stage. */
-const FADE = 72;
-const MAX_PHONE_WIDTH = 340;
+/** Natural phone width relative to the stage width, and its cap. */
+const PHONE_SHARE = 0.66;
+const MAX_PHONE_WIDTH = 330;
+/** Height of the fades at the stage edges. */
+const FADE = 48;
+const CAMERA_MS = 750;
+const CAMERA_EASING = Easing.bezier(0.45, 0, 0.2, 1);
 
 const BEAT_KEYS: Record<IntroBeat, string> = {
   standing: "onboarding.welcome.beats.standing",
@@ -75,9 +76,10 @@ export const WelcomeView = ({
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const [stage, setStage] = useState({ width: 0, height: 0 });
-  // -1: phone still floating in, no beat yet.
-  const [beatIndex, setBeatIndex] = useState(reduceMotion ? 0 : -1);
+  const [beatIndex, setBeatIndex] = useState(0);
   const [focused, setFocused] = useState(true);
+  const anchors = useRef<AnchorMap>({});
+  const placed = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -86,62 +88,127 @@ export const WelcomeView = ({
     }, []),
   );
 
-  // Entrance: from below, tilted back and turned a little, onto its spot.
-  const rise = useSharedValue(reduceMotion ? 0 : 1);
-  const bob = useSharedValue(0);
-  useEffect(() => {
-    if (reduceMotion) return;
-    rise.value = withDelay(
-      120,
-      withSpring(0, { damping: 17, stiffness: 70, mass: 1.1 }),
-    );
-  }, [reduceMotion, rise]);
+  const ready = stage.width > 0;
+  const geometry = phoneGeometry(
+    Math.floor(Math.min(stage.width * PHONE_SHARE, MAX_PHONE_WIDTH)),
+  );
+  /** Zoom that shows the whole phone (entrance, loop start, Reduce Motion). */
+  const fitZoom = ready
+    ? Math.min(1, (stage.height * 0.94) / geometry.height)
+    : 1;
 
-  // Calm float while the page is visible.
+  const enter = useSharedValue(reduceMotion ? 0 : 1);
+  const zoom = useSharedValue(fitZoom);
+  const shift = useSharedValue(0);
+  const bob = useSharedValue(0);
+
+  // Entrance once the stage is measured: from below the stage, tilted, onto
+  // its spot on a spring (about 0.9 s).
+  useEffect(() => {
+    if (!ready || reduceMotion) return;
+    enter.value = withDelay(
+      120,
+      withSpring(0, { damping: 15, stiffness: 95, mass: 1 }),
+    );
+  }, [enter, ready, reduceMotion]);
+
+  // A calm float while the page is visible.
   useEffect(() => {
     if (reduceMotion || !focused) {
       cancelAnimation(bob);
       return;
     }
-    bob.value = withDelay(
-      900,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 2600, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 2600, easing: Easing.inOut(Easing.sin) }),
-        ),
-        -1,
+    bob.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2400, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 2400, easing: Easing.inOut(Easing.sin) }),
       ),
+      -1,
     );
     return () => cancelAnimation(bob);
   }, [bob, focused, reduceMotion]);
 
-  // Beats: start once the phone is in, then loop while visible.
-  useEffect(() => {
-    if (reduceMotion || !focused) return;
-    const timer = setTimeout(
-      () => setBeatIndex((index) => (index + 1) % INTRO_BEATS.length),
-      beatIndex < 0 ? FIRST_BEAT_DELAY : BEAT_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [beatIndex, focused, reduceMotion]);
+  const beat = INTRO_BEATS[beatIndex];
 
-  const phoneWidth = Math.floor(
-    Math.min(
-      stage.width * MAX_PHONE_SHARE,
-      MAX_PHONE_WIDTH,
-      stage.height / MIN_VISIBLE / (phoneHeightFor(100) / 100),
-    ),
+  // Camera: per beat, keyframes onto anchors of its screen. The loop starts
+  // from the whole phone again.
+  useEffect(() => {
+    if (!ready) return;
+    if (reduceMotion || !focused) {
+      zoom.value = fitZoom;
+      shift.value = 0;
+      return;
+    }
+    const moveTo = (nextZoom: number, nextShift: number) => {
+      zoom.value = withTiming(nextZoom, {
+        duration: CAMERA_MS,
+        easing: CAMERA_EASING,
+      });
+      shift.value = withTiming(nextShift, {
+        duration: CAMERA_MS,
+        easing: CAMERA_EASING,
+      });
+    };
+    if (!placed.current) {
+      // First frame: the whole phone, no camera move during the entrance.
+      placed.current = true;
+      zoom.value = fitZoom;
+      shift.value = 0;
+    } else if (beatIndex === 0) {
+      moveTo(fitZoom, 0);
+    }
+    const timers = CAMERA[beat].map((key) =>
+      setTimeout(
+        () => {
+          const anchor = anchors.current[`${beat}.${key.anchor}`];
+          if (!anchor) return;
+          const centre =
+            geometry.frame +
+            (anchor.y + anchor.height / 2) * geometry.contentScale;
+          moveTo(key.zoom, -key.zoom * (centre - geometry.height / 2));
+        },
+        // Anchors report on the first layout pass of the beat's screen.
+        Math.max(key.at, 60),
+      ),
+    );
+    timers.push(
+      setTimeout(
+        () => setBeatIndex((index) => (index + 1) % INTRO_BEATS.length),
+        BEAT_MS[beat],
+      ),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [
+    beat,
+    beatIndex,
+    fitZoom,
+    focused,
+    geometry.contentScale,
+    geometry.frame,
+    geometry.height,
+    ready,
+    reduceMotion,
+    shift,
+    zoom,
+  ]);
+
+  const onAnchor = useCallback(
+    (name: string, y: number, height: number) => {
+      anchors.current[`${beat}.${name}`] = { y, height };
+    },
+    [beat],
   );
 
   const phoneStyle = useAnimatedStyle(() => ({
-    opacity: 1 - rise.value * 0.6,
     transform: [
-      { perspective: 900 },
-      { translateY: rise.value * stage.height * 0.9 - bob.value * 6 },
-      { rotateX: `${rise.value * 24}deg` },
-      { rotateZ: `${rise.value * -7 + (bob.value - 0.5) * 0.8}deg` },
-      { scale: 1 - rise.value * 0.06 },
+      { perspective: 1000 },
+      {
+        translateY:
+          enter.value * stage.height * 1.05 + shift.value - bob.value * 4,
+      },
+      { rotateY: `${enter.value * 8 + (bob.value - 0.5) * 1.2}deg` },
+      { rotateX: `${enter.value * 4 + (bob.value - 0.5) * 0.6}deg` },
+      { scale: zoom.value },
     ],
   }));
 
@@ -149,8 +216,6 @@ export const WelcomeView = ({
     const { width, height } = event.nativeEvent.layout;
     setStage({ width, height });
   };
-
-  const beat = beatIndex >= 0 ? INTRO_BEATS[beatIndex] : null;
 
   return (
     <View
@@ -175,41 +240,70 @@ export const WelcomeView = ({
         accessibilityRole="image"
         accessibilityLabel={t("onboarding.welcome.a11y")}
       >
-        {phoneWidth > 0 ? (
-          <Animated.View style={phoneStyle}>
-            <PhoneFrame width={phoneWidth}>
-              {beat ? (
-                <Animated.View
-                  key={`${beat}-${beatIndex}`}
-                  style={styles.flex}
-                  entering={
-                    reduceMotion ? undefined : FadeIn.duration(380).delay(80)
-                  }
-                  exiting={reduceMotion ? undefined : FadeOut.duration(220)}
-                >
-                  <IntroScreen beat={beat} animate={!reduceMotion} />
-                </Animated.View>
-              ) : null}
+        {ready ? (
+          <Animated.View
+            style={[
+              styles.phone,
+              {
+                left: (stage.width - geometry.width) / 2,
+                top: (stage.height - geometry.height) / 2,
+              },
+              phoneStyle,
+            ]}
+          >
+            <PhoneFrame geometry={geometry}>
+              <Animated.View
+                key={`${beat}-${beatIndex}`}
+                style={styles.flex}
+                entering={
+                  reduceMotion ? undefined : FadeIn.duration(320).delay(60)
+                }
+                exiting={reduceMotion ? undefined : FadeOut.duration(200)}
+              >
+                <IntroScreen
+                  beat={beat}
+                  animate={!reduceMotion}
+                  onAnchor={onAnchor}
+                />
+              </Animated.View>
             </PhoneFrame>
           </Animated.View>
         ) : null}
-        <BottomFade color={colors.background} />
+        <EdgeFade color={colors.background} edge="top" />
+        <EdgeFade color={colors.background} edge="bottom" />
       </View>
 
-      <View style={styles.beatLine}>
-        {beat && !reduceMotion ? (
-          <Animated.Text
-            key={beat}
-            entering={FadeInDown.duration(420)}
-            exiting={FadeOutUp.duration(220)}
-            maxFontSizeMultiplier={FontScale.heading}
-            accessibilityLiveRegion="polite"
-            style={[Type.title3, styles.center, { color: colors.text }]}
-          >
-            {t(BEAT_KEYS[beat])}
-          </Animated.Text>
-        ) : null}
-      </View>
+      {reduceMotion ? null : (
+        <View style={styles.beatArea}>
+          <View style={styles.beatLine}>
+            <Animated.Text
+              key={beat}
+              entering={FadeInDown.duration(420)}
+              exiting={FadeOutUp.duration(220)}
+              maxFontSizeMultiplier={FontScale.heading}
+              accessibilityLiveRegion="polite"
+              style={[Type.title2, styles.center, { color: colors.text }]}
+            >
+              {t(BEAT_KEYS[beat])}
+            </Animated.Text>
+          </View>
+          <View style={styles.dots} importantForAccessibility="no">
+            {INTRO_BEATS.map((item, index) => (
+              <View
+                key={item}
+                style={[
+                  styles.dot,
+                  index === beatIndex && styles.dotActive,
+                  {
+                    backgroundColor:
+                      index === beatIndex ? colors.accent : colors.separator,
+                  },
+                ]}
+              />
+            ))}
+          </View>
+        </View>
+      )}
 
       <View
         style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}
@@ -243,18 +337,38 @@ export const WelcomeView = ({
   );
 };
 
-/** The page colour fading in over the bottom edge of the stage. */
-const BottomFade = ({ color }: { color: string }) => (
-  <Svg style={styles.fade} pointerEvents="none">
-    <Defs>
-      <LinearGradient id="introFade" x1="0" y1="0" x2="0" y2="1">
-        <Stop offset="0" stopColor={color} stopOpacity={0} />
-        <Stop offset="1" stopColor={color} stopOpacity={1} />
-      </LinearGradient>
-    </Defs>
-    <Rect x="0" y="0" width="100%" height="100%" fill="url(#introFade)" />
-  </Svg>
-);
+/** The page colour fading in over one edge of the stage. */
+const EdgeFade = ({
+  color,
+  edge,
+}: {
+  color: string;
+  edge: "top" | "bottom";
+}) => {
+  const id = `introFade-${edge}`;
+  return (
+    <Svg
+      style={[styles.fade, edge === "top" ? styles.fadeTop : styles.fadeBottom]}
+      pointerEvents="none"
+    >
+      <Defs>
+        <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <Stop
+            offset="0"
+            stopColor={color}
+            stopOpacity={edge === "top" ? 1 : 0}
+          />
+          <Stop
+            offset="1"
+            stopColor={color}
+            stopOpacity={edge === "top" ? 0 : 1}
+          />
+        </LinearGradient>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${id})`} />
+    </Svg>
+  );
+};
 
 const styles = StyleSheet.create({
   flex: {
@@ -270,31 +384,53 @@ const styles = StyleSheet.create({
   },
   stage: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingTop: 20,
+    marginTop: 8,
     overflow: "hidden",
+  },
+  phone: {
+    position: "absolute",
   },
   fade: {
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0,
     height: FADE,
+  },
+  fadeTop: {
+    top: 0,
+  },
+  fadeBottom: {
+    bottom: 0,
+  },
+  beatArea: {
+    paddingHorizontal: 24,
+    gap: 10,
+    marginTop: 2,
   },
   beatLine: {
     // Room for two lines, so a longer beat never moves the phone.
     minHeight: 56,
     justifyContent: "center",
-    paddingHorizontal: 24,
-    marginTop: 4,
+  },
+  dots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  dotActive: {
+    width: 18,
   },
   center: {
     textAlign: "center",
   },
   footer: {
     paddingHorizontal: 24,
-    paddingTop: 10,
+    paddingTop: 12,
     gap: 2,
   },
   promise: {

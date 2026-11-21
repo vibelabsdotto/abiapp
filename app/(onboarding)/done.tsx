@@ -150,6 +150,15 @@ export default function OnboardingDoneScreen() {
           entering={reduceMotion ? undefined : FadeIn.duration(400)}
           style={styles.goal}
         >
+          {analysis?.requiredAverageOpen != null &&
+          analysis.reachable !== false ? (
+            <Text
+              accessibilityRole="header"
+              style={[Type.title2, styles.center, { color: colors.text }]}
+            >
+              {t("onboarding.done.knowHeading")}
+            </Text>
+          ) : null}
           {/* The goal as a result: the overview's arch in its estimate
               form (dashed), the target grade in the middle. */}
           <GradeHero
@@ -178,7 +187,6 @@ export default function OnboardingDoneScreen() {
                 {t("onboarding.done.needLabel", { grade })}
               </Text>
               <Text
-                accessibilityRole="header"
                 maxFontSizeMultiplier={FontScale.display}
                 style={[
                   NumberType.display,

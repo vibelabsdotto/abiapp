@@ -1,10 +1,14 @@
 // The four screens inside the intro phone, built from the app's own
 // building blocks with fixed example values: the average as the arch
-// (counting up), the courses that count, what the goal takes and the 16
-// states. Laid out at PhoneFrame's logical width (320 pt).
+// (counting up), the courses that count, what the next exam takes and the
+// 16 states. Laid out at PhoneFrame's logical width (290 pt).
+//
+// Each beat also has a camera: keyframes that move and zoom the phone onto
+// one part of its screen (an anchor), like the "stage" pose of a product
+// film. Anchors report their position with onLayout.
 
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import Animated, {
   Easing,
   FadeIn,
@@ -13,6 +17,8 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withSequence,
+  withSpring,
   withTiming,
 } from "react-native-reanimated";
 
@@ -35,27 +41,95 @@ export const INTRO_BEATS: readonly IntroBeat[] = [
   "states",
 ];
 
+/** How long each beat stays on screen. */
+export const BEAT_MS: Record<IntroBeat, number> = {
+  standing: 3800,
+  counts: 3900,
+  needs: 3300,
+  states: 3500,
+};
+
+export interface CameraKey {
+  /** ms after the beat started. */
+  at: number;
+  /** Phone scale relative to its natural width. */
+  zoom: number;
+  /** Anchor whose centre the camera centres. */
+  anchor: string;
+}
+
+export const CAMERA: Record<IntroBeat, CameraKey[]> = {
+  standing: [
+    { at: 650, zoom: 1.3, anchor: "arch" },
+    { at: 2500, zoom: 1.2, anchor: "blocks" },
+  ],
+  counts: [
+    { at: 0, zoom: 1.22, anchor: "matrix" },
+    { at: 2150, zoom: 1.28, anchor: "caption" },
+  ],
+  needs: [
+    { at: 0, zoom: 1.18, anchor: "goal" },
+    { at: 750, zoom: 1.3, anchor: "hero" },
+  ],
+  states: [
+    { at: 0, zoom: 1.2, anchor: "grid" },
+    { at: 2050, zoom: 1.25, anchor: "caption" },
+  ],
+};
+
+export type AnchorMap = Record<string, { y: number; height: number }>;
+type OnAnchor = (name: string, y: number, height: number) => void;
+
 // Example values. The grade always comes from the engine's own scale.
 const DEMO_TOTAL = 612;
 const DEMO_GOAL_TENTHS = 15;
 const DEMO_NEXT_EXAM = 12;
+/** The state the tap lands on in beat 4. */
+const DEMO_STATE = "SN";
+
+/** A direct child of a screen that the camera can centre on. */
+const Anchor = ({
+  name,
+  onAnchor,
+  children,
+  style,
+}: {
+  name: string;
+  onAnchor: OnAnchor;
+  children: React.ReactNode;
+  style?: object;
+}) => (
+  <View
+    style={style}
+    onLayout={(event: LayoutChangeEvent) => {
+      const { y, height } = event.nativeEvent.layout;
+      onAnchor(name, y, height);
+    }}
+  >
+    {children}
+  </View>
+);
 
 /** Ease-out count from 0 to `target` (JS frames; one short run). */
-const useCountUp = (target: number, duration: number, animate: boolean) => {
+const useCountUp = (
+  target: number,
+  duration: number,
+  delay: number,
+  animate: boolean,
+) => {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!animate) return;
     let frame = 0;
-    const start = Date.now();
+    const start = Date.now() + delay;
     const tick = () => {
-      const t = Math.min(1, (Date.now() - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      setValue(Math.round(target * eased));
+      const t = Math.min(1, Math.max(0, (Date.now() - start) / duration));
+      setValue(Math.round(target * (1 - (1 - t) ** 3)));
       if (t < 1) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [target, duration, animate]);
+  }, [target, duration, delay, animate]);
   return animate ? value : target;
 };
 
@@ -72,131 +146,11 @@ const ScreenTitle = ({ title }: { title: string }) => {
   );
 };
 
-// ---------------------------------------------------------------------------
-// Beat 1: where you stand
-// ---------------------------------------------------------------------------
+interface ScreenProps {
+  animate: boolean;
+  onAnchor: OnAnchor;
+}
 
-const StandingScreen = ({ animate }: { animate: boolean }) => {
-  const colors = useThemeStore((state) => state.colors);
-  const { t, locale } = useTranslation();
-  const points = useCountUp(DEMO_TOTAL, 1400, animate);
-  const tenths = gradeFromPoints(points).tenths;
-  const blockI = Math.round((points * 408) / DEMO_TOTAL);
-
-  return (
-    <View style={styles.screen}>
-      <ScreenTitle title={t("tabs.home")} />
-      <View style={styles.hero}>
-        <ArchGauge
-          width={230}
-          progress={points / 900}
-          color={colors.accent}
-          trackColor={colors.separator}
-          surfaceColor={colors.background}
-          strokeRatio={0.055}
-          legRatio={0.42}
-          trackWidth={1}
-          fill="outline"
-          animated={false}
-          markers={[
-            { at: 300 / 900, kind: "tick", color: colors.textSecondary },
-            { at: 823 / 900, kind: "tick", color: colors.textSecondary },
-          ]}
-        >
-          <Text
-            allowFontScaling={false}
-            style={[
-              Type.footnote,
-              styles.center,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("ui.hero.prognosis")}
-          </Text>
-          <Text
-            allowFontScaling={false}
-            style={[
-              NumberType.hero,
-              styles.heroGrade,
-              { color: tenths !== null ? colors.text : colors.textTertiary },
-            ]}
-          >
-            {tenths !== null ? formatGrade(tenths, locale) : "–"}
-          </Text>
-          <Text
-            allowFontScaling={false}
-            style={[
-              Type.subhead,
-              styles.center,
-              styles.tabular,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("ui.hero.totalOf", { points, max: 900 })}
-          </Text>
-        </ArchGauge>
-      </View>
-      <View style={styles.tiles}>
-        {[
-          { label: "Block I", value: blockI, max: 600 },
-          { label: "Block II", value: points - blockI, max: 300 },
-        ].map((tile) => (
-          <View
-            key={tile.label}
-            style={[styles.tile, { backgroundColor: colors.card }]}
-          >
-            <Text
-              allowFontScaling={false}
-              style={[Type.footnote, { color: colors.textSecondary }]}
-            >
-              {tile.label}
-            </Text>
-            <Text
-              allowFontScaling={false}
-              style={[NumberType.title, { color: colors.text }]}
-            >
-              {tile.value}
-              <Text style={[Type.subhead, { color: colors.textSecondary }]}>
-                {` / ${tile.max}`}
-              </Text>
-            </Text>
-          </View>
-        ))}
-      </View>
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
-        {DEMO_ROWS.slice(0, 3).map((row) => (
-          <View key={row.name} style={styles.subjectRow}>
-            <SubjectAvatar
-              name={t(`onboarding.demo.${row.name}`)}
-              color={row.color}
-              size={28}
-            />
-            <Text
-              allowFontScaling={false}
-              numberOfLines={1}
-              style={[Type.body, styles.flex, { color: colors.text }]}
-            >
-              {t(`onboarding.demo.${row.name}`)}
-            </Text>
-            <PointsBadge
-              points={row.cells[3][0]}
-              exact={row.cells[3][0] + 0.4}
-              source="grades"
-              size="small"
-              maxFontScale={1}
-            />
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
-// ---------------------------------------------------------------------------
-// Beat 2: what counts
-// ---------------------------------------------------------------------------
-
-/** Points per half-year; false = not counted in the best inclusion. */
 const DEMO_ROWS: {
   name: string;
   color: string;
@@ -254,6 +208,131 @@ const DEMO_ROWS: {
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Beat 1: where you stand
+// ---------------------------------------------------------------------------
+
+const StandingScreen = ({ animate, onAnchor }: ScreenProps) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t, locale } = useTranslation();
+  const points = useCountUp(DEMO_TOTAL, 1500, 650, animate);
+  const tenths = gradeFromPoints(points).tenths;
+  const blockI = Math.round((points * 408) / DEMO_TOTAL);
+
+  return (
+    <View style={styles.screen}>
+      <ScreenTitle title={t("tabs.home")} />
+      <Anchor name="arch" onAnchor={onAnchor} style={styles.hero}>
+        <ArchGauge
+          width={262}
+          progress={points / 900}
+          color={colors.accent}
+          trackColor={colors.separator}
+          surfaceColor={colors.background}
+          strokeRatio={0.055}
+          legRatio={0.42}
+          trackWidth={1}
+          fill="outline"
+          animated={false}
+          markers={[
+            { at: 300 / 900, kind: "tick", color: colors.textSecondary },
+            { at: 823 / 900, kind: "tick", color: colors.textSecondary },
+          ]}
+        >
+          <Text
+            allowFontScaling={false}
+            style={[
+              Type.footnote,
+              styles.center,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {t("ui.hero.prognosis")}
+          </Text>
+          <Text
+            allowFontScaling={false}
+            style={[
+              NumberType.hero,
+              styles.heroGrade,
+              { color: tenths !== null ? colors.text : colors.textTertiary },
+            ]}
+          >
+            {tenths !== null ? formatGrade(tenths, locale) : "–"}
+          </Text>
+          <Text
+            allowFontScaling={false}
+            style={[
+              Type.subhead,
+              styles.center,
+              styles.tabular,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {t("ui.hero.totalOf", { points, max: 900 })}
+          </Text>
+        </ArchGauge>
+      </Anchor>
+      <Anchor name="blocks" onAnchor={onAnchor} style={styles.tiles}>
+        {[
+          { label: "Block I", value: blockI, max: 600 },
+          { label: "Block II", value: points - blockI, max: 300 },
+        ].map((tile) => (
+          <View
+            key={tile.label}
+            style={[styles.tile, { backgroundColor: colors.card }]}
+          >
+            <Text
+              allowFontScaling={false}
+              style={[Type.subhead, { color: colors.textSecondary }]}
+            >
+              {tile.label}
+            </Text>
+            <Text
+              allowFontScaling={false}
+              numberOfLines={1}
+              style={[NumberType.title, { color: colors.text }]}
+            >
+              {tile.value}
+              <Text style={[Type.subhead, { color: colors.textSecondary }]}>
+                {` / ${tile.max}`}
+              </Text>
+            </Text>
+          </View>
+        ))}
+      </Anchor>
+      <View style={[styles.card, { backgroundColor: colors.card }]}>
+        {DEMO_ROWS.slice(0, 4).map((row) => (
+          <View key={row.name} style={styles.subjectRow}>
+            <SubjectAvatar
+              name={t(`onboarding.demo.${row.name}`)}
+              color={row.color}
+              size={30}
+            />
+            <Text
+              allowFontScaling={false}
+              numberOfLines={1}
+              style={[Type.body, styles.flex, { color: colors.text }]}
+            >
+              {t(`onboarding.demo.${row.name}`)}
+            </Text>
+            <PointsBadge
+              points={row.cells[3][0]}
+              exact={row.cells[3][0] + 0.4}
+              source="grades"
+              size="small"
+              maxFontScale={1}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Beat 2: what counts
+// ---------------------------------------------------------------------------
+
 const DimCell = ({
   points,
   counted,
@@ -269,8 +348,8 @@ const DimCell = ({
   useEffect(() => {
     if (counted) return;
     opacity.value = animate
-      ? withDelay(delay, withTiming(0.28, { duration: 420 }))
-      : 0.28;
+      ? withDelay(delay, withTiming(0.25, { duration: 380 }))
+      : 0.25;
   }, [animate, counted, delay, opacity]);
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return (
@@ -280,184 +359,205 @@ const DimCell = ({
   );
 };
 
+const INCLUSION = {
+  total: DEMO_ROWS.length * 4,
+  count: DEMO_ROWS.reduce(
+    (sum, row) => sum + row.cells.filter(([, inc]) => inc).length,
+    0,
+  ),
+};
+
 /** Block I as subjects x half-years; the courses that don't count fade. */
+const InclusionMatrix = ({ animate }: { animate: boolean }) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
+  let dimIndex = 0;
+  return (
+    <View
+      style={[styles.card, styles.matrix, { backgroundColor: colors.card }]}
+    >
+      <View style={styles.matrixRow}>
+        <View style={styles.matrixName} />
+        {[1, 2, 3, 4].map((index) => (
+          <Text
+            key={index}
+            allowFontScaling={false}
+            style={[
+              Type.caption1,
+              styles.cell,
+              styles.center,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {t("onboarding.demo.halfYear", { index })}
+          </Text>
+        ))}
+      </View>
+      {DEMO_ROWS.map((row) => (
+        <View key={row.name} style={styles.matrixRow}>
+          <View style={styles.matrixName}>
+            <SubjectAvatar
+              name={t(`onboarding.demo.${row.name}`)}
+              color={row.color}
+              size={26}
+            />
+            <Text
+              allowFontScaling={false}
+              numberOfLines={1}
+              style={[Type.subhead, styles.flex, { color: colors.text }]}
+            >
+              {t(`onboarding.demo.${row.name}`)}
+            </Text>
+          </View>
+          {row.cells.map(([points, inc], index) => (
+            <DimCell
+              key={index}
+              points={points}
+              counted={inc}
+              delay={inc ? 0 : 450 + dimIndex++ * 210}
+              animate={animate}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+};
+
+/** The matrix plus its caption, for the mirror page of the story. */
 export const DemoInclusion = ({ animate }: { animate: boolean }) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
-  const total = DEMO_ROWS.length * 4;
-  const counted = DEMO_ROWS.reduce(
-    (sum, row) => sum + row.cells.filter(([, inc]) => inc).length,
-    0,
-  );
-  let dimIndex = 0;
-
   return (
     <View style={styles.inclusion}>
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
-        <View style={styles.matrixRow}>
-          <View style={styles.matrixName} />
-          {[1, 2, 3, 4].map((index) => (
-            <Text
-              key={index}
-              allowFontScaling={false}
-              style={[
-                Type.caption1,
-                styles.cell,
-                styles.center,
-                { color: colors.textSecondary },
-              ]}
-            >
-              {t("onboarding.demo.halfYear", { index })}
-            </Text>
-          ))}
-        </View>
-        {DEMO_ROWS.map((row) => (
-          <View key={row.name} style={styles.matrixRow}>
-            <View style={styles.matrixName}>
-              <SubjectAvatar
-                name={t(`onboarding.demo.${row.name}`)}
-                color={row.color}
-                size={26}
-              />
-              <Text
-                allowFontScaling={false}
-                numberOfLines={1}
-                style={[Type.subhead, styles.flex, { color: colors.text }]}
-              >
-                {t(`onboarding.demo.${row.name}`)}
-              </Text>
-            </View>
-            {row.cells.map(([points, inc], index) => {
-              const delay = inc ? 0 : 450 + dimIndex++ * 160;
-              return (
-                <DimCell
-                  key={index}
-                  points={points}
-                  counted={inc}
-                  delay={delay}
-                  animate={animate}
-                />
-              );
-            })}
-          </View>
-        ))}
-      </View>
+      <InclusionMatrix animate={animate} />
       <Animated.View
-        entering={animate ? FadeIn.delay(1300).duration(400) : undefined}
-        style={styles.legendRow}
+        entering={animate ? FadeIn.delay(1900).duration(400) : undefined}
       >
         <Text
           allowFontScaling={false}
-          style={[Type.headline, { color: colors.accent }]}
+          style={[Type.headline, styles.center, { color: colors.accent }]}
         >
-          {t("onboarding.demo.inclusion", { count: counted, total })}
+          {t("onboarding.demo.inclusion", INCLUSION)}
         </Text>
       </Animated.View>
     </View>
   );
 };
 
-const CountsScreen = ({ animate }: { animate: boolean }) => (
-  <View style={styles.screen}>
-    <ScreenTitle title="Block I" />
-    <DemoInclusion animate={animate} />
-  </View>
-);
+const CountsScreen = ({ animate, onAnchor }: ScreenProps) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
+  return (
+    <View style={styles.screen}>
+      <ScreenTitle title="Block I" />
+      <Anchor name="matrix" onAnchor={onAnchor}>
+        <InclusionMatrix animate={animate} />
+      </Anchor>
+      <Anchor name="caption" onAnchor={onAnchor}>
+        <Animated.View
+          entering={animate ? FadeInDown.delay(1900).duration(450) : undefined}
+          style={styles.captionBlock}
+        >
+          <Text
+            allowFontScaling={false}
+            style={[NumberType.hero, styles.bigCount, { color: colors.accent }]}
+          >
+            {`${INCLUSION.count}/${INCLUSION.total}`}
+          </Text>
+          <Text
+            allowFontScaling={false}
+            style={[Type.title3, styles.center, { color: colors.text }]}
+          >
+            {t("onboarding.demo.inclusion", INCLUSION)}
+          </Text>
+        </Animated.View>
+      </Anchor>
+    </View>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Beat 3: what you still need
 // ---------------------------------------------------------------------------
 
-const NeedsScreen = ({ animate }: { animate: boolean }) => {
+const NeedsScreen = ({ animate, onAnchor }: ScreenProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t, locale } = useTranslation();
   const goalPoints = minPointsForGrade(DEMO_GOAL_TENTHS);
   const grade = formatGrade(DEMO_GOAL_TENTHS, locale);
-  const enter = (delay: number) =>
-    animate ? FadeInDown.delay(delay).duration(420) : undefined;
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title={t("tabs.home")} />
-      <View style={styles.hero}>
-        <ArchGauge
-          width={190}
-          progress={DEMO_TOTAL / 900}
-          color={colors.accent}
-          trackColor={colors.separator}
-          surfaceColor={colors.background}
-          strokeRatio={0.055}
-          legRatio={0.42}
-          trackWidth={1}
-          fill="outline"
-          animated={animate}
-          markers={[{ at: goalPoints / 900, kind: "dot", color: colors.text }]}
+      <ScreenTitle title={t("onboarding.demo.maths")} />
+      <Anchor name="goal" onAnchor={onAnchor}>
+        <View
+          style={[
+            styles.card,
+            styles.goalCard,
+            { backgroundColor: colors.card },
+          ]}
         >
           <Text
             allowFontScaling={false}
-            style={[NumberType.display, styles.center, { color: colors.text }]}
+            style={[Type.headline, styles.center, { color: colors.text }]}
           >
-            {formatGrade(gradeFromPoints(DEMO_TOTAL).tenths ?? 40, locale)}
-          </Text>
-        </ArchGauge>
-      </View>
-      <Animated.View
-        entering={enter(250)}
-        style={[styles.card, styles.goalCard, { backgroundColor: colors.card }]}
-      >
-        <Text
-          allowFontScaling={false}
-          style={[Type.headline, { color: colors.text }]}
-        >
-          {t("home.goal.titleMissing", {
-            grade,
-            points: goalPoints - DEMO_TOTAL,
-          })}
-        </Text>
-      </Animated.View>
-      <Animated.View
-        entering={enter(650)}
-        style={[styles.card, styles.examCard, { backgroundColor: colors.card }]}
-      >
-        <SubjectAvatar
-          name={t("onboarding.demo.maths")}
-          color="slate"
-          size={36}
-        />
-        <View style={styles.flex}>
-          <Text
-            allowFontScaling={false}
-            style={[Type.headline, { color: colors.text }]}
-          >
-            {t("onboarding.demo.maths")}
-          </Text>
-          <Text
-            allowFontScaling={false}
-            style={[Type.subhead, { color: colors.textSecondary }]}
-          >
-            {t("subjects.goal.nextExam")}
+            {t("home.goal.titleMissing", {
+              grade,
+              points: goalPoints - DEMO_TOTAL,
+            })}
           </Text>
         </View>
-        <Animated.View
-          entering={animate ? ZoomIn.delay(1050).springify() : undefined}
+      </Anchor>
+      <Anchor name="hero" onAnchor={onAnchor}>
+        <View
+          style={[
+            styles.card,
+            styles.examHero,
+            { backgroundColor: colors.card },
+          ]}
         >
-          <PointsBadge
-            points={DEMO_NEXT_EXAM}
-            source="grades"
-            showDecimal={false}
-            size="medium"
-            maxFontScale={1}
-          />
-        </Animated.View>
-      </Animated.View>
-      <Animated.View entering={enter(1100)}>
-        <Text
-          allowFontScaling={false}
-          style={[Type.subhead, styles.center, { color: colors.textSecondary }]}
-        >
-          {t("onboarding.demo.atLeast", { points: DEMO_NEXT_EXAM })}
-        </Text>
-      </Animated.View>
+          <View style={styles.examHead}>
+            <SubjectAvatar
+              name={t("onboarding.demo.maths")}
+              color="slate"
+              size={34}
+            />
+            <Text
+              allowFontScaling={false}
+              style={[Type.title3, styles.flex, { color: colors.text }]}
+            >
+              {t("subjects.goal.nextExam")}
+            </Text>
+          </View>
+          <Animated.View
+            entering={
+              animate
+                ? ZoomIn.delay(850).springify().damping(12).stiffness(140)
+                : undefined
+            }
+            // Outline: a prognosis, like PointsBadge's "grades" shape.
+            style={[styles.needBox, { borderColor: colors.accent }]}
+          >
+            <Text
+              allowFontScaling={false}
+              style={[
+                NumberType.hero,
+                styles.needNumber,
+                { color: colors.accent },
+              ]}
+            >
+              {DEMO_NEXT_EXAM}
+            </Text>
+          </Animated.View>
+          <Text
+            allowFontScaling={false}
+            style={[Type.title3, styles.center, { color: colors.text }]}
+          >
+            {t("onboarding.demo.atLeast", { points: DEMO_NEXT_EXAM })}
+          </Text>
+        </View>
+      </Anchor>
     </View>
   );
 };
@@ -466,7 +566,89 @@ const NeedsScreen = ({ animate }: { animate: boolean }) => {
 // Beat 4: 16 states
 // ---------------------------------------------------------------------------
 
-const StatesScreen = ({ animate }: { animate: boolean }) => {
+const StateTile = ({
+  code,
+  index,
+  picked,
+  animate,
+}: {
+  code: string;
+  index: number;
+  picked: boolean;
+  animate: boolean;
+}) => {
+  const colors = useThemeStore((state) => state.colors);
+  const fill = useSharedValue(picked && !animate ? 1 : 0);
+  const ring = useSharedValue(0);
+  useEffect(() => {
+    if (!picked || !animate) return;
+    // The tap: a touch lands on the tile, then the tile fills.
+    ring.value = withDelay(
+      1250,
+      withSequence(
+        withTiming(1, { duration: 160 }),
+        withTiming(0, { duration: 420 }),
+      ),
+    );
+    fill.value = withDelay(1380, withSpring(1, { damping: 14 }));
+  }, [animate, fill, picked, ring]);
+  const fillStyle = useAnimatedStyle(() => ({
+    opacity: fill.value,
+    transform: [{ scale: 0.6 + fill.value * 0.4 }],
+  }));
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: ring.value * 0.35,
+    transform: [{ scale: 1.5 - ring.value * 0.5 }],
+  }));
+
+  return (
+    <Animated.View
+      entering={
+        animate
+          ? ZoomIn.delay(80 + index * 45)
+              .duration(300)
+              .easing(Easing.out(Easing.back(1.6)))
+          : undefined
+      }
+      style={[styles.gridCell, { backgroundColor: colors.card }]}
+    >
+      <Text
+        allowFontScaling={false}
+        style={[NumberType.title, { color: colors.text }]}
+      >
+        {code}
+      </Text>
+      {picked ? (
+        <>
+          <Animated.View
+            style={[
+              styles.gridFill,
+              { backgroundColor: colors.accent },
+              fillStyle,
+            ]}
+          >
+            <Text
+              allowFontScaling={false}
+              style={[NumberType.title, { color: colors.accentForeground }]}
+            >
+              {code}
+            </Text>
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.tapRing,
+              { backgroundColor: colors.textSecondary },
+              ringStyle,
+            ]}
+          />
+        </>
+      ) : null}
+    </Animated.View>
+  );
+};
+
+const StatesScreen = ({ animate, onAnchor }: ScreenProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const states = listStates();
@@ -474,38 +656,29 @@ const StatesScreen = ({ animate }: { animate: boolean }) => {
   return (
     <View style={styles.screen}>
       <ScreenTitle title={t("onboarding.state.title")} />
-      <View style={styles.grid}>
+      <Anchor name="grid" onAnchor={onAnchor} style={styles.grid}>
         {states.map((state, index) => (
-          <Animated.View
+          <StateTile
             key={state.code}
-            entering={
-              animate
-                ? ZoomIn.delay(120 + index * 55)
-                    .duration(320)
-                    .easing(Easing.out(Easing.back(1.6)))
-                : undefined
-            }
-            style={[styles.gridCell, { backgroundColor: colors.card }]}
-          >
-            <Text
-              allowFontScaling={false}
-              style={[NumberType.value, { color: colors.text }]}
-            >
-              {state.code}
-            </Text>
-          </Animated.View>
+            code={state.code}
+            index={index}
+            picked={state.code === DEMO_STATE}
+            animate={animate}
+          />
         ))}
-      </View>
-      <Animated.View
-        entering={animate ? FadeIn.delay(1150).duration(400) : undefined}
-      >
-        <Text
-          allowFontScaling={false}
-          style={[Type.title3, styles.center, { color: colors.text }]}
+      </Anchor>
+      <Anchor name="caption" onAnchor={onAnchor}>
+        <Animated.View
+          entering={animate ? FadeInDown.delay(1850).duration(450) : undefined}
         >
-          {t("onboarding.demo.states")}
-        </Text>
-      </Animated.View>
+          <Text
+            allowFontScaling={false}
+            style={[Type.title1, styles.center, { color: colors.text }]}
+          >
+            {t("onboarding.demo.states")}
+          </Text>
+        </Animated.View>
+      </Anchor>
     </View>
   );
 };
@@ -513,19 +686,21 @@ const StatesScreen = ({ animate }: { animate: boolean }) => {
 export const IntroScreen = ({
   beat,
   animate,
+  onAnchor,
 }: {
   beat: IntroBeat;
   animate: boolean;
+  onAnchor: OnAnchor;
 }) => {
   switch (beat) {
     case "standing":
-      return <StandingScreen animate={animate} />;
+      return <StandingScreen animate={animate} onAnchor={onAnchor} />;
     case "counts":
-      return <CountsScreen animate={animate} />;
+      return <CountsScreen animate={animate} onAnchor={onAnchor} />;
     case "needs":
-      return <NeedsScreen animate={animate} />;
+      return <NeedsScreen animate={animate} onAnchor={onAnchor} />;
     case "states":
-      return <StatesScreen animate={animate} />;
+      return <StatesScreen animate={animate} onAnchor={onAnchor} />;
   }
 };
 
@@ -535,7 +710,7 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
-    paddingTop: 56,
+    paddingTop: 44,
     paddingHorizontal: 14,
     gap: 16,
   },
@@ -550,11 +725,11 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: "center",
-    paddingTop: 6,
+    paddingTop: 4,
   },
   heroGrade: {
-    fontSize: 64,
-    lineHeight: 70,
+    fontSize: 72,
+    lineHeight: 78,
     textAlign: "center",
   },
   tiles: {
@@ -574,6 +749,16 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
   },
+  subjectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 3,
+  },
+  matrix: {
+    gap: 10,
+    paddingVertical: 14,
+  },
   matrixRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -589,41 +774,69 @@ const styles = StyleSheet.create({
     width: 36,
     alignItems: "center",
   },
-  subjectRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 2,
-  },
   inclusion: {
     gap: 16,
   },
-  legendRow: {
+  captionBlock: {
     alignItems: "center",
+    gap: 2,
+    paddingTop: 6,
+  },
+  bigCount: {
+    fontSize: 64,
+    lineHeight: 70,
   },
   goalCard: {
     paddingVertical: 16,
     alignItems: "center",
   },
-  examCard: {
+  examHero: {
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 20,
+  },
+  examHead: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 14,
+    gap: 10,
+    alignSelf: "stretch",
+  },
+  needBox: {
+    borderWidth: 3,
+    borderRadius: 28,
+    borderCurve: "continuous",
+    paddingHorizontal: 34,
+    paddingVertical: 4,
+  },
+  needNumber: {
+    fontSize: 112,
+    lineHeight: 124,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     rowGap: 10,
-    paddingTop: 4,
   },
   gridCell: {
     width: "23%",
-    aspectRatio: 1.1,
+    aspectRatio: 1,
     borderRadius: Radius.control,
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
+  },
+  gridFill: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: Radius.control,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tapRing: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
 });

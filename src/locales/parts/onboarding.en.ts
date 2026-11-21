@@ -37,8 +37,7 @@ export const onboardingEN = {
     },
     worries: {
       title: "What stresses you?",
-      intro:
-        "What stresses you most about the Abitur? Pick everything that applies.",
+      intro: "Pick everything that applies to your Abitur.",
       options: {
         rules: "I don't get the rules",
         inclusion: "I don't know which courses count in the end",
@@ -69,7 +68,7 @@ export const onboardingEN = {
         relaxed: "ease off",
       },
       exams: {
-        text: "Your exams bring a third of your points: 300 of 900. AbiApp shows what each exam does for your average.",
+        text: "Your exams bring a third of your points. AbiApp shows which subjects can be exam subjects and what each exam does for your average.",
         courses: "Courses",
         exams: "Exams",
         share: "{{points}} of 900",
@@ -167,6 +166,7 @@ export const onboardingEN = {
         goal: "Goal {{grade}}",
       },
       heading: "All set",
+      knowHeading: "Now you know what it takes.",
       text: "Enter your first grade. The overview shows your average right away.",
       goalLabel: "Your goal",
       needLabel: "For {{grade}} you need on average",

@@ -42,7 +42,7 @@ export const onboardingDE = {
     },
     worries: {
       title: "Was stresst dich?",
-      intro: "Was stresst dich am Abi am meisten? Wähle alles, was passt.",
+      intro: "Wähle alles, was am Abi auf dich zutrifft.",
       options: {
         rules: "Ich blick bei den Regeln nicht durch",
         inclusion: "Ich weiß nicht, welche Kurse am Ende zählen",
@@ -73,7 +73,7 @@ export const onboardingDE = {
         relaxed: "Druck raus",
       },
       exams: {
-        text: "Deine Prüfungen bringen ein Drittel deiner Punkte: 300 von 900. AbiApp zeigt dir, was jede Prüfung für deinen Schnitt bringt.",
+        text: "Deine Prüfungen bringen ein Drittel deiner Punkte. AbiApp zeigt dir, welche Fächer als Prüfungsfach gehen und was jede Prüfung für deinen Schnitt bringt.",
         courses: "Kurse",
         exams: "Prüfungen",
         share: "{{points}} von 900",
@@ -170,6 +170,7 @@ export const onboardingDE = {
         goal: "Ziel {{grade}}",
       },
       heading: "Alles bereit",
+      knowHeading: "Jetzt weißt du, was du brauchst.",
       text: "Trage deine erste Note ein. Die Übersicht zeigt dir sofort deinen Schnitt.",
       goalLabel: "Dein Ziel",
       needLabel: "Für {{grade}} brauchst du im Schnitt",

@@ -1,13 +1,13 @@
-// PhoneFrame - a phone mockup without a fixed picture frame: bezel, screen
-// and island drawn as views, so it follows light, dark and the accent. The
-// screen content is laid out at a fixed logical width (SCREEN_WIDTH) and
-// scaled down to the frame, so the real UI building blocks keep their
-// proportions at every phone size.
+// PhoneFrame - a plain phone mockup for the intro: thin frame, round
+// corners, no island (the real island sits right above it). Drawn as views,
+// so it follows light, dark and the accent; the frame keeps a visible edge
+// in both modes. The screen content is laid out at a fixed logical width
+// (SCREEN_WIDTH) and scaled to the frame, so the real UI building blocks
+// keep their proportions at every phone size.
 
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
-import { Brand } from "@constants/colors";
 import { useThemeStore } from "@stores/themeStore";
 
 /** Logical width the screen content is laid out at. */
@@ -16,29 +16,39 @@ export const SCREEN_WIDTH = 290;
 export const SCREEN_RATIO = 2.1667;
 export const SCREEN_HEIGHT = Math.round(SCREEN_WIDTH * SCREEN_RATIO);
 
-/** Bezel relative to the frame width. */
-const BEZEL = 0.032;
+/** Frame width relative to the phone width. */
+const FRAME = 0.022;
 
-/** Frame height for a frame width. */
-export const phoneHeightFor = (width: number) => {
-  const bezel = width * BEZEL;
-  return (width - 2 * bezel) * SCREEN_RATIO + 2 * bezel;
+export interface PhoneGeometry {
+  width: number;
+  height: number;
+  frame: number;
+  /** Screen points per logical content point. */
+  contentScale: number;
+}
+
+export const phoneGeometry = (width: number): PhoneGeometry => {
+  const frame = Math.max(3, width * FRAME);
+  const screenWidth = width - 2 * frame;
+  return {
+    width,
+    height: screenWidth * SCREEN_RATIO + 2 * frame,
+    frame,
+    contentScale: screenWidth / SCREEN_WIDTH,
+  };
 };
 
 export const PhoneFrame = ({
-  width,
+  geometry,
   children,
 }: {
-  width: number;
+  geometry: PhoneGeometry;
   children: React.ReactNode;
 }) => {
   const colors = useThemeStore((state) => state.colors);
   const isDark = useThemeStore((state) => state.isDark);
-  const bezel = width * BEZEL;
-  const screenWidth = width - 2 * bezel;
-  const screenHeight = screenWidth * SCREEN_RATIO;
-  const scale = screenWidth / SCREEN_WIDTH;
-  const radius = width * 0.15;
+  const { width, height, frame, contentScale } = geometry;
+  const radius = width * 0.14;
 
   return (
     <View
@@ -46,15 +56,14 @@ export const PhoneFrame = ({
         styles.frame,
         {
           width,
-          height: screenHeight + 2 * bezel,
-          padding: bezel,
+          height,
+          padding: frame,
           borderRadius: radius,
-          // Light: a black phone on the white page. Dark: a dark grey
-          // phone with a hairline edge on the black page.
-          backgroundColor: isDark ? colors.card : colors.text,
-          borderColor: isDark ? colors.separator : "transparent",
+          // Light: an ink frame. Dark: a light grey frame, so the phone
+          // reads on the black page.
+          backgroundColor: isDark ? colors.textTertiary : colors.text,
           shadowColor: colors.text,
-          shadowOpacity: isDark ? 0 : 0.22,
+          shadowOpacity: isDark ? 0 : 0.2,
         },
       ]}
     >
@@ -62,9 +71,7 @@ export const PhoneFrame = ({
         style={[
           styles.screen,
           {
-            width: screenWidth,
-            height: screenHeight,
-            borderRadius: radius - bezel,
+            borderRadius: radius - frame,
             backgroundColor: colors.background,
           },
         ]}
@@ -75,23 +82,12 @@ export const PhoneFrame = ({
             {
               width: SCREEN_WIDTH,
               height: SCREEN_HEIGHT,
-              transform: [{ scale }],
+              transform: [{ scale: contentScale }],
             },
           ]}
         >
           {children}
         </View>
-        <View
-          style={[
-            styles.island,
-            {
-              top: screenWidth * 0.035,
-              width: screenWidth * 0.3,
-              height: screenWidth * 0.088,
-              left: screenWidth * 0.35,
-            },
-          ]}
-        />
       </View>
     </View>
   );
@@ -100,12 +96,12 @@ export const PhoneFrame = ({
 const styles = StyleSheet.create({
   frame: {
     borderCurve: "continuous",
-    borderWidth: StyleSheet.hairlineWidth,
     shadowOffset: { width: 0, height: 18 },
     shadowRadius: 30,
     elevation: 14,
   },
   screen: {
+    flex: 1,
     overflow: "hidden",
     borderCurve: "continuous",
   },
@@ -114,10 +110,5 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     transformOrigin: "top left",
-  },
-  island: {
-    position: "absolute",
-    borderRadius: 999,
-    backgroundColor: Brand.ink,
   },
 });
