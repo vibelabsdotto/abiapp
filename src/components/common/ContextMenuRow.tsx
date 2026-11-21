@@ -10,13 +10,14 @@ import {
   NativeMenu,
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
+import type { MenuSymbol } from "@constants/menuIcons";
 
 export interface ContextMenuRowAction {
   id: string;
   title: string;
   onSelect: () => void;
-  /** SF Symbol name (iOS only). */
-  image?: string;
+  /** Icon, required (SF Symbol on iOS, Lucide drawable on Android). */
+  image: MenuSymbol;
   /** Android drawable resource name. */
   androidImage?: string;
   destructive?: boolean;
@@ -44,7 +45,7 @@ export const ContextMenuRow = ({
   const menuActions: NativeMenuAction[] = actions.map((action) => ({
     id: action.id,
     title: action.title,
-    ...(action.image !== undefined ? { image: action.image } : {}),
+    image: action.image,
     ...(action.androidImage !== undefined
       ? { androidImage: action.androidImage }
       : {}),

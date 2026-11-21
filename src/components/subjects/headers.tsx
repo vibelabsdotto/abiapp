@@ -81,7 +81,55 @@ export const SubjectContext = ({
   );
 };
 
+/**
+ * Top of the subject detail: the subject avatar (the only place the
+ * subject's accent shows here) with level and exam slot in neutral text.
+ * The name is the nav title.
+ */
+export const SubjectHeader = ({
+  subject,
+  levelName,
+}: {
+  subject: SubjectRecord;
+  levelName: string | null;
+}) => {
+  const colors = useThemeStore((state) => state.colors);
+  const line = [levelName, subject.examSlot].filter(Boolean).join(" · ");
+  return (
+    <View style={styles.header}>
+      <SubjectAvatar
+        catalogKey={subject.catalogKey}
+        color={subject.color}
+        name={subject.name}
+        tags={subject.tags}
+        size={44}
+      />
+      {line ? (
+        <Text
+          style={[
+            Type.subhead,
+            styles.headerLine,
+            { color: colors.textSecondary },
+          ]}
+          numberOfLines={2}
+        >
+          {line}
+        </Text>
+      ) : null}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 4,
+  },
+  headerLine: {
+    flexShrink: 1,
+  },
   context: {
     flexDirection: "row",
     alignItems: "center",
@@ -93,5 +141,5 @@ const styles = StyleSheet.create({
   },
 });
 
-/** SF Symbol on iOS, Material drawable on Android (see constants). */
+/** SF Symbol on iOS, Lucide drawable on Android (see constants). */
 export { toolbarIcon } from "@constants/toolbarIcons";

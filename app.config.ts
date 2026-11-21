@@ -14,9 +14,11 @@ const hasIosFirebase = fileExists(IOS_GOOGLE_SERVICES_FILE);
 const hasAndroidFirebase = fileExists(ANDROID_GOOGLE_SERVICES_FILE);
 const hasFirebase = hasIosFirebase || hasAndroidFirebase;
 
-// Brand ink (light) and ink night (dark); see src/constants/colors.ts Brand.
-const BRAND_INK = "#3B3FD8";
-const BRAND_NIGHT = "#0E0F33";
+// Monochrome brand (src/constants/colors.ts Brand) and icon N1 ("1,0"
+// white on ink): ink #0A0A0A for the icon tile, adaptive background and
+// dark splash; paper white for the light splash with the black mark.
+const BRAND_INK = "#0A0A0A";
+const BRAND_PAPER = "#FFFFFF";
 
 type PluginList = NonNullable<ExpoConfig["plugins"]>;
 
@@ -43,8 +45,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.max.mannstein.abisax",
-    // iOS 18+/26 home-screen appearances: opaque night background (dark)
-    // and grayscale on black (tinted, the system applies the tint).
+    // iOS 18+/26 home-screen appearances: the same ink tile in light and
+    // dark, grayscale on black for tinted (the system applies the tint).
     icon: {
       light: "./assets/images/icon.png",
       dark: "./assets/images/icon-dark.png",
@@ -84,10 +86,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         image: "./assets/images/splash-icon.png",
         imageWidth: 128,
-        backgroundColor: BRAND_INK,
+        backgroundColor: BRAND_PAPER,
         dark: {
           image: "./assets/images/splash-icon-dark.png",
-          backgroundColor: BRAND_NIGHT,
+          backgroundColor: BRAND_INK,
         },
       },
     ],
@@ -103,7 +105,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
-    // Brand accent for native Android widgets (alerts, menus, cursor).
+    // Ink accent for native Android widgets (alerts, menus, cursor).
     "./plugins/withAndroidAccent.js",
     // 3-button navigation bar follows the in-app light/dark choice.
     "./plugins/withAndroidNavigationBarTheme.js",

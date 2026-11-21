@@ -13,26 +13,45 @@ import {
 } from "react-native";
 import { MenuView, type MenuAction } from "@react-native-menu/menu";
 
-import { androidMenuIcon } from "@constants/menuIcons";
+import { androidMenuIcon, type MenuSymbol } from "@constants/menuIcons";
 import { useThemeStore } from "@stores/themeStore";
 
-export interface NativeMenuAction {
+interface NativeMenuItem {
   id: string;
   title: string;
   subtitle?: string;
   /** Checkmark state. "none" omits it. */
   state?: "on" | "off" | "none";
-  /** SF Symbol name. Passed to the library on iOS only. */
-  image?: string;
-  /** Android drawable resource name. Defaults to the Material drawable for
-   * `image` (src/constants/menuIcons.ts). Passed on Android only. */
+  /**
+   * Icon, required: SF Symbol name on iOS, mapped to its Lucide drawable on
+   * Android (src/constants/menuIcons.ts). Only symbols of that table
+   * compile.
+   */
+  image: MenuSymbol;
+  /** Android drawable override (rarely needed). Passed on Android only. */
   androidImage?: string;
   destructive?: boolean;
   disabled?: boolean;
-  /** Inline section on iOS; Android renders subactions as a submenu. */
-  displayInline?: boolean;
+  displayInline?: false;
+  /** Android renders subactions as a submenu. */
   subactions?: NativeMenuAction[];
 }
+
+/** Inline section on iOS (a group, not a row): no icon of its own. */
+interface NativeMenuSection {
+  id: string;
+  title: string;
+  displayInline: true;
+  subactions: NativeMenuAction[];
+  subtitle?: undefined;
+  state?: undefined;
+  image?: undefined;
+  androidImage?: undefined;
+  destructive?: undefined;
+  disabled?: undefined;
+}
+
+export type NativeMenuAction = NativeMenuItem | NativeMenuSection;
 
 interface NativeMenuProps {
   trigger: React.ReactNode;
@@ -49,7 +68,7 @@ interface NativeMenuProps {
 }
 
 // Android resolves `image` as a drawable resource: SF Symbol names go through
-// the central Material mapping (unknown drawables would log a stack trace).
+// the central Lucide mapping (unknown drawables would log a stack trace).
 const platformImage = (action: NativeMenuAction): string | undefined =>
   Platform.OS === "ios"
     ? action.image

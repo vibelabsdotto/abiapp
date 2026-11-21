@@ -33,7 +33,7 @@ export const DestructiveAction = ({
         disabled && styles.disabled,
       ]}
     >
-      <Icon sf="trash" fallback={Trash2} size={17} color={colors.destructive} />
+      <Icon icon={Trash2} size={16} color={colors.destructive} />
       <Text style={[Type.body, { color: colors.destructive }]}>{title}</Text>
     </Pressable>
   );

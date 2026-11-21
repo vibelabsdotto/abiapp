@@ -81,7 +81,7 @@ export default function AbiturScreen() {
         {toolbar}
         <ScreenLayout>
           <EmptyState
-            icon={{ sf: "exclamationmark.circle", fallback: CircleAlert }}
+            icon={CircleAlert}
             title={t("home.error.title")}
             message={data.error ?? t("home.error.message")}
           />

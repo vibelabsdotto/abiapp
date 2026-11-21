@@ -1,8 +1,10 @@
+// Not found: the shared empty state (empty arch mark) with one way back.
+
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { Button } from "@components/common";
+import { EmptyState } from "@components/ui";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 
@@ -13,10 +15,14 @@ export default function NotFoundScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>
-        {t("notFound.title")}
-      </Text>
-      <Button title={t("notFound.back")} onPress={() => router.replace("/")} />
+      <EmptyState
+        fill
+        title={t("notFound.title")}
+        action={{
+          title: t("notFound.back"),
+          onPress: () => router.replace("/"),
+        }}
+      />
     </View>
   );
 }
@@ -24,13 +30,5 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    padding: 24,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
   },
 });

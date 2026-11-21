@@ -1,6 +1,6 @@
 // PointsPicker - choose 0-15 points. One row per grade (15 14 13 = 1+ 1 1−
 // ... 0 = 6), large cells with the grade equivalent, haptic feedback.
-// Numbers carry the tier colour; the selected cell is filled solid.
+// Numbers are ink (deficits red); the selected cell is ink-filled.
 
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -70,7 +70,7 @@ export const PointsPicker = ({
                   styles.cell,
                   row.length === 1 && styles.cellWide,
                   {
-                    backgroundColor: selected ? palette.solid : colors.fill,
+                    backgroundColor: selected ? colors.accent : colors.fill,
                   },
                   pressed && !selected && styles.pressed,
                   disabled && styles.disabled,
@@ -80,7 +80,9 @@ export const PointsPicker = ({
                   maxFontSizeMultiplier={FontScale.badge}
                   style={[
                     NumberType.title,
-                    { color: selected ? palette.onSolid : palette.text },
+                    {
+                      color: selected ? colors.accentForeground : palette.text,
+                    },
                   ]}
                 >
                   {points}
@@ -93,7 +95,7 @@ export const PointsPicker = ({
                       styles.grade,
                       {
                         color: selected
-                          ? palette.onSolid
+                          ? colors.accentForeground
                           : colors.textSecondary,
                       },
                     ]}

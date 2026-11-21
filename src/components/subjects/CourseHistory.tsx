@@ -86,12 +86,7 @@ export const CourseHistory = ({
             />
             <View style={styles.mark}>
               {!cell.taken ? (
-                <Icon
-                  sf="minus"
-                  fallback={Minus}
-                  size={13}
-                  color={colors.textTertiary}
-                />
+                <Icon icon={Minus} size={16} color={colors.textTertiary} />
               ) : !hasEvaluation ? null : cell.included ? (
                 weight > 1 ? (
                   <Text
@@ -108,10 +103,9 @@ export const CourseHistory = ({
                   </Text>
                 ) : (
                   <Icon
-                    sf="checkmark"
-                    fallback={Check}
-                    size={13}
-                    weight="bold"
+                    icon={Check}
+                    size={16}
+
                     color={colors.success}
                   />
                 )

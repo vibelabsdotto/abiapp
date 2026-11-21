@@ -1,4 +1,7 @@
 // Chip - short label for course attributes: "LK", "P1", "×2", "Pflicht".
+// Monochrome: neutral grey fill; `accent` is an ink outline (used for
+// "Prognose"); only `error` carries the signal red. `success`/`warning`
+// stay as tones for callers but render neutral.
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -29,10 +32,14 @@ export const Chip = ({
     ChipTone,
     { background: string; text: string; border?: string }
   > = {
-    neutral: { background: colors.fill, text: colors.textSecondary },
-    accent: { background: colors.accentLight, text: colors.accent },
-    success: { background: colors.successFill, text: colors.success },
-    warning: { background: colors.warningFill, text: colors.warning },
+    neutral: { background: colors.fill, text: colors.text },
+    accent: {
+      background: "transparent",
+      text: colors.text,
+      border: colors.text,
+    },
+    success: { background: colors.fill, text: colors.text },
+    warning: { background: colors.fill, text: colors.text },
     error: { background: colors.errorFill, text: colors.error },
     outline: {
       background: "transparent",
@@ -84,7 +91,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     lineHeight: 14,
-    fontWeight: "700",
+    fontWeight: "600",
+    letterSpacing: 0.2,
     fontVariant: ["tabular-nums"],
   },
   labelMedium: {

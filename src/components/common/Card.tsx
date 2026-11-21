@@ -1,4 +1,5 @@
-// Card - rounded surface for grouped content (iOS inset-grouped style).
+// Card - the one card style: light grey fill (near-black in dark), radius
+// 16, no border, no shadow.
 
 import React from "react";
 import {
@@ -11,6 +12,7 @@ import {
 } from "react-native";
 
 import { useThemeStore } from "@stores/themeStore";
+import { Radius } from "@constants/typography";
 
 interface CardProps extends Pick<
   PressableProps,
@@ -60,7 +62,7 @@ export const Card = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: Radius.card,
     borderCurve: "continuous",
     overflow: "hidden",
   },

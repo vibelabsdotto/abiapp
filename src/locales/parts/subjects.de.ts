@@ -253,6 +253,8 @@ export const subjectsDE = {
         "{{exam}} % Klausuren, {{other}} % sonstige Noten. Standard laut Regeln: {{default}} %.",
       color: "Farbe",
       colorAuto: "Automatisch",
+      colorNone: "Keine",
+      colorFooter: "Die Farbe erscheint nur bei diesem Fach.",
       exam: "Prüfungsfach",
       examNone: "keins",
       examChange: "Prüfungsfächer festlegen",

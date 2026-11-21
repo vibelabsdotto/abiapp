@@ -87,12 +87,7 @@ export const WelcomeView = ({ onStart }: { onStart: () => void }) => {
                   { backgroundColor: colors.accentLight },
                 ]}
               >
-                <Icon
-                  sf={promise.sf}
-                  fallback={promise.fallback}
-                  size={20}
-                  color={colors.accent}
-                />
+                <Icon icon={promise.fallback} size={20} color={colors.accent} />
               </View>
               <View style={styles.flex}>
                 <Text style={[Type.headline, { color: colors.text }]}>

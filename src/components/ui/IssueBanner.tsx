@@ -1,4 +1,5 @@
-// IssueBanner - an engine Issue (error/warning/info) as a tinted banner.
+// IssueBanner - an engine Issue: errors in the signal red on a light red
+// fill; warnings and infos neutral (grey card, ink icon).
 // With `onPress` it becomes a button with a chevron (e.g. jump to the fix).
 
 import React from "react";
@@ -36,22 +37,19 @@ export const IssueBanner = ({
 
   const tone = {
     error: {
-      sf: "exclamationmark.octagon.fill" as const,
-      fallback: OctagonAlert,
+      icon: OctagonAlert,
       color: colors.error,
       fill: colors.errorFill,
     },
     warning: {
-      sf: "exclamationmark.triangle.fill" as const,
-      fallback: TriangleAlert,
-      color: colors.warning,
-      fill: colors.warningFill,
+      icon: TriangleAlert,
+      color: colors.text,
+      fill: colors.card,
     },
     info: {
-      sf: "info.circle.fill" as const,
-      fallback: Info,
-      color: colors.info,
-      fill: colors.infoFill,
+      icon: Info,
+      color: colors.text,
+      fill: colors.card,
     },
   }[severity];
 
@@ -61,12 +59,7 @@ export const IssueBanner = ({
 
   const content = (
     <>
-      <Icon
-        sf={tone.sf}
-        fallback={tone.fallback}
-        size={20}
-        color={tone.color}
-      />
+      <Icon icon={tone.icon} size={20} color={tone.color} />
       <View style={styles.text}>
         {title ? (
           <Text style={[Type.subhead, styles.title, { color: tone.color }]}>
@@ -77,10 +70,9 @@ export const IssueBanner = ({
       </View>
       {onPress ? (
         <Icon
-          sf="chevron.right"
-          fallback={ChevronRight}
-          size={13}
-          weight="bold"
+          icon={ChevronRight}
+          size={16}
+
           color={colors.textTertiary}
         />
       ) : null}
@@ -114,9 +106,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: Radius.control + 2,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: Radius.card,
     borderCurve: "continuous",
   },
   pressed: {

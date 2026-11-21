@@ -204,7 +204,7 @@ export default function SubjectsScreen() {
         <ScreenLayout>
           <EmptyState
             fill
-            icon={{ sf: "books.vertical", fallback: BookOpen }}
+            icon={BookOpen}
             title={t("subjects.list.emptyTitle")}
             message={t("subjects.list.emptyMessage")}
             action={{ title: t("subjects.list.add"), onPress: addSubject }}

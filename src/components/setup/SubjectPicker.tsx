@@ -18,6 +18,7 @@ import {
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
 import { Icon, ListRow, Section, SubjectAvatar } from "@components/ui";
+import type { MenuSymbol } from "@constants/menuIcons";
 import { Type } from "@constants/typography";
 import type { RulesetSummary, SubjectField } from "@domain/model";
 import { FIELD_ORDER, type CustomSubjectDraft } from "@hooks/useSetupFlows";
@@ -25,7 +26,7 @@ import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
 
-export const FIELD_SYMBOLS: Record<SubjectField, string> = {
+export const FIELD_SYMBOLS: Record<SubjectField, MenuSymbol> = {
   language: "character.book.closed",
   social: "person.3",
   science: "atom",
@@ -237,12 +238,7 @@ const CustomSubjectForm = ({
           !canAdd && styles.disabled,
         ]}
       >
-        <Icon
-          sf="plus.circle.fill"
-          fallback={Plus}
-          size={22}
-          color={colors.accent}
-        />
+        <Icon icon={Plus} size={24} color={colors.accent} />
         <Text style={[Type.body, { color: colors.accent }]}>
           {t("setup.subjects.addCustom")}
         </Text>

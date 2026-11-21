@@ -1,140 +1,151 @@
-// AbiApp color system. Brand: "Tinte" (fountain-pen ink blue, the colour of
-// German school ink) on calm, ink-tinted neutrals. The points scale reads
-// red (Unterkurs) -> amber -> green -> ink, so the brand accent is also the
-// colour of top marks (13-15 points).
+// AbiApp color system: black on white. The app lives on typography, white
+// space and the arch; colour is reserved for two things only:
+// - red, the single signal colour: deficit (Unterkurs), "nicht bestanden",
+//   errors and destructive actions;
+// - the subject accent a student picks in the subject editor
+//   (src/components/ui/subjects.ts), shown only on that subject.
 //
 // Rules:
-// - Components use only semantic tokens; never hard-code hex values.
+// - Components use only semantic tokens; never hard-code hex values (lint
+//   rule `abiapp/no-hex-colors` in eslint.config.js).
 // - Token names are a contract with the UI lanes: extend, never rename.
-// - Every `*Text` token reaches >= 4.5:1 on `card` and on its `*Fill`;
-//   every `*OnSolid` reaches >= 4.5:1 on its `*Solid`.
+//   `success`, `warning` and `info` stay as names but are neutral ink: met
+//   is a black check mark, hints are neutral with an icon.
+// - Neutrals are true greys (R = G = B), no blue cast.
+// - Contrast (scripts/check-contrast.mts, part of `npm run lint`): every text
+//   token reaches >= 4.5:1 on `background`, `card` and `fill`; every
+//   `*OnSolid` reaches >= 4.5:1 on its `*Solid`.
 
 /** Fixed brand colours (icon, splash, store assets). Not theme-aware. */
 export const Brand = {
-  ink: "#3B3FD8",
-  inkTop: "#464AE6",
-  inkBottom: "#3033C4",
-  inkLight: "#8F94FF",
-  night: "#0E0F33",
+  ink: "#0A0A0A",
+  inkTop: "#0A0A0A",
+  inkBottom: "#0A0A0A",
+  inkLight: "#F5F5F5",
+  night: "#0A0A0A",
   paper: "#FFFFFF",
 } as const;
 
 export const Colors = {
   light: {
-    // Surfaces
-    background: "#F2F3F7",
-    card: "#FFFFFF",
-    muted: "#E6E7EE",
+    // Surfaces: white page, light grey cards without border or shadow.
+    background: "#FFFFFF",
+    card: "#F3F3F3",
+    muted: "#EAEAEA",
     /** Control fill inside cards (segment tracks, empty picker cells). */
-    fill: "#ECEDF3",
+    fill: "#E6E6E6",
 
     // Text
-    text: "#12132B",
-    textSecondary: "#5E6278",
+    text: "#0A0A0A",
+    textSecondary: "#5E5E5E",
     /** Placeholders and decorative numbers only (below 4.5:1). */
-    textTertiary: "#9195A8",
+    textTertiary: "#9E9E9E",
 
-    // Accent (brand ink)
-    accent: "#3B3FD8",
-    accentLight: "#3B3FD81A",
+    // Accent is the text colour itself: black buttons, black selection.
+    accent: "#0A0A0A",
+    /** Secondary button and selected-row fill (grey, never tinted). */
+    accentLight: "#E6E6E6",
     accentForeground: "#FFFFFF",
 
-    // Status
-    success: "#127A43",
-    successFill: "#E6F3EC",
-    warning: "#A35A00",
-    warningFill: "#FBF1E2",
-    error: "#C8262F",
-    errorFill: "#FBE9EA",
-    destructive: "#C8262F",
-    info: "#3B3FD8",
-    infoFill: "#ECEDFB",
+    // Status: only `error`/`destructive` carry colour.
+    success: "#0A0A0A",
+    successFill: "#E6E6E6",
+    warning: "#0A0A0A",
+    warningFill: "#E6E6E6",
+    error: "#C8102E",
+    errorFill: "#FBE8EA",
+    destructive: "#C8102E",
+    info: "#0A0A0A",
+    infoFill: "#E6E6E6",
 
-    // Points scale: 0-4 low (Unterkurs), 5-9 mid, 10-12 good, 13-15 top
-    pointsLowText: "#C8262F",
-    pointsLowFill: "#FBE9EA",
-    pointsLowSolid: "#D0303A",
+    // Points scale. The app draws every value neutral and only 0-4 red
+    // (POINTS_SCALE "neutral" in src/components/ui/points.ts); the Mid/Good/
+    // Top solids are the ink-density variant (13-15 full ink, 10-12 mid
+    // grey, 5-9 light grey), kept for the dev-gallery comparison.
+    pointsLowText: "#C8102E",
+    pointsLowFill: "#FBE8EA",
+    pointsLowSolid: "#C8102E",
     pointsLowOnSolid: "#FFFFFF",
-    pointsMidText: "#A35A00",
-    pointsMidFill: "#FBF1E2",
-    pointsMidSolid: "#F2B13B",
-    pointsMidOnSolid: "#3B2500",
-    pointsGoodText: "#127A43",
-    pointsGoodFill: "#E6F3EC",
-    pointsGoodSolid: "#17824A",
+    pointsMidText: "#0A0A0A",
+    pointsMidFill: "#E6E6E6",
+    pointsMidSolid: "#D4D4D4",
+    pointsMidOnSolid: "#0A0A0A",
+    pointsGoodText: "#0A0A0A",
+    pointsGoodFill: "#E6E6E6",
+    pointsGoodSolid: "#6B6B6B",
     pointsGoodOnSolid: "#FFFFFF",
-    pointsTopText: "#3B3FD8",
-    pointsTopFill: "#ECEDFB",
-    pointsTopSolid: "#3B3FD8",
+    pointsTopText: "#0A0A0A",
+    pointsTopFill: "#E6E6E6",
+    pointsTopSolid: "#0A0A0A",
     pointsTopOnSolid: "#FFFFFF",
-    pointsNoneText: "#8A8EA3",
-    pointsNoneFill: "#ECEDF3",
+    pointsNoneText: "#5E5E5E",
+    pointsNoneFill: "#E6E6E6",
 
     // Gauge
-    gaugeTrack: "#E3E4EE",
+    gaugeTrack: "#E3E3E3",
 
-    // Lines
-    border: "#E3E4EC",
-    separator: "#D5D7E0",
+    // Lines: hairlines only.
+    border: "#E0E0E0",
+    separator: "#D6D6D6",
 
     // Navigation
     tabBar: "#FFFFFF",
-    tabBarInactive: "#6B6F85",
-    tabIndicator: "#3B3FD826",
-    ripple: "#3B3FD833",
+    tabBarInactive: "#6B6B6B",
+    tabIndicator: "#E6E6E6",
+    ripple: "#0000001F",
   },
   dark: {
     background: "#000000",
-    card: "#16171D",
-    muted: "#23242D",
-    fill: "#262833",
+    card: "#141414",
+    muted: "#1C1C1C",
+    fill: "#262626",
 
-    text: "#F4F4F8",
-    textSecondary: "#9A9DB2",
-    textTertiary: "#6A6D80",
+    text: "#F5F5F5",
+    textSecondary: "#A3A3A3",
+    textTertiary: "#6B6B6B",
 
-    accent: "#8F94FF",
-    accentLight: "#8F94FF29",
-    accentForeground: "#0B0C2A",
+    accent: "#F5F5F5",
+    accentLight: "#262626",
+    accentForeground: "#0A0A0A",
 
-    success: "#3DD68C",
-    successFill: "#12321F",
-    warning: "#F5B24D",
-    warningFill: "#3A2A12",
-    error: "#FF6B70",
-    errorFill: "#3A1A1E",
-    destructive: "#FF6B70",
-    info: "#8F94FF",
-    infoFill: "#22244A",
+    success: "#F5F5F5",
+    successFill: "#262626",
+    warning: "#F5F5F5",
+    warningFill: "#262626",
+    error: "#FF6369",
+    errorFill: "#3A1517",
+    destructive: "#FF6369",
+    info: "#F5F5F5",
+    infoFill: "#262626",
 
-    pointsLowText: "#FF6B70",
-    pointsLowFill: "#3A1A1E",
-    pointsLowSolid: "#FF6B70",
-    pointsLowOnSolid: "#2A0507",
-    pointsMidText: "#F5B24D",
-    pointsMidFill: "#3A2A12",
-    pointsMidSolid: "#F5B24D",
-    pointsMidOnSolid: "#2A1A00",
-    pointsGoodText: "#3DD68C",
-    pointsGoodFill: "#12321F",
-    pointsGoodSolid: "#3DD68C",
-    pointsGoodOnSolid: "#04170C",
-    pointsTopText: "#8F94FF",
-    pointsTopFill: "#22244A",
-    pointsTopSolid: "#8F94FF",
-    pointsTopOnSolid: "#0B0C2A",
-    pointsNoneText: "#7C8094",
-    pointsNoneFill: "#23242D",
+    pointsLowText: "#FF6369",
+    pointsLowFill: "#3A1517",
+    pointsLowSolid: "#FF6369",
+    pointsLowOnSolid: "#1A0405",
+    pointsMidText: "#F5F5F5",
+    pointsMidFill: "#262626",
+    pointsMidSolid: "#3A3A3A",
+    pointsMidOnSolid: "#F5F5F5",
+    pointsGoodText: "#F5F5F5",
+    pointsGoodFill: "#262626",
+    pointsGoodSolid: "#8F8F8F",
+    pointsGoodOnSolid: "#000000",
+    pointsTopText: "#F5F5F5",
+    pointsTopFill: "#262626",
+    pointsTopSolid: "#F5F5F5",
+    pointsTopOnSolid: "#0A0A0A",
+    pointsNoneText: "#A3A3A3",
+    pointsNoneFill: "#262626",
 
-    gaugeTrack: "#262838",
+    gaugeTrack: "#2E2E2E",
 
-    border: "#262833",
-    separator: "#2E3040",
+    border: "#262626",
+    separator: "#333333",
 
-    tabBar: "#16171D",
-    tabBarInactive: "#9A9DB2",
-    tabIndicator: "#8F94FF33",
-    ripple: "#8F94FF40",
+    tabBar: "#000000",
+    tabBarInactive: "#8F8F8F",
+    tabIndicator: "#2E2E2E",
+    ripple: "#FFFFFF29",
   },
 } as const;
 

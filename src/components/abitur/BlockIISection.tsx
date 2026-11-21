@@ -17,7 +17,7 @@ import type {
 } from "@domain/model";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
-import type { SFSymbol } from "sf-symbols-typescript";
+import type { MenuSymbol } from "@constants/menuIcons";
 import { useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
 import { FontScale, NumberType, Radius, Type } from "@constants/typography";
@@ -33,7 +33,7 @@ interface BlockIISectionProps {
   variant: ExamVariantInfo | null;
 }
 
-const variantIcon = (variant: ExamVariantInfo): SFSymbol =>
+const variantIcon = (variant: ExamVariantInfo): MenuSymbol =>
   variant.components.some((component) => component.kind === "bll")
     ? "doc.richtext"
     : "list.number";
@@ -109,12 +109,7 @@ export const BlockIISection = ({
               accessibilityLabel={`${t("abitur.blockII.variant")}, ${variant.label}`}
               style={[styles.variant, { backgroundColor: colors.card }]}
             >
-              <Icon
-                sf={variantIcon(variant)}
-                fallback={ListOrdered}
-                size={20}
-                color={colors.accent}
-              />
+              <Icon icon={ListOrdered} size={20} color={colors.accent} />
               <View style={styles.variantValue}>
                 <Text style={[Type.footnote, { color: colors.textSecondary }]}>
                   {t("abitur.blockII.variant")}
@@ -124,9 +119,8 @@ export const BlockIISection = ({
                 </Text>
               </View>
               <Icon
-                sf="chevron.up.chevron.down"
-                fallback={ChevronsUpDown}
-                size={14}
+                icon={ChevronsUpDown}
+                size={16}
                 color={colors.textSecondary}
               />
             </View>

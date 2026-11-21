@@ -251,6 +251,8 @@ export const subjectsEN = {
         "{{exam}} % exams, {{other}} % other grades. Default per the rules: {{default}} %.",
       color: "Color",
       colorAuto: "Automatic",
+      colorNone: "None",
+      colorFooter: "The colour only appears on this subject.",
       exam: "Exam subject",
       examNone: "none",
       examChange: "Choose exam subjects",

@@ -9,12 +9,14 @@ import { useTranslation } from "@locales/index";
 export interface ProgressBarProps {
   value: number;
   max: number;
-  /** Fill colour; defaults to the accent. */
+  /** Fill colour; defaults to ink. */
   color?: string;
   trackColor?: string;
   height?: number;
   /** Threshold values drawn as notches (e.g. minimum points). */
   markers?: number[];
+  /** Colour the notches are cut in (the surface behind the bar). */
+  surfaceColor?: string;
   accessibilityLabel?: string;
 }
 
@@ -23,8 +25,9 @@ export const ProgressBar = ({
   max,
   color,
   trackColor,
-  height = 6,
+  height = 4,
   markers = [],
+  surfaceColor,
   accessibilityLabel,
 }: ProgressBarProps) => {
   const colors = useThemeStore((state) => state.colors);
@@ -68,7 +71,7 @@ export const ProgressBar = ({
             styles.marker,
             {
               left: `${Math.min(1, Math.max(0, marker / max)) * 100}%`,
-              backgroundColor: colors.card,
+              backgroundColor: surfaceColor ?? colors.card,
             },
           ]}
         />

@@ -98,7 +98,7 @@ export default function CourseResultScreen() {
         />
         <EditorScroll>
           <EmptyState
-            icon={{ sf: "books.vertical", fallback: BookOpen }}
+            icon={BookOpen}
             title={t("subjects.common.missingSubject")}
           />
         </EditorScroll>

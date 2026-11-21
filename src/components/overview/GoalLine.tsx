@@ -5,7 +5,7 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import { ChevronRight, Target } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 
 import { Icon, formatGrade } from "@components/ui";
 import type { TargetAnalysis } from "@domain/index";
@@ -92,13 +92,8 @@ export const GoalLine = ({
         pressed && { backgroundColor: colors.fill },
       ]}
     >
-      <View style={[styles.icon, { backgroundColor: colors.accentLight }]}>
-        <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
-      </View>
       <View style={styles.text}>
-        <Text style={[Type.subhead, styles.title, { color: tone }]}>
-          {title}
-        </Text>
+        <Text style={[Type.headline, { color: tone }]}>{title}</Text>
         {message ? (
           <Text style={[Type.footnote, { color: colors.textSecondary }]}>
             {message}
@@ -106,10 +101,9 @@ export const GoalLine = ({
         ) : null}
       </View>
       <Icon
-        sf="chevron.right"
-        fallback={ChevronRight}
-        size={13}
-        weight="bold"
+        icon={ChevronRight}
+        size={16}
+
         color={colors.textTertiary}
       />
     </Pressable>
@@ -121,23 +115,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-  },
-  icon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     flex: 1,
     gap: 2,
-  },
-  title: {
-    fontWeight: "600",
   },
 });

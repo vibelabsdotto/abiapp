@@ -154,12 +154,7 @@ const CatalogPicker = ({
               <View
                 style={[styles.plus, { backgroundColor: colors.accentLight }]}
               >
-                <Icon
-                  sf="plus"
-                  fallback={CirclePlus}
-                  size={18}
-                  color={colors.accent}
-                />
+                <Icon icon={CirclePlus} size={20} color={colors.accent} />
               </View>
             }
             chevron
@@ -201,10 +196,9 @@ const CatalogPicker = ({
                     trailing={
                       isOn ? (
                         <Icon
-                          sf="checkmark"
-                          fallback={Check}
-                          size={18}
-                          weight="bold"
+                          icon={Check}
+                          size={20}
+
                           color={colors.accent}
                         />
                       ) : (
@@ -333,10 +327,9 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
               trailing={
                 item === field ? (
                   <Icon
-                    sf="checkmark"
-                    fallback={Check}
-                    size={18}
-                    weight="bold"
+                    icon={Check}
+                    size={20}
+
                     color={colors.accent}
                   />
                 ) : (

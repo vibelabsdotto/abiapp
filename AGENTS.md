@@ -16,7 +16,7 @@ npm run android
 npm start                   # nur Metro (Dev-Client), Port 8090
 npm run type-check
 npm test                    # Vitest, nur src/domain
-npm run lint
+npm run lint                # ESLint + Kontrast- und Menü-Icon-Check
 npm run format:check
 ```
 
@@ -44,12 +44,17 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 - Routen: Root-Stack in `app/_layout.tsx` registriert alle Modals; das Onboarding steuert `Stack.Protected` über den Profil-Store. Tab-Roots sind eigene Stacks mit Large Title.
 - Texte: `src/locales/de.ts` ist die Quelle der Wahrheit, `en.ts` wird dagegen typgeprüft. Bereichstexte liegen in `src/locales/parts/<bereich>.{de,en}.ts`. Engine-Texte (Checks, Issues, Annahmen) sind deutsch.
 
-## Native UI
+## Native UI und Design
 
+- Look „Schwarz auf Weiß“: neutrale Grautöne, Akzent ist die Textfarbe (Primärbutton schwarz, dark invertiert), Auswahl immer Tinte, nie farbig. Einzige Signalfarbe ist Rot (Defizit, „nicht bestanden“, Fehler, destruktiv). Farben nur über Tokens aus `src/constants/colors.ts` (Namen sind Vertrag, `success`/`warning`/`info` sind neutral); Hex-Literale in `app/**` und `src/components/**` verbietet die Lint-Regel `abiapp/no-hex-colors`. Kontraste prüft `scripts/check-contrast.mts` (Teil von `npm run lint`).
+- Fachfarben sind der einzige Farbtupfer: gespeichert als Palettenschlüssel (`src/components/ui/subjectPalette.ts`, Keys nie umbenennen) oder `null` = neutral. Keine automatische Farbe. Sichtbar nur in `SubjectAvatar` und im Kopf der Fach-Detailseite.
+- Punkteskala: Form statt Farbe. Amtlich gefüllt (grau), Prognose aus Noten als Umriss, Schätzung gestrichelt, 0–4 rot (`POINTS_SCALE` in `src/components/ui/points.ts`). Umriss ist für Prognosen reserviert (auch Chip `tone="accent"`, gestrichelter Bogen im `GradeHero`).
+- Icons in Inhalten: `<Icon icon={LucideIcon} size={16|20|24} color=… />` (Lucide, Strich 1,75 bzw. 2 bei 16). `expo-symbols` ist per Lint gesperrt; SF Symbols leben nur als Namen im nativen Chrome (Menü-`image`, `Stack.Toolbar`). Keine Icons in farbigen Kreisen, Icons nur wo sie beim Scannen helfen.
+- Tab-Bar: Lucide-Template-PNGs aus `scripts/generate-tab-icons.mjs` (macOS, AppKit rendert das SVG).
 - Jeder Screen hat einen nativen Header. Modals nutzen `src/components/common/ModalHeader.tsx` (`Stack.Toolbar`, „Abbrechen“ links, „Sichern“ bzw. „Fertig“ rechts).
-- Menüs nur über `src/components/common/NativeMenu.tsx` bzw. `ContextMenuRow`/`ListRow menu`. **Jede Menüaktion hat ein Icon** (`image`, SF Symbol auf iOS). Der Adapter setzt `imageColor`, sonst sind Icons unter Fabric unsichtbar. SF-Symbole müssen auf iOS 16.4 existieren.
-- Android-Menüicons: Der Adapter übersetzt das SF Symbol über `src/constants/menuIcons.ts` in ein Material-Drawable (`assets/android-menu-icons/`, beim Prebuild per `plugins/withAndroidMenuIcons.js` nach `res/drawable`). Neues Symbol in einem Menü: dort eintragen, `node scripts/generate-android-menu-icons.mjs`, Prebuild und nativer Android-Build. Fehlt der Eintrag, bleibt die Zeile auf Android ohne Icon.
-- UI-Bausteine aus `src/components/ui/` verwenden (PointsBadge, GradeHero, ListRow, SegmentedControl, PointsPicker, CheckRow, …), Farben nur über Tokens aus `src/constants/colors.ts`, Typografie aus `src/constants/typography.ts`.
+- Menüs nur über `src/components/common/NativeMenu.tsx` bzw. `ContextMenuRow`/`ListRow menu`. `image` ist Pflicht und vom Typ `MenuSymbol` (`src/constants/menuIcons.ts`): ein Symbol ohne Android-Icon kompiliert nicht. Der Adapter setzt `imageColor`, sonst sind Icons unter Fabric unsichtbar. SF-Symbole müssen auf iOS 16.4 existieren.
+- Android-Menü- und Toolbar-Icons sind Lucide-VectorDrawables (`assets/android-menu-icons/`, `assets/icons/toolbar/`), erzeugt von `node scripts/generate-android-menu-icons.mjs`, beim Prebuild per `plugins/withAndroidMenuIcons.js` nach `res/drawable`. Neues Symbol: in `MENU_ICONS` eintragen, Skript, Prebuild, nativer Android-Build. Katalog-Symbole aus `src/domain` prüft `scripts/check-menu-icons.mts` (Teil von `npm run lint`).
+- UI-Bausteine aus `src/components/ui/` verwenden (PointsBadge, GradeHero, ListRow, SegmentedControl, PointsPicker, CheckRow, …), Typografie und Radien aus `src/constants/typography.ts` (Karten 16, Controls 12, Badges 8, `borderCurve: "continuous"`). Die Dev-Galerie (`abiapp://dev-gallery`) zeigt alle Bausteine.
 - Prognosen sind immer als Prognose erkennbar (`CourseValue.source`), offene Bedingungen (`passed = null`) als „offen“, nie als nicht erfüllt.
 
 ## Bekannte Workarounds
