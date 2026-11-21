@@ -50,6 +50,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
 - **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben.
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
+- **SL-2027:** Eine Fremdsprache als L-Kurs ist die Pflichtfremdsprache (nur sie zählt als Kernfach); bei zwei G-Kurs-Fremdsprachen bzw. zwei GW- oder NW-Fächern wählt die Engine das günstigere Pflichtfach. SL-2030: 36 Kurse, zwei eA-Prüfungsfächer doppelt, höchstens 20 % unter 5 Punkten (KMK Ziff. 9.5.3–9.5.7), LK-Kombination nur als Warnung.
 - **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13.
 - **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
 

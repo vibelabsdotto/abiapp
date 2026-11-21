@@ -85,8 +85,15 @@ function examSubjectsWithCourses(ctx: RuleContext): EngineSubject[] {
   );
 }
 
+/**
+ * Pflichtfremdsprache (§ 17 Abs. 2 Nr. 1, § 35 Abs. 2): a continued language;
+ * a foreign-language L-Kurs is it, otherwise the student chooses among the
+ * continued G-Kurs languages.
+ */
 function fsList(ctx: RuleContext): EngineSubject[] {
   const fs = continuedLanguages(ctx);
+  const lk = fs.filter((s) => s.level === "elevated");
+  if (lk.length > 0) return lk;
   if (fs.length > 0) return fs;
   return taken(
     ctx,
@@ -311,19 +318,20 @@ export const SL_2027: Ruleset = {
   catalog: catalog(CATALOG),
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Hauptphase 11/1 bis 12/2 (G8) mit zwei L-Kursen. Einer ist Deutsch, Mathematik oder die Pflichtfremdsprache.",
-    "Block I: genau 40 Kurse, alle einfach (auch L-Kurse), E_I = Punktsumme, ohne Rundung.",
-    "Pflicht: alle fünf Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, Pflichtfremdsprache, gesellschaftswissenschaftliches und naturwissenschaftliches Pflichtfach, 2 Kurse Geschichte (bei Erdkunde oder Politik), je 2 Kurse Kunst oder Musik und Religion oder Ethik.",
-    "Zulassung: höchstens 8 Kurse unter 5 Punkten, mindestens 5 der 12 Kernfachkurse mit 5 oder mehr Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
+    "Hauptphase mit zwei L-Kursen, mindestens einer davon Deutsch, Mathematik oder die Pflichtfremdsprache. Am Gymnasium (G8) heißen die Halbjahre 11/1 bis 12/2, an Gemeinschaftsschulen 12/1 bis 13/2. Abitur 2029 gibt es nur dort.",
+    "Block I: genau 40 Kurse, alle einfach (auch L-Kurse), Block I = Punktsumme, ohne Rundung.",
+    "Pflicht: alle fünf Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, Pflichtfremdsprache, gesellschaftswissenschaftliches und naturwissenschaftliches Pflichtfach, 2 Kurse Geschichte (wenn Erdkunde oder Politik das Pflichtfach ist), je 2 Kurse Kunst oder Musik und Religion oder Ethik.",
+    "Eine Fremdsprache als L-Kurs ist deine Pflichtfremdsprache. Bei zwei Fremdsprachen oder zwei Gesellschafts- bzw. Naturwissenschaften als G-Kurs wählt die App das günstigere Pflichtfach.",
+    "Zulassung: höchstens 8 Kurse unter 5 Punkten, mindestens 5 der 12 Kernfachkurse mit 5 oder mehr Punkten, mindestens 200 Punkte. Kurse mit 0 Punkten können nicht eingebracht werden. In einem Prüfungsfach führt schon ein Halbjahr mit 0 Punkten zur Nichtzulassung.",
+    "Seminarfach-Kurse zählen wie andere Kurse. Eine Besondere Lernleistung ersetzt die Seminarfach-Note in zwei Halbjahren.",
     "Block II: P1 bis P4 schriftlich, P5 mündlich, alle vierfach.",
     "Zusätzliche mündliche Prüfung: 4 × (2 × schriftlich + mündlich) / 3, kaufmännisch gerundet. Pflicht, wenn das schriftliche Ergebnis 4 oder mehr Punkte vom Kursschnitt abweicht.",
     "Bestehen: Block II mindestens 100, drei Fächer mit 20 Punkten (darunter ein L-Kurs), ein Kernfach mit 20 Punkten.",
   ],
   sources: [
     {
-      title:
-        "Verordnung über die gymnasiale Oberstufe und die Abiturprüfung im Saarland (GOS-VO)",
-      section: "§§ 13–17, 28, 34, 35, 44–46, 50–52, Anlage 8",
+      title: "GOS-VO Saarland vom 02.07.2007, zuletzt geändert am 08.12.2021",
+      section: "§§ 13–17, 28, 34, 35, 44–46, 50–52, Anlagen 7 und 8",
       url: "https://recht.saarland.de/bssl/document/jlr-NNLSL0000A114",
     },
     {
@@ -424,8 +432,8 @@ export const SL_2030: Ruleset = {
   },
   elevatedSubjects: { min: 3, max: 3 },
   summary: [
-    "Vorläufig: Die neue GOS-VO für den ersten G9-Jahrgang ist noch ein Entwurf. Die App rechnet mit dem KMK-Rahmen.",
-    "Hauptphase 12/1 bis 13/2 mit drei Leistungskursen.",
+    "Vorläufig: Die neue GOS-VO für den ersten G9-Jahrgang (Oberstufe ab 2027/28, erstes Abitur 2030) ist noch ein Entwurf. Die App rechnet mit dem KMK-Rahmen.",
+    "Hauptphase 12/1 bis 13/2 mit drei Leistungskursen. Mindestens zwei sind Kernfächer (Deutsch, Mathematik, fortgeführte Fremdsprache) oder ein Kernfach und eine Naturwissenschaft.",
     "Block I (Annahme): 36 Kurse, zwei LK der schriftlichen eA-Prüfungen doppelt, E_I = Summe / gewichtete Anzahl × 40, ab 0,5 aufgerundet.",
     "Pflicht (Annahme): alle Prüfungsfächer, je 4 Kurse Deutsch, Mathematik und Fremdsprache.",
     "Zulassung: höchstens 20 % der Kurse unter 5 Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
@@ -513,8 +521,36 @@ export const SL_2030: Ruleset = {
       "Annahme: Prüfungsblock und Rundung nach KMK-Rahmen, weil die saarländische Verordnung noch nicht verkündet ist.",
     ],
   },
-  validate: (ctx) => [...validate2030(ctx), ...requireCoreElevated(ctx)],
+  validate: (ctx) => [
+    ...validate2030(ctx),
+    ...requireCoreElevated(ctx),
+    ...lkCombination2030(ctx),
+  ],
 };
+
+/**
+ * Draft (MBK, 29.09.2026): of the three LK at least two are core subjects
+ * (Deutsch, Mathematik, continued foreign language) or one core subject and
+ * a natural science. Only a warning while the regulation is a draft.
+ */
+function lkCombination2030(ctx: RuleContext): Issue[] {
+  const lk = elevatedSubjects(ctx);
+  if (lk.length < 3) return [];
+  const core = lk.filter(
+    (s) =>
+      hasKey(s, "de", "ma") ||
+      (hasTag(s, "foreign_language") && !hasTag(s, "new_foreign_language")),
+  ).length;
+  const nw = lk.filter((s) => hasKey(s, ...NWS)).length;
+  if (core >= 2 || (core >= 1 && nw >= 1)) return [];
+  return [
+    issue(
+      "setup.elevated.combo",
+      "warning",
+      "Laut Entwurf müssen zwei LK Kernfächer sein (Deutsch, Mathematik, fortgeführte Fremdsprache) oder ein Kernfach und eine Naturwissenschaft.",
+    ),
+  ];
+}
 
 function validate2030(ctx: RuleContext): Issue[] {
   const out: Issue[] = [];
