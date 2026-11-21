@@ -1,4 +1,5 @@
 import type { Translations } from "./de";
+import { backupEN } from "./parts/backup.en";
 import { onboardingEN } from "./parts/onboarding.en";
 import { overviewEN } from "./parts/overview.en";
 import { setupEN } from "./parts/setup.en";
@@ -6,6 +7,7 @@ import { subjectsEN } from "./parts/subjects.en";
 
 export const en: Translations = {
   ...setupEN,
+  ...backupEN,
   ...onboardingEN,
   ...subjectsEN,
   ...overviewEN,

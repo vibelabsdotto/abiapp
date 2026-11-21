@@ -1,5 +1,5 @@
-// Settings tab: profile and setup flows, goal, appearance, data (backup,
-// import, delete all), feedback, clipping ("Mitmachen"), about and, in dev
+// Settings tab: profile and setup flows, goal, appearance, cloud backup,
+// data (backup file, import, delete all), feedback, clipping ("Mitmachen"), about and, in dev
 // builds, developer tools.
 // Every menu carries SF Symbols (NativeMenu adapter); destructive actions
 // ask natively first.
@@ -36,6 +36,7 @@ import {
   WandSparkles,
 } from "lucide-react-native";
 
+import { CloudBackupSection, confirmDeleteAllFinal } from "@components/backup";
 import {
   NativeMenu,
   type NativeMenuAction,
@@ -78,6 +79,7 @@ import {
   trackClippingShown,
 } from "@services/analytics/appEvents";
 import { clippingUrl } from "@services/clipping/clipping";
+import { afterDeleteAll } from "@services/cloudBackup/cloudSync";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
 import { useLanguageStore } from "@stores/languageStore";
@@ -231,15 +233,11 @@ export default function SettingsScreen() {
       destructive: true,
     });
     if (!first) return;
-    const second = await confirmAsync({
-      title: t("settings.deleteFinalTitle"),
-      message: t("settings.deleteFinalMessage"),
-      confirm: t("settings.deleteFinalConfirm"),
-      destructive: true,
-    });
+    const second = await confirmDeleteAllFinal();
     if (!second) return;
     try {
       await deleteAllData();
+      await afterDeleteAll(second.deleteCloud);
       useProfileDraft.getState().reset();
       showSuccess(t("settings.deleteDone"));
     } catch (error) {
@@ -447,6 +445,8 @@ export default function SettingsScreen() {
           }
         />
       </Section>
+
+      <CloudBackupSection />
 
       <Section
         title={t("settings.data")}

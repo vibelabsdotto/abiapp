@@ -34,6 +34,29 @@ python3 <skill>/scripts/store_readback.py ios --app 6450996587 --version 2.0.0 -
 python3 <skill>/scripts/store_readback.py android --package com.max.mannstein.abisax --version-code <M> --track internal
 ```
 
+## iCloud (Cloud-Backup)
+
+Das Cloud-Backup nutzt den iCloud Key-Value-Store (`modules/abiapp-cloud`). `app.config.ts` setzt dafür das Entitlement `com.apple.developer.ubiquity-kvstore-identifier` = `$(TeamIdentifierPrefix)$(CFBundleIdentifier)`. Einen Container gibt es nicht und kein CloudKit.
+
+- **App-ID:** Die Fähigkeit ICLOUD (Xcode-6-Variante) ist seit 21.11.2026 an `com.max.mannstein.abisax` aktiv (`asc bundle-ids capabilities list --bundle LD3J684Y4S`).
+- **Profile:** Mit der Änderung wurde das Profil `com.max.mannstein.abisax AppStore 2026-11-21` (Build 23) **INVALID**. Neu angelegt ist `com.max.mannstein.abisax AppStore 2026-11-21 iCloud` (ID `XW582GU9HL`, ACTIVE, gewährt `ubiquity-kvstore-identifier: ZY92V7S3F6.*`).
+  - `vibe-release` sucht ein aktives App-Store-Profil, das jedes Entitlement aus `ios/AbiApp/AbiApp.entitlements` enthält, und findet dieses.
+  - Fehlt es, legt `vibe-release` eines mit dem Namen `<bundle> AppStore <Datum>` an. Am selben Tag wie ein ungültiges gleichnamiges Profil scheitert das mit „Multiple profiles found with the name“. Dann das ungültige Profil löschen oder ein Profil unter anderem Namen anlegen.
+- **Bestehende Builds:** Build 23 ist schon signiert und von der Profiländerung nicht betroffen.
+- **Simulator / Dev-Client:** Lokal ohne Team signiert („Sign to Run Locally“). Der KVS läuft dort ohne Apple-Account nur lokal, die App zeigt „Nicht bei iCloud angemeldet“.
+- **Prüfen nach dem Store-Build:** `codesign -d --entitlements - <App>.app` zeigt den KVS-Schlüssel mit `ZY92V7S3F6.com.max.mannstein.abisax`.
+
+## Android Auto Backup
+
+`plugins/withAndroidBackupRules.js` setzt `allowBackup`, `fullBackupContent` (bis Android 11) und `dataExtractionRules` (ab 12). Gesichert werden `files/SQLite/`, `files/cloud-backup/`, `databases/RKStorage*`; Cache, `shared_prefs` (Firebase-Zustand), OTA-Dateien (`files/.expo-internal`) und `files/dev-cloud` nicht. Nachweis im Emulator mit lokalem Transport:
+
+```sh
+adb shell bmgr enable true
+adb shell bmgr transport com.android.localtransport/.LocalTransport
+adb shell bmgr backupnow com.max.mannstein.abisax
+adb uninstall com.max.mannstein.abisax && adb install <apk>   # Restore beim Installieren
+```
+
 ## Android-Upload-Key (Reset vom 21.11.2026)
 
 Der Upload-Key der alten MAUI-App ist nicht auffindbar. Am 21.11.2026 gegen 01:05 wurde in der Play Console ein Reset auf den neuen Key beantragt (Grund „Upload-Key verloren“). Neues Zertifikat: SHA-1 `34:8C:B7:F8:55:5B:C1:27:29:9E:7C:8E:ED:2C:DB:DE:B6:D6:C3:58`. Der alte Key hatte SHA-1 `8C:D8:D5:62:CB:AB:52:82:33:4D:23:F0:8D:9E:91:0C:44:2F:F1:10`.

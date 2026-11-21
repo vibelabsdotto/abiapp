@@ -4,6 +4,8 @@
 
 import * as backup from "@services/backup/backupService";
 import * as setup from "@stores/setupActions";
+import { devCloud } from "@services/cloudBackup/devCloud";
+import { useCloudBackupStore } from "@stores/cloudBackupStore";
 import { useCourseStore } from "@stores/courseStore";
 import { useExamStore } from "@stores/examStore";
 import { usePreferencesStore } from "@stores/preferencesStore";
@@ -17,12 +19,14 @@ export function registerDevTools(): void {
   (globalThis as { __abiapp?: unknown }).__abiapp = {
     seedDemoData,
     backup,
+    cloud: devCloud,
     setup,
     stores: {
       profile: useProfileStore,
       course: useCourseStore,
       exam: useExamStore,
       preferences: usePreferencesStore,
+      cloudBackup: useCloudBackupStore,
       theme: useThemeStore,
     },
   };

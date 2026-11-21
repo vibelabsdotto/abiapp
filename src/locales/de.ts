@@ -1,6 +1,7 @@
 // German strings. This file is the source of truth for keys and structure;
 // en.ts must satisfy the same shape.
 
+import { backupDE } from "./parts/backup.de";
 import { onboardingDE } from "./parts/onboarding.de";
 import { overviewDE } from "./parts/overview.de";
 import { setupDE } from "./parts/setup.de";
@@ -8,6 +9,7 @@ import { subjectsDE } from "./parts/subjects.de";
 
 export const de = {
   ...setupDE,
+  ...backupDE,
   ...onboardingDE,
   ...subjectsDE,
   ...overviewDE,
