@@ -3,7 +3,14 @@
 // button. Selection marks live in ListRow (`selected`).
 
 import React from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -105,6 +112,8 @@ interface OnboardingStepProps {
    * slides to the new step and a footer button that appears fades in.
    */
   inPlace?: boolean;
+  /** Quiet "Überspringen" top right in the header (story pages). */
+  onSkip?: () => void;
   children: React.ReactNode;
 }
 
@@ -124,6 +133,7 @@ export const OnboardingStep = ({
   footerNote,
   keyboardAware = false,
   inPlace = false,
+  onSkip,
   children,
 }: OnboardingStepProps) => {
   const colors = useThemeStore((state) => state.colors);
@@ -136,7 +146,29 @@ export const OnboardingStep = ({
   // screen's first subview.
   return (
     <>
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen
+        options={{
+          title,
+          // Android drops text-only toolbar items: a header view there.
+          headerRight:
+            onSkip && Platform.OS === "android"
+              ? () => <AndroidSkip onPress={onSkip} />
+              : undefined,
+        }}
+      />
+      {onSkip && Platform.OS === "ios" ? (
+        <Stack.Toolbar placement="right" tintColor={colors.textSecondary}>
+          <Stack.Toolbar.Button
+            variant="plain"
+            hidesSharedBackground
+            tintColor={colors.textSecondary}
+            style={{ color: colors.textSecondary, fontWeight: "400" }}
+            onPress={onSkip}
+          >
+            {t("onboarding.skip")}
+          </Stack.Toolbar.Button>
+        </Stack.Toolbar>
+      ) : null}
       <AndroidKeyboardAvoider enabled={keyboardAware}>
         <ScrollView
           style={[styles.flex, { backgroundColor: colors.background }]}
@@ -259,9 +291,31 @@ export const OnboardingStep = ({
 
 const noop = () => undefined;
 
+const AndroidSkip = ({ onPress }: { onPress: () => void }) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      hitSlop={8}
+      android_ripple={{ color: colors.ripple, borderless: false }}
+      style={styles.skip}
+    >
+      <Text style={[Type.body, { color: colors.textSecondary }]}>
+        {t("onboarding.skip")}
+      </Text>
+    </Pressable>
+  );
+};
+
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+  },
+  skip: {
+    paddingHorizontal: 8,
+    paddingVertical: 10,
   },
   content: {
     paddingHorizontal: 16,

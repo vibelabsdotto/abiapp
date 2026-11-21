@@ -1,5 +1,5 @@
-// Story part of the onboarding: the goal, four questions and the scene
-// that answers each, plus the step numbers of the whole flow. Pure
+// Story part of the onboarding: the goal, the colour, four questions and
+// the scene that answers each (in the chosen colour), plus the step numbers of the whole flow. Pure
 // functions.
 //
 // Question and answer keys are analytics enum values
@@ -57,14 +57,19 @@ export function sceneHeadline(question: Question, answer: Answer): string {
   }
 }
 
-/** Story pages in flow order: the goal, then question and scene in turns. */
+/**
+ * Story pages in flow order: the goal, the colour, then question and scene
+ * in turns.
+ */
 export type StoryPage =
   | { kind: "goal" }
+  | { kind: "accent" }
   | { kind: "question"; question: Question }
   | { kind: "scene"; question: Question };
 
 export const STORY_PAGES: readonly StoryPage[] = [
   { kind: "goal" },
+  { kind: "accent" },
   ...QUESTION_ORDER.flatMap((question): StoryPage[] => [
     { kind: "question", question },
     { kind: "scene", question },
@@ -75,9 +80,11 @@ export const STORY_PAGES: readonly StoryPage[] = [
 export const storyIndex = (page: StoryPage): number =>
   page.kind === "goal"
     ? 0
-    : 1 +
-      QUESTION_ORDER.indexOf(page.question) * 2 +
-      (page.kind === "scene" ? 1 : 0);
+    : page.kind === "accent"
+      ? 1
+      : 2 +
+        QUESTION_ORDER.indexOf(page.question) * 2 +
+        (page.kind === "scene" ? 1 : 0);
 
 /** Counted steps after the story, in flow order. */
 export const SETUP_STEPS = [
@@ -87,7 +94,6 @@ export const SETUP_STEPS = [
   "subjects",
   "levels",
   "exams",
-  "accent",
   "source",
 ] as const;
 export type SetupStep = (typeof SETUP_STEPS)[number];

@@ -14,9 +14,10 @@ import {
 } from "../onboardingStory";
 
 describe("story order", () => {
-  it("starts with the goal, then question and scene in turns", () => {
+  it("starts with goal and colour, then question and scene in turns", () => {
     expect(STORY_PAGES).toEqual([
       { kind: "goal" },
+      { kind: "accent" },
       { kind: "question", question: "explain" },
       { kind: "scene", question: "explain" },
       { kind: "question", question: "focus" },
@@ -71,14 +72,15 @@ describe("stepProgress", () => {
 
   it("counts goal, questions, scenes and setup", () => {
     expect(stepProgress({ kind: "goal" }, null)).toEqual({ step: 1, total });
+    expect(stepProgress({ kind: "accent" }, null)).toEqual({ step: 2, total });
     expect(
       stepProgress({ kind: "question", question: "explain" }, null),
-    ).toEqual({ step: 2, total });
+    ).toEqual({ step: 3, total });
     expect(
       stepProgress({ kind: "scene", question: "calculatedBefore" }, null),
-    ).toEqual({ step: 9, total });
+    ).toEqual({ step: 10, total });
     expect(stepProgress({ kind: "setup", step: "state" }, null)).toEqual({
-      step: 10,
+      step: 11,
       total,
     });
     expect(stepProgress({ kind: "setup", step: "source" }, null)).toEqual({
@@ -88,10 +90,10 @@ describe("stepProgress", () => {
   });
 
   it("drops the story pages after the one skipped from", () => {
-    // Skipped on the first question (index 1): goal and question count.
-    expect(stepProgress({ kind: "setup", step: "state" }, 1)).toEqual({
-      step: 3,
-      total: 2 + SETUP_STEPS.length,
+    // Skipped on the first question (index 2): goal, colour, question.
+    expect(stepProgress({ kind: "setup", step: "state" }, 2)).toEqual({
+      step: 4,
+      total: 3 + SETUP_STEPS.length,
     });
     expect(stepProgress({ kind: "setup", step: "source" }, 0)).toEqual({
       step: 1 + SETUP_STEPS.length,

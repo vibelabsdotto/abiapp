@@ -40,10 +40,7 @@ export default function OnboardingGoalScreen() {
     try {
       chooseTarget(selected);
       await commitTarget();
-      router.push({
-        pathname: "/(onboarding)/story",
-        params: { question: "explain" },
-      });
+      router.push("/(onboarding)/accent");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
@@ -62,13 +59,9 @@ export default function OnboardingGoalScreen() {
         loading: saving,
         onPress: () => void next(),
       }}
-      secondary={{
-        title: t("onboarding.skip"),
-        disabled: saving,
-        onPress: () => {
-          skip({ kind: "goal" });
-          router.push("/(onboarding)/state");
-        },
+      onSkip={() => {
+        skip({ kind: "goal" });
+        router.push("/(onboarding)/state");
       }}
     >
       <StoryHeading

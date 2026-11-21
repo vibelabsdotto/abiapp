@@ -25,8 +25,8 @@ import { EASE_OUT } from "./motion";
 /** How long the card takes to fill on a tap. */
 export const FILL_MS = 170;
 
-export const ANSWER_MIN_HEIGHT = 56;
-export const ANSWER_PADDING = 16;
+export const ANSWER_MIN_HEIGHT = 64;
+export const ANSWER_PADDING = 18;
 
 interface AnswerCardProps {
   title: string;
@@ -79,12 +79,12 @@ export const AnswerCard = ({
       <Animated.View
         style={[styles.card, { backgroundColor: colors.card }, cardStyle]}
       >
-        <Text style={[Type.headline, { color: colors.text }]}>{title}</Text>
+        <Text style={[Type.title3, { color: colors.text }]}>{title}</Text>
         <Animated.View
           pointerEvents="none"
           style={[styles.fill, { backgroundColor: colors.accent }, fillStyle]}
         >
-          <Text style={[Type.headline, { color: colors.accentForeground }]}>
+          <Text style={[Type.title3, { color: colors.accentForeground }]}>
             {title}
           </Text>
         </Animated.View>
@@ -104,7 +104,7 @@ export const AnswerFace = ({
   color: string;
 }) => (
   <View style={[styles.face, { width }]}>
-    <Text style={[Type.headline, { color }]}>{title}</Text>
+    <Text style={[Type.title3, { color }]}>{title}</Text>
   </View>
 );
 
@@ -114,14 +114,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.card,
     borderCurve: "continuous",
     paddingHorizontal: ANSWER_PADDING,
-    paddingVertical: 14,
+    paddingVertical: 16,
     justifyContent: "center",
     overflow: "hidden",
   },
   fill: {
     ...StyleSheet.absoluteFill,
     paddingHorizontal: ANSWER_PADDING,
-    paddingVertical: 14,
+    paddingVertical: 16,
     justifyContent: "center",
   },
   face: {

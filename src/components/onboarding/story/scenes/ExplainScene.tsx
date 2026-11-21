@@ -20,20 +20,20 @@ import { SceneStage, StageText, scatter } from "./parts";
 
 const HERO_H = 226;
 const GAP = 12;
-const BIN_H = 140;
+const BIN_H = 154;
 const BIN_GAP = 10;
-const BADGE_W = 32;
-const BADGE_H = 24;
-const BADGE_GAP = 5;
+const BADGE_W = 42;
+const BADGE_H = 30;
+const BADGE_GAP = 6;
 const PAD = 10;
 const BADGES_TOP = 78;
 const HEIGHT = HERO_H + GAP + BIN_H;
 
 /** Example grades: courses first, then exams. */
-const GRADES = [12, 11, 13, 10, 14, 9, 12, 13, 11, 10, 12, 15, 13, 11, 12, 14];
+const GRADES = [12, 11, 13, 10, 14, 9, 12, 15, 13, 11];
 
 const FLY_START = 250;
-const FLY_STAGGER = 55;
+const FLY_STAGGER = 70;
 const FLY_MS = 760;
 const HERO_AT = 1750;
 const SUM_MS = 1150;
@@ -62,7 +62,9 @@ const layoutBins = (width: number): Bin[] => {
       1,
       Math.floor((bin.width - 2 * PAD + BADGE_GAP) / (BADGE_W + BADGE_GAP)),
     );
-    const slots = Array.from({ length: columns * 2 }, (_, index) => ({
+    // Ten grades at their real size: two rows of courses, one of exams.
+    const rows = bin.key === "courses" ? 2 : 1;
+    const slots = Array.from({ length: columns * rows }, (_, index) => ({
       x: bin.x + PAD + (index % columns) * (BADGE_W + BADGE_GAP),
       y:
         HERO_H +
@@ -195,9 +197,9 @@ const Flying = ({
   points: number;
 }) => {
   const heap = {
-    x: width / 2 - BADGE_W / 2 + scatter(index, 1) * Math.min(190, width * 0.6),
-    y: HERO_H / 2 - BADGE_H / 2 + scatter(index, 2) * 96,
-    rotate: scatter(index, 3) * 46,
+    x: width / 2 - BADGE_W / 2 + scatter(index, 1) * Math.min(230, width * 0.7),
+    y: HERO_H / 2 - BADGE_H / 2 + scatter(index, 2) * 130,
+    rotate: scatter(index, 3) * 40,
   };
   const fly = useCue(
     cue,
@@ -221,7 +223,7 @@ const Flying = ({
   });
   return (
     <Animated.View style={[styles.flying, style]}>
-      <PointsBadge points={points} size="small" maxFontScale={1} />
+      <PointsBadge points={points} maxFontScale={1} />
     </Animated.View>
   );
 };

@@ -34,7 +34,7 @@ export default function OnboardingExamsScreen() {
     try {
       // "Später" keeps whatever is valid so far.
       if (draft.canSave) await draft.save();
-      router.push("/(onboarding)/accent");
+      router.push("/(onboarding)/source");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {

@@ -18,30 +18,29 @@ import { demoSubject } from "../../intro/IntroScreens";
 import { useCue, type Cue } from "../motion";
 import { SceneStage, StageText } from "./parts";
 
-const BAR_TOP = 22;
-const BAR_H = 14;
+const BAR_TOP = 30;
+const BAR_H = 20;
 /** Height of one course term at its maximum (30 points). */
-const UNIT = 38;
-const TILE_W = 40;
+const UNIT = 50;
+const TILE_W = 54;
 const TILE_GAP = 6;
-const COMPARE_TOP = BAR_TOP + BAR_H + 22;
-const COMPARE_H = 2 * UNIT + 40;
+const COMPARE_TOP = BAR_TOP + BAR_H + 20;
+const COMPARE_H = 2 * UNIT + 50;
 const LIST_TOP = COMPARE_TOP + COMPARE_H + 14;
-const ROW_H = 36;
+const ROW_H = 46;
 const SUBJECTS = [
   { name: "german", key: "de" },
   { name: "maths", key: "ma" },
   { name: "english", key: "en" },
 ];
-const HEIGHT = LIST_TOP + 20 + SUBJECTS.length * ROW_H;
+const HEIGHT = LIST_TOP + 22 + SUBJECTS.length * ROW_H;
 
 const COURSES_AT = 150;
 const EXAMS_AT = 750;
-const TILES_AT = 1350;
-const BLOCK_AT = 1750;
-const LIST_AT = 2450;
-const CHECK_AT = 2700;
-const CHECK_STAGGER = 260;
+const TILES_AT = 150;
+const BLOCK_AT = 1450;
+const CHECK_AT = 2300;
+const CHECK_STAGGER = 280;
 
 export const ExamShareScene = ({
   cue,
@@ -83,14 +82,14 @@ const ExamShare = ({ cue, width }: { cue: Cue; width: number }) => {
   return (
     <>
       <View style={styles.barLabels}>
-        <StageText style={[Type.subhead, { color: colors.textSecondary }]}>
+        <StageText style={[Type.body, { color: colors.textSecondary }]}>
           {t("onboarding.story.examShare.courses")}
           <StageText style={[NumberType.value, { color: colors.text }]}>
             {"  600"}
           </StageText>
         </StageText>
         <Animated.View style={examLabelStyle}>
-          <StageText style={[Type.subhead, { color: colors.accent }]}>
+          <StageText style={[Type.body, { color: colors.accent }]}>
             {t("onboarding.story.examShare.exams")}
             <StageText style={[NumberType.value, { color: colors.accent }]}>
               {"  300"}
@@ -130,7 +129,7 @@ const ExamShare = ({ cue, width }: { cue: Cue; width: number }) => {
       </View>
       <Compare cue={cue} />
       <View style={[styles.list, { top: LIST_TOP }]}>
-        <ListHead cue={cue} />
+        <ListHead />
         {SUBJECTS.map((subject, index) => (
           <SubjectCheck
             key={subject.key}
@@ -138,7 +137,6 @@ const ExamShare = ({ cue, width }: { cue: Cue; width: number }) => {
             name={t(`onboarding.demo.${subject.name}`)}
             catalogKey={subject.key}
             delay={CHECK_AT + index * CHECK_STAGGER}
-            rowDelay={LIST_AT + index * 70}
           />
         ))}
       </View>
@@ -170,7 +168,7 @@ const Compare = ({ cue }: { cue: Cue }) => {
             <Tile key={index} cue={cue} index={index} />
           ))}
         </View>
-        <StageText style={[Type.footnote, { color: colors.textSecondary }]}>
+        <StageText style={[Type.subhead, { color: colors.textSecondary }]}>
           {t("onboarding.story.examShare.course")}
         </StageText>
         <StageText
@@ -190,14 +188,14 @@ const Compare = ({ cue }: { cue: Cue }) => {
           >
             <Animated.View style={examTextStyle}>
               <StageText
-                style={[NumberType.value, { color: colors.accentForeground }]}
+                style={[NumberType.title, { color: colors.accentForeground }]}
               >
                 60
               </StageText>
             </Animated.View>
           </Animated.View>
         </View>
-        <StageText style={[Type.footnote, { color: colors.textSecondary }]}>
+        <StageText style={[Type.subhead, { color: colors.textSecondary }]}>
           {t("onboarding.story.examShare.exam")}
         </StageText>
         <StageText
@@ -212,29 +210,27 @@ const Compare = ({ cue }: { cue: Cue }) => {
 
 const Tile = ({ cue, index }: { cue: Cue; index: number }) => {
   const colors = useThemeStore((state) => state.colors);
+  // Present from the first frame; they settle as the bar fills.
   const pop = useCue(cue, 0, 1, TILES_AT + index * 90, 520, "land");
   const style = useAnimatedStyle(() => ({
-    opacity: Math.min(1, pop.value * 2),
-    transform: [{ scale: 0.9 + 0.1 * pop.value }],
+    transform: [{ scale: 0.94 + 0.06 * pop.value }],
   }));
   return (
     <Animated.View
       style={[styles.tile, { backgroundColor: colors.fill }, style]}
     >
-      <StageText style={[NumberType.small, { color: colors.textSecondary }]}>
+      <StageText style={[NumberType.value, { color: colors.textSecondary }]}>
         30
       </StageText>
     </Animated.View>
   );
 };
 
-const ListHead = ({ cue }: { cue: Cue }) => {
+const ListHead = () => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
-  const shown = useCue(cue, 0, 1, LIST_AT - 100, 360, "ease");
-  const style = useAnimatedStyle(() => ({ opacity: shown.value }));
   return (
-    <Animated.View style={[styles.listHead, style]}>
+    <Animated.View style={styles.listHead}>
       <StageText style={[Type.footnote, { color: colors.textSecondary }]}>
         {t("onboarding.story.examShare.examSubject")}
       </StageText>
@@ -247,28 +243,21 @@ const SubjectCheck = ({
   name,
   catalogKey,
   delay,
-  rowDelay,
 }: {
   cue: Cue;
   name: string;
   catalogKey: string;
   delay: number;
-  rowDelay: number;
 }) => {
   const colors = useThemeStore((state) => state.colors);
-  const row = useCue(cue, 0, 1, rowDelay, 420, "ease");
   const check = useCue(cue, 0, 1, delay, 460, "land");
-  const rowStyle = useAnimatedStyle(() => ({
-    opacity: row.value,
-    transform: [{ translateY: 8 * (1 - row.value) }],
-  }));
   const checkStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, check.value * 2),
     transform: [{ scale: 0.6 + 0.4 * check.value }],
   }));
   return (
-    <Animated.View style={[styles.row, rowStyle]}>
-      <SubjectAvatar {...demoSubject(catalogKey)} size={26} />
+    <View style={styles.row}>
+      <SubjectAvatar {...demoSubject(catalogKey)} size={30} />
       <View style={styles.rowName}>
         <StageText style={[Type.body, { color: colors.text }]}>
           {name}
@@ -277,7 +266,7 @@ const SubjectCheck = ({
       <Animated.View style={checkStyle}>
         <Icon icon={Check} size={24} color={colors.accent} />
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -334,7 +323,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   blockClip: {
-    width: TILE_W + 8,
+    width: TILE_W + 10,
     justifyContent: "flex-end",
     overflow: "hidden",
     borderRadius: Radius.badge,
@@ -357,7 +346,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   listHead: {
-    height: 20,
+    height: 22,
     paddingHorizontal: 4,
   },
   row: {

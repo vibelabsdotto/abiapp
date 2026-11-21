@@ -20,12 +20,12 @@ import { useCue, type Cue } from "../motion";
 import { SceneStage, StageText } from "./parts";
 
 const COLUMNS = 4;
-const TILE_H = 44;
+const TILE_H = 52;
 const TILE_GAP = 8;
 const GRID_H = 4 * TILE_H + 3 * TILE_GAP;
-const ROW_H = 44;
+const ROW_H = 52;
 /** Tiles shrink uniformly into the list's code badges. */
-const BADGE_SCALE = 0.74;
+const BADGE_SCALE = 0.7;
 const RULE_TOP = GRID_H + 14;
 const RULE_CLOSED = 68;
 const RULE_OPEN = 112;
@@ -165,7 +165,8 @@ const StateTile = ({
       opacity: span(p, 0.55, 1) * visible,
       transform: [
         { translateX: nameX + 12 * (1 - p) },
-        { translateY: index * ROW_H + (TILE_H - 22) / 2 },
+        // Centred on the badge (scaled about the tile's centre).
+        { translateY: index * ROW_H + (TILE_H * BADGE_SCALE) / 2 - 11 },
       ],
     };
   });

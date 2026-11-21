@@ -51,16 +51,6 @@ const ROWS: { name: string; key: string; cells: [number, boolean][] }[] = [
     ],
   },
   {
-    name: "biology",
-    key: "bio",
-    cells: [
-      [13, true],
-      [7, false],
-      [12, true],
-      [10, true],
-    ],
-  },
-  {
     name: "history",
     key: "ge",
     cells: [
@@ -81,18 +71,19 @@ const COUNTED = ROWS.reduce(
 const BEFORE = 612;
 const AFTER = 613;
 /** The two probes: [row, half-year]. */
-const PROBE_PALE: [number, number] = [4, 0];
+const PROBE_PALE: [number, number] = [3, 0];
 const PROBE_COUNTED: [number, number] = [1, 0];
 
-const CELL_W = 44;
-const ROW_H = 32;
+const CELL_W = 54;
+const ROW_H = 42;
 const HEAD_H = 20;
 const GRID_H = HEAD_H + ROWS.length * ROW_H;
-const PANEL_TOP = GRID_H + 14;
+const LEGEND_TOP = GRID_H + 8;
+const PANEL_TOP = LEGEND_TOP + 30;
 const HEIGHT = PANEL_TOP + 74;
 
 const WAVE_AT = 250;
-const WAVE_STAGGER = 38;
+const WAVE_STAGGER = 45;
 const FADE_AT = 900;
 const PROBE_1 = 1700;
 const PROBE_2 = 2750;
@@ -126,6 +117,8 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const nameWidth = width - 4 * CELL_W;
+  // Full subject names where they fit, the short forms on narrow phones.
+  const names = nameWidth >= 136 ? "onboarding.demo" : "onboarding.demo.short";
   let pale = 0;
 
   return (
@@ -147,9 +140,9 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
       {ROWS.map((row, rowIndex) => (
         <View key={row.name} style={[styles.row, { height: ROW_H }]}>
           <View style={[styles.name, { width: nameWidth }]}>
-            <SubjectAvatar {...demoSubject(row.key)} size={24} />
-            <StageText style={[Type.subhead, { color: colors.text }]}>
-              {t(`onboarding.demo.short.${row.name}`)}
+            <SubjectAvatar {...demoSubject(row.key)} size={30} />
+            <StageText style={[Type.body, { color: colors.text }]}>
+              {t(`${names}.${row.name}`)}
             </StageText>
           </View>
           {row.cells.map(([points, counted], halfYear) => {
@@ -175,6 +168,7 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
           })}
         </View>
       ))}
+      <Legend cue={cue} />
       <Panel cue={cue} />
     </>
   );
@@ -232,7 +226,7 @@ const Cell = ({
   return (
     <View style={styles.cell}>
       <Animated.View style={cellStyle}>
-        <PointsBadge points={shown} size="small" maxFontScale={1} />
+        <PointsBadge points={shown} maxFontScale={1} />
         <Animated.View
           pointerEvents="none"
           style={[styles.lit, { backgroundColor: colors.accent }, litStyle]}
@@ -257,6 +251,36 @@ const Cell = ({
         </Animated.View>
       ) : null}
     </View>
+  );
+};
+
+/** What light and faded mean, once the wave has run. */
+const Legend = ({ cue }: { cue: Cue }) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
+  const shown = useCue(cue, 0, 1, FADE_AT + 200, 420, "ease");
+  const style = useAnimatedStyle(() => ({ opacity: shown.value }));
+  return (
+    <Animated.View style={[styles.legend, { top: LEGEND_TOP }, style]}>
+      <View style={styles.legendItem}>
+        <View style={[styles.swatch, { backgroundColor: colors.accent }]} />
+        <StageText style={[Type.footnote, { color: colors.textSecondary }]}>
+          {t("onboarding.story.focus.counted")}
+        </StageText>
+      </View>
+      <View style={styles.legendItem}>
+        <View
+          style={[
+            styles.swatch,
+            styles.faded,
+            { backgroundColor: colors.fill },
+          ]}
+        />
+        <StageText style={[Type.footnote, { color: colors.textSecondary }]}>
+          {t("onboarding.story.focus.notCounted")}
+        </StageText>
+      </View>
+    </Animated.View>
   );
 };
 
@@ -351,6 +375,25 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     justifyContent: "center",
+  },
+  legend: {
+    position: "absolute",
+    right: 0,
+    flexDirection: "row",
+    gap: 16,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  swatch: {
+    width: 14,
+    height: 14,
+    borderRadius: 4,
+  },
+  faded: {
+    opacity: 0.5,
   },
   panel: {
     position: "absolute",

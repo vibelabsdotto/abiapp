@@ -312,13 +312,9 @@ export const StoryPage = ({
           ? { title: continueLabel, onPress: onContinue }
           : undefined
       }
-      secondary={
+      onSkip={
         onSkip && phase !== "back"
-          ? {
-              title: t("onboarding.skip"),
-              onPress: () =>
-                onSkip(phase === "question" ? "question" : "scene"),
-            }
+          ? () => onSkip(phase === "question" ? "question" : "scene")
           : undefined
       }
     >

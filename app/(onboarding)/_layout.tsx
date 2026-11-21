@@ -1,6 +1,6 @@
-// First-run flow: motion intro (welcome), the story (goal, then four
-// questions, each answered by a scene on the same page), state, year,
-// rules, subjects, level, exams, colour, source, result. Native Stack with large titles and native back. Each step
+// First-run flow: motion intro (welcome), the story (goal, colour, then
+// four questions, each answered by a scene on the same page), state, year,
+// rules, subjects, level, exams, source, result. Native Stack with large titles and native back. Each step
 // saves through setupActions when it advances; going back keeps the
 // choices (draft store + saved data).
 
@@ -30,6 +30,10 @@ export default function OnboardingLayout() {
         options={{ title: "", headerLargeTitleEnabled: false }}
       />
       <Stack.Screen
+        name="accent"
+        options={{ title: "", headerLargeTitleEnabled: false }}
+      />
+      <Stack.Screen
         name="story"
         options={{ title: "", headerLargeTitleEnabled: false }}
       />
@@ -53,10 +57,6 @@ export default function OnboardingLayout() {
       <Stack.Screen
         name="exams"
         options={{ title: t("onboarding.exams.title") }}
-      />
-      <Stack.Screen
-        name="accent"
-        options={{ title: t("onboarding.accent.title") }}
       />
       <Stack.Screen
         name="source"
