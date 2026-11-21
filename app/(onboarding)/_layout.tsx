@@ -30,7 +30,7 @@ export default function OnboardingLayout() {
       />
       <Stack.Screen
         name="mirror"
-        options={{ title: t("onboarding.mirror.you") }}
+        options={{ title: "", headerLargeTitleEnabled: false }}
       />
       <Stack.Screen
         name="state"

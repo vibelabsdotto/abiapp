@@ -30,7 +30,8 @@ export default function OnboardingMirrorScreen() {
 
   return (
     <OnboardingStep
-      title={t("onboarding.mirror.you")}
+      // The quote is the heading of the page; the bar stays small.
+      title=""
       {...progress}
       primary={{
         title: t("onboarding.next"),
@@ -54,15 +55,20 @@ export default function OnboardingMirrorScreen() {
             }
       }
     >
-      <Text
-        accessibilityRole="header"
-        maxFontSizeMultiplier={FontScale.heading}
-        style={[styles.quote, { color: colors.text }]}
-      >
-        {t("onboarding.mirror.quote", {
-          text: t(`onboarding.worries.options.${worry}`),
-        })}
-      </Text>
+      <View style={styles.head}>
+        <Text style={[Type.subhead, { color: colors.textSecondary }]}>
+          {t("onboarding.mirror.you")}
+        </Text>
+        <Text
+          accessibilityRole="header"
+          maxFontSizeMultiplier={FontScale.heading}
+          style={[styles.quote, { color: colors.text }]}
+        >
+          {t("onboarding.mirror.quote", {
+            text: t(`onboarding.worries.options.${worry}`),
+          })}
+        </Text>
+      </View>
       <MirrorVisual worry={worry} />
       <View style={styles.answer}>
         <Text style={[Type.body, { color: colors.text }]}>
@@ -74,9 +80,12 @@ export default function OnboardingMirrorScreen() {
 }
 
 const styles = StyleSheet.create({
-  quote: {
-    ...Type.title1,
+  head: {
+    gap: 6,
     paddingHorizontal: 4,
+  },
+  quote: {
+    ...Type.largeTitle,
   },
   answer: {
     paddingHorizontal: 4,

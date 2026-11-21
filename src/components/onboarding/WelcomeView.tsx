@@ -31,7 +31,7 @@ import Animated, {
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { Button } from "@components/common/Button";
-import { FontScale, Type } from "@constants/typography";
+import { Type } from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 
@@ -51,6 +51,11 @@ const MAX_PHONE_WIDTH = 330;
 /** Height of the fades at the stage edges. */
 const FADE = 56;
 const CAMERA_MS = 750;
+/**
+ * Claim and beat line are display text already; capped lower than body
+ * text so large Dynamic Type sizes leave the stage room for the phone.
+ */
+const DISPLAY_SCALE = 1.2;
 /** How deep into a fade a phone edge may reach in a close-up (share). */
 const EDGE_IN_FADE = 0.4;
 const MAX_ZOOM = 1.45;
@@ -242,7 +247,7 @@ export const WelcomeView = ({
       <Text
         accessibilityRole="header"
         accessibilityLabel={t("onboarding.welcome.claim").replace(/\n/g, " ")}
-        maxFontSizeMultiplier={FontScale.heading}
+        maxFontSizeMultiplier={DISPLAY_SCALE}
         style={[styles.claim, { color: colors.text }]}
       >
         {t("onboarding.welcome.claim")}
@@ -295,7 +300,7 @@ export const WelcomeView = ({
               key={beat}
               entering={FadeInDown.duration(420)}
               exiting={FadeOutUp.duration(220)}
-              maxFontSizeMultiplier={FontScale.heading}
+              maxFontSizeMultiplier={DISPLAY_SCALE}
               accessibilityLiveRegion="polite"
               style={[Type.title2, styles.center, { color: colors.text }]}
             >

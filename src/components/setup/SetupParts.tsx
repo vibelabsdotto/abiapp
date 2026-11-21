@@ -160,17 +160,6 @@ export const OnboardingStep = ({
                       total: totalSteps,
                     })}
                   />
-                  <Text
-                    importantForAccessibility="no"
-                    accessibilityElementsHidden
-                    style={[
-                      Type.footnote,
-                      styles.step,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {t("onboarding.step", { step, total: totalSteps })}
-                  </Text>
                 </View>
               ) : null}
               {intro ? <IntroText text={intro} /> : null}
@@ -275,9 +264,6 @@ const styles = StyleSheet.create({
   progress: {
     gap: 8,
     marginBottom: 4,
-  },
-  step: {
-    fontWeight: "600",
   },
   intro: {},
   footer: {
