@@ -11,6 +11,7 @@ import { ExpoRouterFeatureRequestsScreen } from "@vibelabsdotto/featurama-rn-exp
 
 import { FEATURAMA_API_KEY, FEATURAMA_BASE_URL } from "@constants/config";
 import { useTranslation } from "@locales/index";
+import { useLanguageStore } from "@stores/languageStore";
 import { useThemeStore } from "@stores/themeStore";
 
 export default function FeatureRequests() {
@@ -18,15 +19,27 @@ export default function FeatureRequests() {
   const colors = useThemeStore((state) => state.colors);
   const isDark = useThemeStore((state) => state.isDark);
   const { t } = useTranslation();
+  // The SDK picks the device language otherwise (English on an English
+  // device even when AbiApp runs in German).
+  const language = useLanguageStore((state) => state.currentLanguage);
 
+  // Full SDK theme in app tokens: ink accent, grey fills, no tint.
   const theme = useMemo(
     () => ({
       background: colors.background,
       card: colors.card,
+      secondary: colors.fill,
       text: colors.text,
       textSecondary: colors.textSecondary,
-      border: colors.border,
+      accent: colors.accent,
+      accentLight: colors.accentLight,
       accentForeground: colors.accentForeground,
+      border: colors.border,
+      borderAccent: colors.text,
+      gray100: colors.fill,
+      warning: colors.text,
+      warningLight: colors.fill,
+      warningText: colors.text,
     }),
     [colors],
   );
@@ -47,6 +60,7 @@ export default function FeatureRequests() {
       config={{ apiKey: FEATURAMA_API_KEY, baseUrl: FEATURAMA_BASE_URL }}
     >
       <ExpoRouterFeatureRequestsScreen
+        locale={language}
         colorScheme={isDark ? "dark" : "light"}
         accentColor={colors.accent}
         theme={theme}

@@ -12,11 +12,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import {
-  SegmentedControl,
-  SubjectAvatar,
-  resolveSubjectColor,
-} from "@components/ui";
+import { SegmentedControl, SubjectAvatar } from "@components/ui";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useThemeStore } from "@stores/themeStore";
@@ -86,8 +82,9 @@ export const SubjectContext = ({
 };
 
 /**
- * Top of the subject detail: the subject avatar (the subject's accent, if
- * one was picked) with level and exam slot. The name is the nav title.
+ * Top of the subject detail: the subject avatar (the only place the
+ * subject's accent shows here) with level and exam slot in neutral text.
+ * The name is the nav title.
  */
 export const SubjectHeader = ({
   subject,
@@ -97,8 +94,6 @@ export const SubjectHeader = ({
   levelName: string | null;
 }) => {
   const colors = useThemeStore((state) => state.colors);
-  const isDark = useThemeStore((state) => state.isDark);
-  const accent = resolveSubjectColor(subject.color, isDark);
   const line = [levelName, subject.examSlot].filter(Boolean).join(" · ");
   return (
     <View style={styles.header}>
@@ -114,7 +109,7 @@ export const SubjectHeader = ({
           style={[
             Type.subhead,
             styles.headerLine,
-            { color: accent ?? colors.textSecondary },
+            { color: colors.textSecondary },
           ]}
           numberOfLines={2}
         >
@@ -134,7 +129,6 @@ const styles = StyleSheet.create({
   },
   headerLine: {
     flexShrink: 1,
-    fontWeight: "600",
   },
   context: {
     flexDirection: "row",

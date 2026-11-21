@@ -126,6 +126,21 @@ export default function DevGalleryScreen() {
         }}
       />
       <ScreenLayout contentContainerStyle={styles.content}>
+        <Section title="Bogen: amtlich, Prognose, Schätzung" variant="plain">
+          {(["official", "prognosis", "estimate"] as const).map((basis) => (
+            <GradeHero
+              key={basis}
+              gradeTenths={16}
+              totalPoints={720}
+              predicted={basis !== "official"}
+              basis={basis}
+              passed
+              goalTenths={18}
+              goalPoints={679}
+            />
+          ))}
+        </Section>
+
         <Section
           title="Punkteskala im Raster"
           footer="Oben Tintendichte (13–15 schwarz, 10–12 grau, 5–9 hell, 0–4 rot), unten alles neutral und nur Defizite rot. Gefüllt = amtlich, Umriss = Prognose, gestrichelt = Schätzung."
