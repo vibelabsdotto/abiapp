@@ -9,7 +9,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { Button } from "@components/common/Button";
-import { FontScale, NumberType, Radius, Type } from "@constants/typography";
+import {
+  FontScale,
+  NumberType,
+  Radius,
+  Type,
+  readableContent,
+} from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 
@@ -111,7 +117,7 @@ export const OnboardingStep = ({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           automaticallyAdjustKeyboardInsets={keyboardAware}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, readableContent]}
         >
           {step !== undefined || intro ? (
             <View style={styles.head}>
