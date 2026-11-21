@@ -1,6 +1,6 @@
 // EmptyState - what a screen shows before there is data: a mark, one line
 // that says what is missing, one sentence on the next step, one action.
-// Default mark: the empty AbiApp arch.
+// Default mark: the empty GradeHero arch (hollow, dashed).
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -40,13 +40,18 @@ export const EmptyState = ({
     (icon ? (
       <Icon icon={icon} size={24} color={colors.textSecondary} />
     ) : (
+      // The empty GradeHero arch, small: a hollow band with a dashed
+      // contour (the shape of "noch offen"), nothing filled yet.
       <ArchGauge
-        width={64}
-        progress={0}
-        strokeRatio={0.5}
-        legRatio={0.85}
-        color={colors.text}
-        trackColor={colors.gaugeTrack}
+        width={72}
+        progress={1}
+        strokeRatio={0.14}
+        legRatio={0.42}
+        fill="dashed"
+        contourWidth={1.5}
+        color={colors.textTertiary}
+        trackColor="transparent"
+        surfaceColor="transparent"
         animated={false}
       />
     ));
