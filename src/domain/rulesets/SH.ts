@@ -144,27 +144,25 @@ function requirements(ctx: RuleContext): Requirement[] {
     });
   }
   reqs.push(oneOf("ge", "4 Ergebnisse Geschichte", byKey(ctx, "ge"), 4));
-  // Best 2 of the union Geographie + Wirtschaft/Politik, as explicit picks so
-  // they count as mandatory places (§ 32 Abs. 3 S. 3 extends N with them).
-  const geoWipo = byKey(ctx, "geo", "pol");
   const geoWipoLabel = "2 Ergebnisse aus Geographie und Wirtschaft/Politik";
+  const geoWipoShort = "Geographie/Wirtschaft-Politik";
   reqs.push({
     id: "geoWipo",
     label: geoWipoLabel,
-    short: "Geographie/Wirtschaft-Politik",
+    short: geoWipoShort,
     options: [
-      ...geoWipo.map((s) => ({
-        label: `${s.name} (2)`,
-        picks: [{ subjectId: s.id, count: 2 }],
-      })),
-      ...(geoWipo.length === 2
-        ? [
-            {
-              label: geoWipo.map((s) => s.name).join(" und "),
-              picks: geoWipo.map((s) => ({ subjectId: s.id, count: 1 })),
-            },
-          ]
-        : []),
+      {
+        picks: [],
+        groupMins: [
+          {
+            id: "geoWipo",
+            label: geoWipoLabel,
+            short: geoWipoShort,
+            subjectIds: byKey(ctx, "geo", "pol").map((s) => s.id),
+            count: 2,
+          },
+        ],
+      },
     ],
   });
   reqs.push(

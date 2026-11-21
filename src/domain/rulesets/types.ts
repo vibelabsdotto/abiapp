@@ -208,8 +208,9 @@ export interface BlockIRules {
   minPoints: number;
   /**
    * Number of Block I places (min = max for a fixed count). With
-   * extendToMandatory, more mandatory places than `max` raise N instead of
-   * failing (SH § 32 Abs. 3).
+   * extendToMandatory, more mandatory places than `max` (picks and the
+   * fewest courses that fulfil the sum rules) raise N instead of failing
+   * (SH § 32 Abs. 3).
    */
   count: { min: number; max: number; extendToMandatory?: boolean };
   weightings(ctx: RuleContext): WeightingOption[];
