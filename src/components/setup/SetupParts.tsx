@@ -2,7 +2,7 @@
 // code, exam slot) and the onboarding step scaffold with a pinned footer
 // button. Selection marks live in ListRow (`selected`).
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -118,6 +118,11 @@ interface OnboardingStepProps {
    * the stage takes the room between heading and text).
    */
   fill?: boolean;
+  /**
+   * With `fill`: reports the height the content has on screen, between the
+   * progress head and the footer. Story scenes fit their stage into it.
+   */
+  onRoom?: (height: number) => void;
   /** Quiet "Überspringen" top right in the header (story pages). */
   onSkip?: () => void;
   children: React.ReactNode;
@@ -140,6 +145,7 @@ export const OnboardingStep = ({
   keyboardAware = false,
   inPlace = false,
   fill = false,
+  onRoom,
   onSkip,
   children,
 }: OnboardingStepProps) => {
@@ -148,9 +154,21 @@ export const OnboardingStep = ({
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const [viewport, setViewport] = useState(0);
+  const [headHeight, setHeadHeight] = useState(0);
   // iOS insets the content by the header (contentInsetAdjustment): the
   // room to fill is the scroll view minus the header.
   const fillHeight = viewport - (Platform.OS === "ios" ? headerHeight : 0);
+  const room =
+    fill && fillHeight > 0 && headHeight > 0
+      ? fillHeight -
+        CONTENT_PADDING_TOP -
+        CONTENT_PADDING_BOTTOM -
+        headHeight -
+        CONTENT_GAP
+      : 0;
+  useEffect(() => {
+    if (room > 0) onRoom?.(room);
+  }, [room, onRoom]);
   const hasFooter = Boolean(primary || primaryMenu || secondary || footerNote);
 
   // ScrollView and footer are direct children of the screen (fragment):
@@ -205,7 +223,14 @@ export const OnboardingStep = ({
           ]}
         >
           {step !== undefined || intro ? (
-            <View style={styles.head}>
+            <View
+              style={styles.head}
+              onLayout={
+                fill
+                  ? (event) => setHeadHeight(event.nativeEvent.layout.height)
+                  : undefined
+              }
+            >
               {step !== undefined && totalSteps ? (
                 <View style={styles.progress}>
                   <ProgressBar
@@ -327,6 +352,10 @@ const AndroidSkip = ({ onPress }: { onPress: () => void }) => {
   );
 };
 
+const CONTENT_PADDING_TOP = 8;
+const CONTENT_PADDING_BOTTOM = 24;
+const CONTENT_GAP = 24;
+
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
@@ -337,9 +366,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
-    gap: 24,
+    paddingTop: CONTENT_PADDING_TOP,
+    paddingBottom: CONTENT_PADDING_BOTTOM,
+    gap: CONTENT_GAP,
   },
   head: {
     gap: 6,

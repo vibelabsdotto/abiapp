@@ -22,6 +22,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  PixelRatio,
   StyleSheet,
   Text,
   View,
@@ -73,6 +74,12 @@ const ENTER_DELAY = 200;
 /** Share of the clock between two cascaded elements. */
 const LEAVE_STAGGER = 0.09;
 const ENTER_STAGGER = 0.16;
+/** Above this Dynamic Type scale the page scrolls instead of shrinking. */
+const LARGE_TYPE = 1.3;
+/** The stage never shrinks below this share of its size. */
+const MIN_STAGE_SCALE = 0.55;
+/** Below this room (pt) the scenes show their compact form. */
+const COMPACT_ROOM = 520;
 /** Space between the parts of a layer. */
 const GAP = 20;
 
@@ -120,8 +127,20 @@ export const StoryPage = ({
         value[part] === height ? value : { ...value, [part]: height },
       );
     };
-  const sceneHeight =
-    heights.label + heights.headline + heights.stage + heights.text + 3 * GAP;
+  // On a low screen the whole scene still fits between headline and text:
+  // the stage scales down (to a floor), the page only scrolls for large
+  // type.
+  const [room, setRoom] = useState(0);
+  const [pageWidth, setPageWidth] = useState(0);
+  const around = heights.label + heights.headline + heights.text + 3 * GAP;
+  const stageScale =
+    room > 0 &&
+    heights.stage > 0 &&
+    pageWidth > 0 &&
+    PixelRatio.getFontScale() <= LARGE_TYPE
+      ? Math.max(MIN_STAGE_SCALE, Math.min(1, (room - around) / heights.stage))
+      : 1;
+  const sceneHeight = around + heights.stage * stageScale;
   const [labelRect, setLabelRect] = useState<Rect>(NO_RECT);
   const [cardWidth, setCardWidth] = useState(0);
   const listY = useRef(0);
@@ -329,6 +348,7 @@ export const StoryPage = ({
       {...progress}
       inPlace
       fill
+      onRoom={setRoom}
       primary={
         phase === "scene"
           ? { title: continueLabel, onPress: onContinue }
@@ -345,6 +365,7 @@ export const StoryPage = ({
           styles.page,
           { minHeight: Math.max(heights.question, sceneHeight) },
         ]}
+        onLayout={(event) => setPageWidth(event.nativeEvent.layout.width)}
         accessibilityLiveRegion="polite"
       >
         {/* Question */}
@@ -430,14 +451,34 @@ export const StoryPage = ({
           </Entering>
           {/* The stage fills the room between headline and text, centred. */}
           <Entering enter={enter} index={1} reduce={reduce} grow>
-            <View onLayout={measure("stage")}>
-              <StoryScene
-                question={question}
-                cue={{ play, reduce }}
-                onReplay={() => {
-                  if (phase === "scene") startScene();
-                }}
-              />
+            <View
+              style={
+                stageScale < 1
+                  ? [styles.scaled, { height: heights.stage * stageScale }]
+                  : null
+              }
+            >
+              <View
+                onLayout={measure("stage")}
+                style={
+                  stageScale < 1
+                    ? {
+                        // Laid out wider, then scaled down to the page width.
+                        width: pageWidth / stageScale,
+                        transform: [{ scale: stageScale }],
+                      }
+                    : null
+                }
+              >
+                <StoryScene
+                  question={question}
+                  cue={{ play, reduce }}
+                  compact={room > 0 && room < COMPACT_ROOM}
+                  onReplay={() => {
+                    if (phase === "scene") startScene();
+                  }}
+                />
+              </View>
             </View>
           </Entering>
           <Entering
@@ -583,6 +624,10 @@ const styles = StyleSheet.create({
   },
   grow: {
     flex: 1,
+    justifyContent: "center",
+  },
+  scaled: {
+    alignItems: "center",
     justifyContent: "center",
   },
   answers: {

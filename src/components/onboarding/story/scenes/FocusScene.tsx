@@ -86,11 +86,6 @@ const ROWS: Row[] = [
   },
 ];
 
-const TOTAL = ROWS.length * 4;
-const COUNTED = ROWS.reduce(
-  (sum, row) => sum + row.cells.filter(([, counted]) => counted).length,
-  0,
-);
 /** Example Abitur points; a counting course moves them by one. */
 const BEFORE = 612;
 const AFTER = 613;
@@ -98,11 +93,9 @@ const AFTER = 613;
 const CELL_W = 56;
 const ROW_H = 44;
 const HEAD_H = 22;
-const GRID_H = HEAD_H + ROWS.length * ROW_H;
-const LEGEND_TOP = GRID_H + 8;
-const PANEL_TOP = LEGEND_TOP + 30;
 const PANEL_H = 64;
-const HEIGHT = PANEL_TOP + PANEL_H;
+/** On low screens four subjects, the two probes among them. */
+const COMPACT_ROWS = ["german", "maths", "english", "history"];
 
 const WAVE_AT = 250;
 const WAVE_STAGGER = 40;
@@ -119,41 +112,66 @@ interface Probe {
   counts: boolean;
   at: number;
 }
-const PROBE_PALE: Probe = { row: 4, halfYear: 0, counts: false, at: 1750 };
-const PROBE_COUNTED: Probe = {
-  row: 1,
-  halfYear: 0,
-  counts: true,
-  at: PROBE_PALE.at + LIFT_MS + FLY_MS + AIR_MS,
+const PALE_AT = 1750;
+const COUNTED_AT = PALE_AT + LIFT_MS + FLY_MS + AIR_MS;
+const arrival = (at: number) => at + LIFT_MS + FLY_MS;
+
+/** Rows, counts and positions of the grid, full or compact. */
+const geometry = (compact: boolean) => {
+  const rows = compact
+    ? ROWS.filter((row) => COMPACT_ROWS.includes(row.name))
+    : ROWS;
+  const gridH = HEAD_H + rows.length * ROW_H;
+  const legendTop = gridH + 8;
+  const panelTop = legendTop + 30;
+  const index = (name: string) => rows.findIndex((row) => row.name === name);
+  const probes: Probe[] = [
+    { row: index("history"), halfYear: 0, counts: false, at: PALE_AT },
+    { row: index("maths"), halfYear: 0, counts: true, at: COUNTED_AT },
+  ];
+  return {
+    rows,
+    total: rows.length * 4,
+    counted: rows.reduce(
+      (sum, row) => sum + row.cells.filter(([, counted]) => counted).length,
+      0,
+    ),
+    legendTop,
+    panelTop,
+    height: panelTop + PANEL_H,
+    probes,
+  };
 };
-const PROBES = [PROBE_PALE, PROBE_COUNTED];
-const arrival = (probe: Probe) => probe.at + LIFT_MS + FLY_MS;
+type Geometry = ReturnType<typeof geometry>;
 
 export const FocusScene = ({
   cue,
+  compact,
   onReplay,
 }: {
   cue: Cue;
+  compact: boolean;
   onReplay: () => void;
 }) => {
   const { t } = useTranslation();
+  const g = geometry(compact);
   return (
     <SceneStage
-      height={HEIGHT}
+      height={g.height}
       label={t("onboarding.story.focus.a11y", {
-        count: COUNTED,
-        total: TOTAL,
+        count: g.counted,
+        total: g.total,
         before: BEFORE,
         after: AFTER,
       })}
       onReplay={onReplay}
     >
-      {(width) => <Focus cue={cue} width={width} />}
+      {(width) => <Focus cue={cue} width={width} g={g} />}
     </SceneStage>
   );
 };
 
-const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
+const Focus = ({ cue, width, g }: { cue: Cue; width: number; g: Geometry }) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const nameWidth = width - 4 * CELL_W;
@@ -163,7 +181,7 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
     x: nameWidth + probe.halfYear * CELL_W + CELL_W / 2,
     y: HEAD_H + probe.row * ROW_H + ROW_H / 2,
   });
-  const scoreCentre = { x: width - 44, y: PANEL_TOP + 42 };
+  const scoreCentre = { x: width - 44, y: g.panelTop + 42 };
   let pale = 0;
 
   return (
@@ -182,7 +200,7 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
           </View>
         ))}
       </View>
-      {ROWS.map((row, rowIndex) => (
+      {g.rows.map((row, rowIndex) => (
         <View key={row.name} style={[styles.row, { height: ROW_H }]}>
           <View style={[styles.name, { width: nameWidth }]}>
             <SubjectAvatar {...demoSubject(row.key)} size={30} />
@@ -197,11 +215,11 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
               points={points}
               counted={counted}
               wave={
-                WAVE_AT + (halfYear * ROWS.length + rowIndex) * WAVE_STAGGER
+                WAVE_AT + (halfYear * g.rows.length + rowIndex) * WAVE_STAGGER
               }
               fade={counted ? 0 : FADE_AT + pale++ * 110}
               probe={
-                PROBES.find(
+                g.probes.find(
                   (probe) =>
                     probe.row === rowIndex && probe.halfYear === halfYear,
                 ) ?? null
@@ -210,9 +228,9 @@ const Focus = ({ cue, width }: { cue: Cue; width: number }) => {
           ))}
         </View>
       ))}
-      <Legend cue={cue} />
-      <Panel cue={cue} />
-      {PROBES.map((probe) => (
+      <Legend cue={cue} top={g.legendTop} />
+      <Panel cue={cue} g={g} />
+      {g.probes.map((probe) => (
         <Flight
           key={probe.at}
           cue={cue}
@@ -325,13 +343,13 @@ const Flight = ({
 };
 
 /** What light and faded mean, once the wave has run. */
-const Legend = ({ cue }: { cue: Cue }) => {
+const Legend = ({ cue, top }: { cue: Cue; top: number }) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const shown = useCue(cue, 0, 1, FADE_AT + 200, 420, "ease");
   const style = useAnimatedStyle(() => ({ opacity: shown.value }));
   return (
-    <Animated.View style={[styles.legend, { top: LEGEND_TOP }, style]}>
+    <Animated.View style={[styles.legend, { top }, style]}>
       <View style={styles.legendItem}>
         <View style={[styles.swatch, { backgroundColor: colors.accent }]} />
         <StageText style={[Type.footnote, { color: colors.textSecondary }]}>
@@ -355,14 +373,20 @@ const Legend = ({ cue }: { cue: Cue }) => {
 };
 
 /** Counter, and the Abitur points that take (or don't take) the +1. */
-const Panel = ({ cue }: { cue: Cue }) => {
+const Panel = ({ cue, g }: { cue: Cue; g: Geometry }) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
-  const count = useCount(cue, 0, COUNTED, WAVE_AT, TOTAL * WAVE_STAGGER + 500);
-  const first = useSwitch(cue, arrival(PROBE_PALE) - FLY_MS * 0.15);
-  const second = useSwitch(cue, arrival(PROBE_COUNTED) - 30);
-  const roll = useCue(cue, 0, 1, arrival(PROBE_COUNTED) - 30, 420);
-  const bump = useCue(cue, 0, 1, arrival(PROBE_COUNTED) - 30, 560, "land");
+  const count = useCount(
+    cue,
+    0,
+    g.counted,
+    WAVE_AT,
+    g.total * WAVE_STAGGER + 500,
+  );
+  const first = useSwitch(cue, arrival(PALE_AT) - FLY_MS * 0.15);
+  const second = useSwitch(cue, arrival(COUNTED_AT) - 30);
+  const roll = useCue(cue, 0, 1, arrival(COUNTED_AT) - 30, 420);
+  const bump = useCue(cue, 0, 1, arrival(COUNTED_AT) - 30, 560, "land");
   const delta = second ? "+1" : first ? "±0" : "";
 
   const oldStyle = useAnimatedStyle(() => ({
@@ -383,12 +407,12 @@ const Panel = ({ cue }: { cue: Cue }) => {
     <View
       style={[
         styles.panel,
-        { top: PANEL_TOP, height: PANEL_H, backgroundColor: colors.card },
+        { top: g.panelTop, height: PANEL_H, backgroundColor: colors.card },
       ]}
     >
       <View style={styles.flex}>
         <StageText lines={2} style={[Type.headline, { color: colors.accent }]}>
-          {t("onboarding.story.focus.inclusion", { count, total: TOTAL })}
+          {t("onboarding.story.focus.inclusion", { count, total: g.total })}
         </StageText>
       </View>
       <View style={styles.score}>

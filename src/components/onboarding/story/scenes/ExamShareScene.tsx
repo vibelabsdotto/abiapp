@@ -25,7 +25,9 @@ const UNIT = 50;
 const TILE_W = 54;
 const TILE_GAP = 6;
 const COMPARE_TOP = BAR_TOP + BAR_H + 20;
-const COMPARE_H = 2 * UNIT + 50;
+/** Two course terms stacked, and the exam next to them. */
+const COLUMN_H = 2 * UNIT + TILE_GAP;
+const COMPARE_H = COLUMN_H + 56;
 const LIST_TOP = COMPARE_TOP + COMPARE_H + 14;
 const ROW_H = 46;
 const SUBJECTS = [
@@ -33,35 +35,50 @@ const SUBJECTS = [
   { name: "maths", key: "ma" },
   { name: "english", key: "en" },
 ];
-const HEIGHT = LIST_TOP + 22 + SUBJECTS.length * ROW_H;
+/** On low screens two subjects in the list. */
+const subjectsFor = (compact: boolean) =>
+  compact ? SUBJECTS.slice(0, 2) : SUBJECTS;
+const heightFor = (compact: boolean) =>
+  LIST_TOP + 22 + subjectsFor(compact).length * ROW_H;
 
 const COURSES_AT = 150;
 const EXAMS_AT = 750;
-const TILES_AT = 150;
-const BLOCK_AT = 1450;
-const CHECK_AT = 2300;
-const CHECK_STAGGER = 280;
+const TILES_AT = 1350;
+const TILE_STAGGER = 280;
+const BLOCK_AT = 2050;
+const CHECK_AT = 2850;
+const CHECK_STAGGER = 260;
 
 export const ExamShareScene = ({
   cue,
+  compact,
   onReplay,
 }: {
   cue: Cue;
+  compact: boolean;
   onReplay: () => void;
 }) => {
   const { t } = useTranslation();
   return (
     <SceneStage
-      height={HEIGHT}
+      height={heightFor(compact)}
       label={t("onboarding.story.examShare.a11y")}
       onReplay={onReplay}
     >
-      {(width) => <ExamShare cue={cue} width={width} />}
+      {(width) => <ExamShare cue={cue} width={width} compact={compact} />}
     </SceneStage>
   );
 };
 
-const ExamShare = ({ cue, width }: { cue: Cue; width: number }) => {
+const ExamShare = ({
+  cue,
+  width,
+  compact,
+}: {
+  cue: Cue;
+  width: number;
+  compact: boolean;
+}) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const courses = useCue(cue, 0, 1, COURSES_AT, 620, "ease");
@@ -130,7 +147,7 @@ const ExamShare = ({ cue, width }: { cue: Cue; width: number }) => {
       <Compare cue={cue} />
       <View style={[styles.list, { top: LIST_TOP }]}>
         <ListHead />
-        {SUBJECTS.map((subject, index) => (
+        {subjectsFor(compact).map((subject, index) => (
           <SubjectCheck
             key={subject.key}
             cue={cue}
@@ -144,46 +161,52 @@ const ExamShare = ({ cue, width }: { cue: Cue; width: number }) => {
   );
 };
 
-/** Three course terms at their best, then one exam lands next to them. */
+/**
+ * Two course terms at their best (30 each) stack into a column; then one
+ * exam grows next to it to exactly the same height: at least twice as
+ * much as a course term.
+ */
 const Compare = ({ cue }: { cue: Cue }) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
-  const slide = useCue(cue, 0, 1, BLOCK_AT, 560, "land");
-  const rise = useCue(cue, 0, 1, BLOCK_AT + 260, 520);
-  const blockStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, slide.value * 3),
-    transform: [{ translateX: 46 * (1 - slide.value) }],
+  const grow = useCue(cue, 0, 1, BLOCK_AT, 620);
+  // The exam rises out of the floor inside its clip, to the column height.
+  const growStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: COLUMN_H * (1 - grow.value) }],
   }));
-  // The exam's second unit grows up out of the first: twice as tall.
-  const riseStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: UNIT * (1 - rise.value) }],
+  const examTextStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(0, (grow.value - 0.6) / 0.4),
   }));
-  const examTextStyle = useAnimatedStyle(() => ({ opacity: rise.value }));
 
   return (
     <View style={[styles.compare, { top: COMPARE_TOP }]}>
       <View style={styles.group}>
-        <View style={styles.tiles}>
-          {[0, 1, 2].map((index) => (
-            <Tile key={index} cue={cue} index={index} />
-          ))}
+        <View style={[styles.column, { height: COLUMN_H }]}>
+          {/* The lower term lands first, the second stacks on it. */}
+          <Tile cue={cue} order={1} />
+          <Tile cue={cue} order={0} />
         </View>
         <StageText style={[Type.subhead, { color: colors.textSecondary }]}>
           {t("onboarding.story.examShare.course")}
         </StageText>
         <StageText
-          style={[Type.footnote, styles.strong, { color: colors.text }]}
+          style={[Type.subhead, styles.strong, { color: colors.text }]}
         >
           {t("onboarding.story.examShare.courseMax")}
         </StageText>
       </View>
-      <Animated.View style={[styles.group, blockStyle]}>
-        <View style={[styles.blockClip, { height: 2 * UNIT }]}>
+      <View style={styles.group}>
+        <View
+          style={[
+            styles.blockClip,
+            { height: COLUMN_H, backgroundColor: colors.gaugeTrack },
+          ]}
+        >
           <Animated.View
             style={[
               styles.block,
-              { backgroundColor: colors.accent, height: 2 * UNIT },
-              riseStyle,
+              { backgroundColor: colors.accent, height: COLUMN_H },
+              growStyle,
             ]}
           >
             <Animated.View style={examTextStyle}>
@@ -199,27 +222,28 @@ const Compare = ({ cue }: { cue: Cue }) => {
           {t("onboarding.story.examShare.exam")}
         </StageText>
         <StageText
-          style={[Type.footnote, styles.strong, { color: colors.text }]}
+          style={[Type.subhead, styles.strong, { color: colors.text }]}
         >
           {t("onboarding.story.examShare.examMax")}
         </StageText>
-      </Animated.View>
+      </View>
     </View>
   );
 };
 
-const Tile = ({ cue, index }: { cue: Cue; index: number }) => {
+/** One course term at its best, dropping onto the column. */
+const Tile = ({ cue, order }: { cue: Cue; order: number }) => {
   const colors = useThemeStore((state) => state.colors);
-  // Present from the first frame; they settle as the bar fills.
-  const pop = useCue(cue, 0, 1, TILES_AT + index * 90, 520, "land");
+  const drop = useCue(cue, 0, 1, TILES_AT + order * TILE_STAGGER, 560, "land");
   const style = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.94 + 0.06 * pop.value }],
+    opacity: Math.min(1, drop.value * 2.5),
+    transform: [{ translateY: -28 * (1 - drop.value) }],
   }));
   return (
     <Animated.View
       style={[styles.tile, { backgroundColor: colors.fill }, style]}
     >
-      <StageText style={[NumberType.value, { color: colors.textSecondary }]}>
+      <StageText style={[NumberType.title, { color: colors.textSecondary }]}>
         30
       </StageText>
     </Animated.View>
@@ -308,9 +332,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 2,
   },
-  tiles: {
-    flexDirection: "row",
-    alignItems: "flex-end",
+  column: {
+    justifyContent: "flex-end",
     gap: TILE_GAP,
     marginBottom: 6,
   },
@@ -323,7 +346,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   blockClip: {
-    width: TILE_W + 10,
+    width: TILE_W,
     justifyContent: "flex-end",
     overflow: "hidden",
     borderRadius: Radius.badge,
