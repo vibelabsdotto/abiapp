@@ -510,6 +510,7 @@ const fillCourses = (
             weight: 1,
           })),
           weight,
+          selection.ruleset.id,
         ).points;
       }
     }

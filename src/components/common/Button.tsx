@@ -1,4 +1,7 @@
 // Button - primary/secondary/ghost/destructive actions with optional icon.
+// Primary is ink-filled (black, inverted in dark), secondary grey-filled,
+// ghost is plain ink text, subtle plain secondary text (the weakest choice
+// next to a ghost button); destructive is the signal red.
 
 import React from "react";
 import {
@@ -12,8 +15,10 @@ import {
 import * as Haptics from "expo-haptics";
 
 import { useThemeStore } from "@stores/themeStore";
+import { Radius } from "@constants/typography";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+type ButtonVariant =
+  "primary" | "secondary" | "ghost" | "subtle" | "destructive";
 type ButtonSize = "small" | "medium" | "large";
 
 interface ButtonProps {
@@ -31,9 +36,9 @@ interface ButtonProps {
 }
 
 const SIZES = {
-  small: { paddingVertical: 8, paddingHorizontal: 12, fontSize: 14 },
-  medium: { paddingVertical: 12, paddingHorizontal: 16, fontSize: 16 },
-  large: { paddingVertical: 16, paddingHorizontal: 20, fontSize: 17 },
+  small: { paddingVertical: 8, paddingHorizontal: 12, fontSize: 15 },
+  medium: { paddingVertical: 12, paddingHorizontal: 20, fontSize: 17 },
+  large: { paddingVertical: 16, paddingHorizontal: 24, fontSize: 17 },
 } as const;
 
 export const Button = ({
@@ -54,9 +59,13 @@ export const Button = ({
 
   const palette: Record<ButtonVariant, { background: string; text: string }> = {
     primary: { background: colors.accent, text: colors.accentForeground },
-    secondary: { background: colors.accentLight, text: colors.accent },
-    ghost: { background: "transparent", text: colors.accent },
-    destructive: { background: colors.destructive, text: "#FFFFFF" },
+    secondary: { background: colors.accentLight, text: colors.text },
+    ghost: { background: "transparent", text: colors.text },
+    subtle: { background: "transparent", text: colors.textSecondary },
+    destructive: {
+      background: colors.destructive,
+      text: colors.pointsLowOnSolid,
+    },
   };
   const { background, text } = palette[variant];
   const { fontSize, ...padding } = SIZES[size];
@@ -102,7 +111,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderRadius: 12,
+    borderRadius: Radius.control,
     borderCurve: "continuous",
     alignSelf: "flex-start",
   },
@@ -113,7 +122,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.7,
   },
   disabled: {
     opacity: 0.45,

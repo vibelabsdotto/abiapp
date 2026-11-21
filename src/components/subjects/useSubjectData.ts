@@ -1,4 +1,4 @@
-// Data hooks of the subjects lane: current/selected half-year and the
+// Data hooks of the subject screens: selected half-year and the
 // engine's course values plus Block I inclusion per subject x half-year.
 // Without an evaluation (engine error) values fall back to the store:
 // official result, else the prognosis from the entered grades.
@@ -22,11 +22,9 @@ import { useHalfYearLabels } from "@hooks/useRuleset";
 import { useCourseStore } from "@stores/courseStore";
 import { tryDomain } from "@stores/domainAccess";
 import { usePreferencesStore } from "@stores/preferencesStore";
+import { useProfileStore } from "@stores/profileStore";
 
 const key = (subjectId: string, halfYear: number) => `${subjectId}:${halfYear}`;
-
-/** Shared rule for overview and subjects tab (hooks/useCurrentHalfYear). */
-export { useCurrentHalfYear };
 
 /** Half-year shown in the subjects tab (persisted choice or current one). */
 export function useSelectedHalfYear(): [number, (halfYear: number) => void] {
@@ -59,6 +57,7 @@ export const fallbackCourseValue = (
   course: CourseRecord | undefined,
   halfYear: number,
   grades: GradeRecord[],
+  rulesetId: string | null,
 ): CourseValue => {
   const taken = course?.taken ?? true;
   if (course?.officialPoints !== null && course?.officialPoints !== undefined) {
@@ -74,9 +73,11 @@ export const fallbackCourseValue = (
   const own = grades
     .filter((g) => g.subjectId === subject.id && g.halfYear === halfYear)
     .map(({ id, kind, points, weight }) => ({ id, kind, points, weight }));
-  const prognosis = tryDomain(() =>
-    halfYearPrognosis(own, subject.examWeightPercent),
-  ).value;
+  const prognosis = rulesetId
+    ? tryDomain(() =>
+        halfYearPrognosis(own, subject.examWeightPercent, rulesetId),
+      ).value
+    : null;
   if (prognosis && prognosis.points !== null) {
     return {
       subjectId: subject.id,
@@ -110,6 +111,9 @@ export function useCourseOverview(): CourseOverview {
   const labels = useHalfYearLabels();
   const courses = useCourseStore((state) => state.courses);
   const grades = useCourseStore((state) => state.grades);
+  const rulesetId = useProfileStore(
+    (state) => state.profile?.rulesetId ?? null,
+  );
 
   const maps = useMemo(() => {
     const values = new Map<string, CourseValue>();
@@ -134,7 +138,7 @@ export function useCourseOverview(): CourseOverview {
         const taken = course?.taken ?? true;
         const value =
           maps.values.get(key(subject.id, halfYear)) ??
-          fallbackCourseValue(subject, course, halfYear, grades);
+          fallbackCourseValue(subject, course, halfYear, grades, rulesetId);
         return {
           halfYear,
           label,
@@ -143,7 +147,7 @@ export function useCourseOverview(): CourseOverview {
           included: maps.included.get(key(subject.id, halfYear)) ?? null,
         };
       }),
-    [labels, maps, grades],
+    [labels, maps, grades, rulesetId],
   );
 
   return { evaluation, error, labels, cellsOf };

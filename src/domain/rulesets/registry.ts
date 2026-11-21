@@ -136,6 +136,7 @@ export function toSummary(r: Ruleset): RulesetSummary {
     halfYears: r.halfYears,
     levelNames: r.levelNames,
     elevatedSubjects: r.elevatedSubjects,
+    blockICourses: { min: r.blockI.count.min, max: r.blockI.count.max },
     examVariants,
     extraInputs: r.extraInputs,
     catalog: r.catalog,

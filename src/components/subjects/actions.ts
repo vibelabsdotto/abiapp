@@ -1,4 +1,4 @@
-// User actions of the subjects lane that need feedback: error toasts,
+// Subject screen actions that need feedback: error toasts,
 // subject removal with a native confirmation and grade deletion with undo.
 
 import { Alert } from "react-native";
@@ -6,23 +6,14 @@ import * as Haptics from "expo-haptics";
 import Toast from "react-native-toast-message";
 
 import { showActionToast } from "@components/common/actionToast";
+import { showError } from "@components/common/feedback";
 import { t } from "@locales/index";
 import type { GradeRecord, SubjectRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
 
-/** Error toast; DataValidationError messages are user-facing German text. */
-export const showError = (error: unknown): void => {
-  const message =
-    error instanceof Error && error.message
-      ? error.message
-      : t("subjects.common.unknownError");
-  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  Toast.show({
-    type: "error",
-    text1: t("subjects.common.errorTitle"),
-    text2: message,
-  });
-};
+/** Error toast with the subject screens' title ("Speichern fehlgeschlagen"). */
+export const showSaveError = (error: unknown): void =>
+  showError(t("subjects.common.errorTitle"), error);
 
 export const savedFeedback = (): void => {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -66,7 +57,7 @@ export const confirmRemoveSubject = (
               });
               onRemoved?.();
             })
-            .catch(showError);
+            .catch(showSaveError);
         },
       },
     ],
@@ -83,7 +74,7 @@ export const deleteGradeWithUndo = async (
   try {
     await useCourseStore.getState().removeGrade(grade.id);
   } catch (error) {
-    showError(error);
+    showSaveError(error);
     return;
   }
   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -103,7 +94,7 @@ export const deleteGradeWithUndo = async (
         savedFeedback();
         Toast.show({ type: "success", text1: t("subjects.grade.restored") });
       })
-      .catch(showError);
+      .catch(showSaveError);
   };
   showActionToast({
     text1: t("subjects.grade.deleted"),
@@ -127,5 +118,5 @@ export const duplicateGrade = (grade: GradeRecord): void => {
       date: grade.date,
     })
     .then(savedFeedback)
-    .catch(showError);
+    .catch(showSaveError);
 };

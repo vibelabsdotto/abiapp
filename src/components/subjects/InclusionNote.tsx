@@ -2,9 +2,10 @@
 // sentences: how many half-years count, whether the selected one counts,
 // mandatory inclusions with their reason, double weighting, own overrides.
 
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { InfoButton, InfoText } from "@components/ui";
 import { useTranslation } from "@locales/index";
 import type { CourseLevel, RulesetSummary } from "@domain/model";
 import { useThemeStore } from "@stores/themeStore";
@@ -30,6 +31,7 @@ export const InclusionNote = ({
 }: InclusionNoteProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t, locale } = useTranslation();
+  const [open, setOpen] = useState(false);
 
   if (!hasEvaluation) {
     return (
@@ -124,19 +126,24 @@ export const InclusionNote = ({
     (line): line is string => Boolean(line),
   );
 
+  // Reasons and the prognosis caveat explain the sentence above.
+  const more = [...details, predictedLine].filter(Boolean).join(" ");
+
   return (
     <View style={styles.container}>
-      <Text style={[Type.subhead, { color: colors.text }]}>{main}</Text>
-      {details.length > 0 ? (
-        <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-          {details.join(" ")}
+      <View style={styles.main}>
+        <Text style={[Type.subhead, styles.mainText, { color: colors.text }]}>
+          {main}
         </Text>
-      ) : null}
-      {predictedLine ? (
-        <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-          {predictedLine}
-        </Text>
-      ) : null}
+        {more ? (
+          <InfoButton
+            open={open}
+            topic={main}
+            onPress={() => setOpen((value) => !value)}
+          />
+        ) : null}
+      </View>
+      {more && open ? <InfoText>{more}</InfoText> : null}
     </View>
   );
 };
@@ -144,5 +151,13 @@ export const InclusionNote = ({
 const styles = StyleSheet.create({
   container: {
     gap: 4,
+  },
+  main: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  mainText: {
+    flex: 1,
   },
 });

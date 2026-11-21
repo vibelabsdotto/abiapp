@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { SFSymbol } from "sf-symbols-typescript";
 import type { LucideIcon } from "lucide-react-native";
 
 import { useThemeStore } from "@stores/themeStore";
@@ -22,7 +21,7 @@ export interface StatTileProps {
   /** Caption under the figure; an array renders one line per entry. */
   caption?: string | readonly string[];
   tone?: StatTone;
-  icon?: { sf: SFSymbol; fallback: LucideIcon };
+  icon?: LucideIcon;
   /** Optional bar under the figure. */
   progress?: { value: number; max: number; markers?: number[] };
   onPress?: () => void;
@@ -41,14 +40,10 @@ export const StatTile = ({
   accessibilityLabel,
 }: StatTileProps) => {
   const colors = useThemeStore((state) => state.colors);
-  const toneColor: Record<StatTone, string> = {
-    default: colors.text,
-    accent: colors.accent,
-    success: colors.success,
-    warning: colors.warning,
-    error: colors.error,
-  };
-  const valueColor = toneColor[tone];
+  // Monochrome: only `error` (deficit, not admitted) is red. The bar takes
+  // the accent the student picked, the number stays ink.
+  const valueColor = tone === "error" ? colors.error : colors.text;
+  const barColor = tone === "error" ? colors.error : colors.accent;
   const captionLines =
     caption === undefined
       ? []
@@ -65,12 +60,7 @@ export const StatTile = ({
     <>
       <View style={styles.labelRow}>
         {icon ? (
-          <Icon
-            sf={icon.sf}
-            fallback={icon.fallback}
-            size={15}
-            color={tone === "default" ? colors.textSecondary : valueColor}
-          />
+          <Icon icon={icon} size={16} color={colors.textSecondary} />
         ) : null}
         <Text
           style={[Type.footnote, styles.label, { color: colors.textSecondary }]}
@@ -106,7 +96,7 @@ export const StatTile = ({
           value={progress.value}
           max={progress.max}
           markers={progress.markers}
-          color={tone === "default" ? colors.accent : valueColor}
+          color={barColor}
         />
       ) : null}
       {captionLines.length > 0 ? (
@@ -156,8 +146,8 @@ const styles = StyleSheet.create({
     minWidth: 140,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-    padding: 14,
-    gap: 6,
+    padding: 16,
+    gap: 8,
   },
   pressed: {
     opacity: 0.7,

@@ -9,12 +9,19 @@
     "ios": "expo run:ios --port 8090",
     "android": "expo run:android --port 8090",
     "prebuild": "expo prebuild --clean",
-    "lint": "expo lint",
+    "lint": "expo lint && npm run check:contrast && npm run check:menu-icons && npm run check:vectors",
     "lint:fix": "expo lint --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "type-check": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mts",
+    "icons:tabs": "node scripts/generate-tab-icons.mjs",
+    "check:menu-icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-menu-icons.mts",
+    "icons:android": "node scripts/generate-android-menu-icons.mjs",
+    "check:vectors": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-vectors.mts"
   },
   "dependencies": {
     "@expo/ui": "~58.0.21",
@@ -44,6 +51,7 @@
     "expo-store-review": "~58.0.2",
     "expo-symbols": "~58.0.4",
     "expo-system-ui": "~58.0.6",
+    "expo-updates": "~58.0.22",
     "i18n-js": "^4.5.4",
     "lucide-react-native": "^1.59.0",
     "react": "19.3.0",
@@ -66,7 +74,8 @@
     "eslint-import-resolver-typescript": "3.10.1",
     "patch-package": "^8.0.1",
     "prettier": "^3.9.10",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.1"
   },
   "overrides": {
     "@vibelabsdotto/vibeupdate": {

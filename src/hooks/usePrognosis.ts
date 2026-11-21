@@ -12,6 +12,7 @@ import {
 import type { CourseValue, EngineGrade } from "@domain/model";
 import { tryDomain } from "@stores/domainAccess";
 import { useCourseStore } from "@stores/courseStore";
+import { useProfileStore } from "@stores/profileStore";
 
 import { useEvaluation } from "./useEvaluation";
 
@@ -53,6 +54,9 @@ export function usePrognosis(
       ) ?? null,
   );
   const grades = useCourseStore((state) => state.grades);
+  const rulesetId = useProfileStore(
+    (state) => state.profile?.rulesetId ?? null,
+  );
   const { evaluation } = useEvaluation();
 
   const engineGrades = useMemo(() => {
@@ -74,7 +78,7 @@ export function usePrognosis(
       targetPoints: course?.targetPoints ?? null,
       courseValue,
     };
-    if (examWeightPercent === null) {
+    if (examWeightPercent === null || rulesetId === null) {
       return {
         ...base,
         exact: null,
@@ -84,17 +88,29 @@ export function usePrognosis(
       };
     }
     const prognosis = tryDomain(() =>
-      halfYearPrognosis(engineGrades, examWeightPercent),
+      halfYearPrognosis(engineGrades, examWeightPercent, rulesetId),
     );
     const target = course?.targetPoints ?? null;
     let required: PrognosisState["required"] = null;
     let error = prognosis.error;
     if (target !== null) {
       const exam = tryDomain(() =>
-        requiredNextGrade(engineGrades, examWeightPercent, "exam", target),
+        requiredNextGrade(
+          engineGrades,
+          examWeightPercent,
+          "exam",
+          target,
+          rulesetId,
+        ),
       );
       const other = tryDomain(() =>
-        requiredNextGrade(engineGrades, examWeightPercent, "other", target),
+        requiredNextGrade(
+          engineGrades,
+          examWeightPercent,
+          "other",
+          target,
+          rulesetId,
+        ),
       );
       error = error ?? exam.error ?? other.error;
       if (exam.value && other.value) {
@@ -113,6 +129,7 @@ export function usePrognosis(
     course,
     engineGrades,
     examWeightPercent,
+    rulesetId,
     subjectId,
     halfYear,
   ]);

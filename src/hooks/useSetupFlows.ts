@@ -5,10 +5,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { validateSetup } from "@domain/index";
+import { evaluate, validateSetup } from "@domain/index";
 import type {
   CourseLevel,
+  EngineCourse,
   EngineInput,
+  EngineSubject,
   ExamComponentInfo,
   ExamSlot,
   Issue,
@@ -16,8 +18,9 @@ import type {
   SubjectField,
   SubjectTag,
 } from "@domain/model";
+import { t } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
-import { useCourseStore } from "@stores/courseStore";
+import { subjectsWithData, useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject, tryDomain } from "@stores/domainAccess";
 import { useProfileStore } from "@stores/profileStore";
 import {
@@ -49,29 +52,102 @@ export const FIELD_ORDER: SubjectField[] = [
   "other",
 ];
 
-/** Fewest subjects that still allow a complete exam and level choice. */
+/**
+ * Fewest subjects that can fill Block I (a subject has at most one course
+ * per half-year) and allow a complete exam and level choice.
+ */
 export const minimumSubjects = (ruleset: RulesetSummary): number => {
   const examCounts = ruleset.examVariants.map(
     (variant) => variant.components.filter(componentNeedsSubject).length,
   );
   const exams = examCounts.length > 0 ? Math.min(...examCounts) : 0;
-  return Math.max(exams, ruleset.elevatedSubjects.min, 1);
+  const blockI = ruleset.blockICourses
+    ? Math.ceil(ruleset.blockICourses.min / ruleset.halfYears.length)
+    : 0;
+  return Math.max(exams, ruleset.elevatedSubjects.min, blockI, 1);
 };
+
+/** Engine messages about missing subjects or courses for Block I. */
+const isSubjectGap = (issue: Issue) =>
+  issue.severity !== "info" &&
+  (issue.code.startsWith("block1.requirement.") ||
+    issue.code === "block1.setup.incomplete");
+
+/**
+ * Block I gaps of a subject choice that is not saved yet: the draft's
+ * subjects with every course taken, no grades.
+ */
+function draftSubjectGaps(
+  input: EngineInput | null,
+  ruleset: RulesetSummary | null,
+  keys: readonly string[],
+  custom: readonly CustomSubjectDraft[],
+  saved: readonly SubjectRecord[],
+): Issue[] {
+  if (!input || !ruleset) return [];
+  const examWeightPercent = ruleset.defaults.examWeightPercent;
+  const subjects: EngineSubject[] = [];
+  for (const key of keys) {
+    const entry = ruleset.catalog.find((item) => item.key === key);
+    if (!entry) continue;
+    subjects.push({
+      id: `draft:${key}`,
+      catalogKey: key,
+      name: entry.name,
+      field: entry.field,
+      tags: entry.tags,
+      level: "basic",
+      examSlot: null,
+      examWeightPercent,
+    });
+  }
+  for (const item of custom) {
+    if (!item.selected) continue;
+    const stored = saved.find((subject) => subject.id === item.subjectId);
+    subjects.push({
+      id: item.key,
+      catalogKey: stored?.catalogKey ?? null,
+      name: item.name,
+      field: item.field,
+      tags: stored?.tags ?? tagsForCustomField(item.field),
+      level: "basic",
+      examSlot: null,
+      examWeightPercent,
+    });
+  }
+  const takenIn = (subject: EngineSubject, halfYear: number) => {
+    const entry = ruleset.catalog.find(
+      (item) => item.key === subject.catalogKey,
+    );
+    return (
+      !entry?.defaultHalfYears || entry.defaultHalfYears.includes(halfYear)
+    );
+  };
+  const courses: EngineCourse[] = subjects.flatMap((subject) =>
+    ruleset.halfYears.map((_, halfYear) => ({
+      subjectId: subject.id,
+      halfYear,
+      taken: takenIn(subject, halfYear),
+      officialPoints: null,
+      inclusion: "auto" as const,
+      grades: [],
+      targetPoints: null,
+    })),
+  );
+  const result = tryDomain(() =>
+    evaluate({ ...input, subjects, courses, exams: [], extras: {} }),
+  );
+  return (result.value?.issues ?? []).filter(isSubjectGap);
+}
 
 /** Subject has grades, an official result or a goal. */
 export function useSubjectsWithData(): Set<string> {
   const courses = useCourseStore((state) => state.courses);
   const grades = useCourseStore((state) => state.grades);
-  return useMemo(() => {
-    const ids = new Set<string>();
-    for (const grade of grades) ids.add(grade.subjectId);
-    for (const course of courses) {
-      if (course.officialPoints !== null || course.targetPoints !== null) {
-        ids.add(course.subjectId);
-      }
-    }
-    return ids;
-  }, [courses, grades]);
+  return useMemo(
+    () => subjectsWithData({ courses, grades }),
+    [courses, grades],
+  );
 }
 
 function validateDraft(
@@ -108,6 +184,27 @@ export interface SubjectsSaveResult {
 const catalogIndex = (ruleset: RulesetSummary | null) =>
   new Map((ruleset?.catalog ?? []).map((entry, index) => [entry.key, index]));
 
+/** Whether the draft drops a saved subject (catalog key or custom row). */
+const draftRemoval = (
+  ruleset: RulesetSummary | null,
+  keys: readonly string[],
+  custom: readonly CustomSubjectDraft[],
+) => {
+  const known = catalogIndex(ruleset);
+  const wanted = new Set(keys);
+  const keptCustom = new Set(
+    custom.filter((item) => item.selected).map((item) => item.subjectId),
+  );
+  return (subject: SubjectRecord) => {
+    const isCatalog =
+      subject.catalogKey !== null && known.has(subject.catalogKey);
+    const removed = isCatalog
+      ? !wanted.has(subject.catalogKey as string)
+      : !keptCustom.has(subject.id);
+    return { removed, isCatalog };
+  };
+};
+
 const initialSubjectsDraft = (
   subjects: SubjectRecord[],
   ruleset: RulesetSummary | null,
@@ -143,6 +240,7 @@ export function useSubjectsDraft(options?: { preselect?: readonly string[] }) {
   const [initial] = useState(() =>
     initialSubjectsDraft(subjects, ruleset, options?.preselect ?? []),
   );
+  const [savedCount] = useState(subjects.length);
   const [keys, setKeys] = useState<string[]>(initial.keys);
   const [custom, setCustom] = useState<CustomSubjectDraft[]>(initial.custom);
 
@@ -185,6 +283,12 @@ export function useSubjectsDraft(options?: { preselect?: readonly string[] }) {
   const selectedCount =
     keys.length + custom.filter((item) => item.selected).length;
   const minimum = ruleset ? minimumSubjects(ruleset) : 1;
+  const input = useEngineInput();
+  /** Mandatory Block I subjects the current choice still lacks. */
+  const gaps = useMemo(
+    () => draftSubjectGaps(input, ruleset, keys, custom, subjects),
+    [input, ruleset, keys, custom, subjects],
+  );
 
   const dirty = useMemo(() => {
     const sameKeys =
@@ -198,35 +302,18 @@ export function useSubjectsDraft(options?: { preselect?: readonly string[] }) {
 
   /** Subjects that would be removed although they hold entries. */
   const removalsWithData = useMemo(() => {
-    const wanted = new Set(keys);
-    const keptCustom = new Set(
-      custom.filter((item) => item.selected).map((item) => item.subjectId),
+    const removal = draftRemoval(ruleset, keys, custom);
+    return subjects.filter(
+      (subject) => removal(subject).removed && withData.has(subject.id),
     );
-    const known = catalogIndex(ruleset);
-    return subjects.filter((subject) => {
-      const isCatalog =
-        subject.catalogKey !== null && known.has(subject.catalogKey);
-      const removed = isCatalog
-        ? !wanted.has(subject.catalogKey as string)
-        : !keptCustom.has(subject.id);
-      return removed && withData.has(subject.id);
-    });
   }, [custom, keys, ruleset, subjects, withData]);
 
   /** Writes the draft. Call only after confirming `removalsWithData`. */
   const save = useCallback(async (): Promise<SubjectsSaveResult> => {
-    const store = useCourseStore.getState();
     const known = catalogIndex(ruleset);
-    const wanted = new Set(keys);
-    const keptCustom = new Set(
-      custom.filter((item) => item.selected).map((item) => item.subjectId),
-    );
-    for (const subject of store.subjects) {
-      const isCatalog =
-        subject.catalogKey !== null && known.has(subject.catalogKey);
-      const removed = isCatalog
-        ? !wanted.has(subject.catalogKey as string)
-        : !keptCustom.has(subject.id);
+    const removal = draftRemoval(ruleset, keys, custom);
+    for (const subject of useCourseStore.getState().subjects) {
+      const { removed, isCatalog } = removal(subject);
       // Catalog subjects without entries go through syncCatalogSubjects.
       // Kept subjects from another state's catalog keep their key; the
       // catalog sync only touches keys of the current catalog.
@@ -262,12 +349,42 @@ export function useSubjectsDraft(options?: { preselect?: readonly string[] }) {
     removeCustom,
     selectedCount,
     minimum,
-    canSave: selectedCount >= minimum,
+    // A saved choice below today's minimum may still grow (settings).
+    canSave:
+      selectedCount >= minimum ||
+      (savedCount > 0 && selectedCount >= savedCount),
+    gaps,
     dirty,
     removalsWithData,
     withData,
     save,
   };
+}
+
+/**
+ * Line under the subject list: the minimum while it is not reached, then
+ * the first missing mandatory subject ("und n weitere"), else the count.
+ */
+export function subjectsNote(
+  draft: Pick<
+    ReturnType<typeof useSubjectsDraft>,
+    "canSave" | "selectedCount" | "minimum" | "gaps"
+  >,
+): string {
+  if (!draft.canSave) {
+    return t("setup.subjects.minHint", {
+      count: draft.selectedCount,
+      min: draft.minimum,
+    });
+  }
+  const [first, ...rest] = draft.gaps;
+  if (first) {
+    // "…: 4 Kurse Mathematik und 2 weitere." (one sentence, one period).
+    return rest.length > 0
+      ? `${first.message.replace(/\.$/, "")} ${t("setup.rulesChange.more", { count: rest.length })}.`
+      : first.message;
+  }
+  return t("setup.subjects.selected", { count: draft.selectedCount });
 }
 
 // ---------------------------------------------------------------------------

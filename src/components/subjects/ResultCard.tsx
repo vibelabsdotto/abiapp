@@ -53,8 +53,12 @@ export const ResultCard = ({
       ? formatExact(value.exact as number, locale)
       : String(value.points);
 
-  const sourceLabel =
-    value.source === "official"
+  // Finished half-year without report-card value: the grades are the result.
+  const settled = value.source === "official" && value.fromGrades === true;
+
+  const sourceLabel = settled
+    ? t("subjects.detail.source.settled", { count: gradeCount })
+    : value.source === "official"
       ? t("subjects.detail.source.official")
       : value.source === "grades"
         ? t("subjects.detail.source.grades", { count: gradeCount })
@@ -64,7 +68,11 @@ export const ResultCard = ({
 
   const chip =
     value.source === "official" ? (
-      <Chip label={t("ui.source.official")} tone="success" size="medium" />
+      <Chip
+        label={settled ? t("ui.source.settled") : t("ui.source.official")}
+        tone="neutral"
+        size="medium"
+      />
     ) : value.source === "grades" ? (
       <Chip label={t("ui.source.grades")} tone="accent" size="medium" />
     ) : value.source === "estimate" ? (
@@ -114,10 +122,9 @@ export const ResultCard = ({
                 : t("subjects.detail.enterResult")}
             </Text>
             <Icon
-              sf="chevron.right"
-              fallback={ChevronRight}
-              size={12}
-              weight="bold"
+              icon={ChevronRight}
+              size={16}
+
               color={colors.accent}
             />
           </View>
@@ -193,7 +200,7 @@ const GoalBlock = ({
         style={({ pressed }) => [styles.goal, pressed && styles.pressed]}
       >
         <View style={styles.goalHeader}>
-          <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
+          <Icon icon={Target} size={20} color={colors.accent} />
           <View style={styles.flex}>
             <Text
               maxFontSizeMultiplier={FontScale.heading}
@@ -206,10 +213,9 @@ const GoalBlock = ({
             </Text>
           </View>
           <Icon
-            sf="chevron.right"
-            fallback={ChevronRight}
-            size={12}
-            weight="bold"
+            icon={ChevronRight}
+            size={16}
+
             color={colors.textTertiary}
           />
         </View>
@@ -218,6 +224,7 @@ const GoalBlock = ({
   }
 
   const official = value.source === "official" ? value.points : null;
+  const settled = value.fromGrades === true;
   const current =
     value.source === "grades" && value.exact !== null
       ? formatExact(value.exact, locale)
@@ -285,7 +292,7 @@ const GoalBlock = ({
       style={({ pressed }) => [styles.goal, pressed && styles.pressed]}
     >
       <View style={styles.goalHeader}>
-        <Icon sf="target" fallback={Target} size={18} color={colors.accent} />
+        <Icon icon={Target} size={20} color={colors.accent} />
         <Text
           maxFontSizeMultiplier={FontScale.heading}
           style={[Type.headline, styles.flex, { color: colors.text }]}
@@ -300,9 +307,10 @@ const GoalBlock = ({
               { color: officialReached ? colors.success : colors.error },
             ]}
           >
-            {officialReached
-              ? t("subjects.goal.officialReached", { points: official })
-              : t("subjects.goal.officialMissed", { points: official })}
+            {t(
+              `subjects.goal.${settled ? "settled" : "official"}${officialReached ? "Reached" : "Missed"}`,
+              { points: official },
+            )}
           </Text>
         ) : current ? (
           <Text

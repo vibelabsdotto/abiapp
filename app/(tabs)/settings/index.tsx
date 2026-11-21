@@ -1,15 +1,16 @@
-// Settings tab: profile and setup flows, goal, appearance, data (backup,
-// import, delete all), feedback, about and, in dev builds, developer tools.
+// Settings tab: profile and setup flows, goal, appearance, cloud backup,
+// data (backup file, import, delete all), feedback, clipping ("Mitmachen"), about and, in dev
+// builds, developer tools.
 // Every menu carries SF Symbols (NativeMenu adapter); destructive actions
 // ask natively first.
 
-import React, { useCallback, useMemo } from "react";
-import { Alert, Linking, Platform, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useEffect, useMemo } from "react";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import * as Application from "expo-application";
-import * as StoreReview from "expo-store-review";
 import {
   ArrowUpWideNarrow,
+  Banknote,
   BookOpenText,
   Calendar,
   ChevronsUpDown,
@@ -26,6 +27,7 @@ import {
   Palette,
   RotateCcw,
   ScrollText,
+  Share2,
   Star,
   SunMoon,
   Target,
@@ -34,15 +36,19 @@ import {
   WandSparkles,
 } from "lucide-react-native";
 
+import { CloudBackupSection, confirmDeleteAllFinal } from "@components/backup";
 import {
   NativeMenu,
   type NativeMenuAction,
 } from "@components/common/NativeMenu";
 import { ScreenLayout } from "@components/common/ScreenLayout";
+import { AccentPicker } from "@components/settings/AccentPicker";
 import { SettingsIcon } from "@components/settings/SettingsIcon";
+import type { MenuSymbol } from "@constants/menuIcons";
 import {
   confirmAsync,
   elevatedPlural,
+  importBackupInteractive,
   isProvisional,
   shortLabel,
   showError,
@@ -53,26 +59,34 @@ import {
   IssueBanner,
   ListRow,
   Section,
-  SubjectColors,
   formatGrade,
 } from "@components/ui";
 import { isFeaturamaConfigured } from "@constants/config";
 import { listStates } from "@domain/index";
 import type { StateCode } from "@domain/model";
 import { useSetupIssues } from "@hooks/useEvaluation";
-import { useRuleset } from "@hooks/useRuleset";
+import {
+  examVariantOf,
+  rulesetVersionLabel,
+  useRuleset,
+} from "@hooks/useRuleset";
 import { useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
+import { deleteAllData, exportBackup } from "@services/backup/backupService";
 import {
-  deleteAllData,
-  exportBackup,
-  pickBackupFile,
-  restoreBackup,
-} from "@services/backup/backupService";
-import { seedDemoData } from "@services/demo/demoData";
+  ANALYTICS_EVENTS,
+  track,
+  trackClippingShown,
+} from "@services/analytics/appEvents";
+import { clippingUrl } from "@services/clipping/clipping";
+import { requestStoreReview } from "@services/engagement/storeReview";
+import { presentPrompt } from "@components/engagement/prompts";
+import { resetEngagementSession } from "@hooks/useEngagementPrompts";
+import { afterDeleteAll } from "@services/cloudBackup/cloudSync";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
 import { useLanguageStore } from "@stores/languageStore";
+import { usePreferencesStore } from "@stores/preferencesStore";
 import { useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
 import { ThemeMode, type LanguageMode } from "@apptypes/enums";
@@ -80,12 +94,8 @@ import { ThemeMode, type LanguageMode } from "@apptypes/enums";
 const GITHUB_URL = "https://github.com/vibelabsdotto/abiapp";
 const PRIVACY_URL = "https://vibelabs.to/de/privacy";
 const IMPRINT_URL = "https://vibelabs.to/de/imprint";
-const APP_STORE_REVIEW_URL =
-  "https://apps.apple.com/app/id6450996587?action=write-review";
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.max.mannstein.abisax";
 
-const THEME_ICONS: Record<ThemeMode, string> = {
+const THEME_ICONS: Record<ThemeMode, MenuSymbol> = {
   [ThemeMode.System]: "circle.lefthalf.filled",
   [ThemeMode.Light]: "sun.max",
   [ThemeMode.Dark]: "moon",
@@ -97,7 +107,7 @@ const THEME_LABEL_KEYS: Record<ThemeMode, string> = {
   [ThemeMode.Dark]: "settings.themeDark",
 };
 
-const LANGUAGE_ICONS: Record<LanguageMode, string> = {
+const LANGUAGE_ICONS: Record<LanguageMode, MenuSymbol> = {
   system: "globe",
   de: "d.circle",
   en: "e.circle",
@@ -114,17 +124,6 @@ const isThemeMode = (id: string): id is ThemeMode =>
 
 const isLanguageMode = (id: string): id is LanguageMode =>
   id === "system" || id === "de" || id === "en";
-
-const TILE = {
-  profile: SubjectColors.ink,
-  goal: SubjectColors.amber,
-  appearance: SubjectColors.slate,
-  data: SubjectColors.teal,
-  danger: "#D0303A",
-  feedback: SubjectColors.orange,
-  about: SubjectColors.blue,
-  developer: SubjectColors.brown,
-} as const;
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -146,9 +145,10 @@ export default function SettingsScreen() {
   const variant =
     ruleset?.examVariants.find((item) => item.id === profile?.examVariantId) ??
     null;
-  const required = (variant ?? ruleset?.examVariants[0])?.components.filter(
-    componentNeedsSubject,
-  );
+  const required = examVariantOf(
+    ruleset,
+    profile?.examVariantId,
+  )?.components.filter(componentNeedsSubject);
   const examCount = subjects.filter((subject) => subject.examSlot).length;
   const elevated = subjects.filter((subject) => subject.level === "elevated");
 
@@ -159,30 +159,23 @@ export default function SettingsScreen() {
       (issue.code.startsWith("setup.") || issue.code.startsWith("exam.")),
   );
 
-  const themeActions = useMemo<NativeMenuAction[]>(
-    () =>
-      Object.values(ThemeMode).map((mode) => ({
-        id: mode,
-        title: t(THEME_LABEL_KEYS[mode]),
-        image: THEME_ICONS[mode],
-        state: mode === themeMode ? "on" : "off",
-      })),
-    // `t` is stable; the language is part of the key via `locale`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [themeMode, locale],
+  const themeActions: NativeMenuAction[] = Object.values(ThemeMode).map(
+    (mode) => ({
+      id: mode,
+      title: t(THEME_LABEL_KEYS[mode]),
+      image: THEME_ICONS[mode],
+      state: mode === themeMode ? "on" : "off",
+    }),
   );
 
-  const languageActions = useMemo<NativeMenuAction[]>(
-    () =>
-      (["system", "de", "en"] as const).map((mode) => ({
-        id: mode,
-        title: t(LANGUAGE_LABEL_KEYS[mode]),
-        image: LANGUAGE_ICONS[mode],
-        state: mode === languageMode ? "on" : "off",
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languageMode, locale],
-  );
+  const languageActions: NativeMenuAction[] = (
+    ["system", "de", "en"] as const
+  ).map((mode) => ({
+    id: mode,
+    title: t(LANGUAGE_LABEL_KEYS[mode]),
+    image: LANGUAGE_ICONS[mode],
+    state: mode === languageMode ? "on" : "off",
+  }));
 
   const demoActions = useMemo<NativeMenuAction[]>(
     () =>
@@ -194,6 +187,10 @@ export default function SettingsScreen() {
       })),
     [profile?.state, states],
   );
+
+  useEffect(() => {
+    trackClippingShown("settings");
+  }, []);
 
   const openProfile = useCallback(() => {
     useProfileDraft.getState().initFrom(useProfileStore.getState().profile);
@@ -213,6 +210,11 @@ export default function SettingsScreen() {
     [t],
   );
 
+  const openClipping = () => {
+    track(ANALYTICS_EVENTS.clippingOpened, { placement: "settings" });
+    void openUrl(clippingUrl("settings"));
+  };
+
   const handleExport = async () => {
     try {
       await exportBackup();
@@ -221,48 +223,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleImport = async () => {
-    try {
-      const picked = await pickBackupFile();
-      if (picked.canceled) return;
-      const { result } = picked;
-      if (!result.ok) {
-        Alert.alert(
-          t("settings.importInvalid"),
-          result.errors
-            .slice(0, 3)
-            .map((error) => error.message)
-            .join("\n"),
-        );
-        return;
-      }
-      const { summary } = result;
-      const backupState = states.find((state) => state.code === summary.state);
-      const confirmed = await confirmAsync({
-        title: t("settings.importTitle"),
-        message: t("settings.importMessage", {
-          date: new Date(summary.exportedAt).toLocaleString(
-            locale === "de" ? "de-DE" : "en-US",
-            { dateStyle: "medium", timeStyle: "short" },
-          ),
-          profile: backupState
-            ? `${backupState.name} · ${summary.abiturYear ?? ""}`
-            : t("settings.importNoProfile"),
-          subjects: summary.subjects,
-          grades: summary.grades,
-          official: summary.officialResults,
-          exams: summary.examResults,
-        }),
-        confirm: t("settings.importConfirm"),
-        destructive: true,
-      });
-      if (!confirmed) return;
-      await restoreBackup(result.backup);
-      showSuccess(t("settings.importDone"));
-    } catch (error) {
-      showError(t("settings.importFailed"), error);
-    }
-  };
+  const handleImport = () => importBackupInteractive(locale);
 
   const handleDeleteAll = async () => {
     const first = await confirmAsync({
@@ -272,15 +233,11 @@ export default function SettingsScreen() {
       destructive: true,
     });
     if (!first) return;
-    const second = await confirmAsync({
-      title: t("settings.deleteFinalTitle"),
-      message: t("settings.deleteFinalMessage"),
-      confirm: t("settings.deleteFinalConfirm"),
-      destructive: true,
-    });
+    const second = await confirmDeleteAllFinal();
     if (!second) return;
     try {
       await deleteAllData();
+      await afterDeleteAll(second.deleteCloud);
       useProfileDraft.getState().reset();
       showSuccess(t("settings.deleteDone"));
     } catch (error) {
@@ -288,33 +245,36 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleRate = async () => {
-    try {
-      if (await StoreReview.isAvailableAsync()) {
-        await StoreReview.requestReview();
-        return;
-      }
-    } catch {
-      // Fall through to the store page.
-    }
-    await openUrl(
-      Platform.OS === "ios" ? APP_STORE_REVIEW_URL : PLAY_STORE_URL,
+  const handleRate = () => {
+    usePreferencesStore.getState().markRatingRequested();
+    requestStoreReview().catch((error: unknown) =>
+      showError(t("settings.linkFailed"), error),
     );
   };
 
-  const handleSeed = async (code: string) => {
-    const state = states.find((item) => item.code === code);
-    if (!state) return;
-    try {
-      await seedDemoData({
-        state: state.code as StateCode,
-        abiturYear: profile?.abiturYear ?? 2027,
-      });
-      showSuccess(t("settings.seedDemoDone", { state: state.name }));
-    } catch (error) {
-      showError(t("settings.seedDemoFailed"), error);
-    }
+  const handleResetEngagement = () => {
+    usePreferencesStore.getState().resetEngagement();
+    resetEngagementSession();
+    showSuccess(t("engagement.dev.resetDone"));
   };
+
+  // Development builds only; release bundles drop the demo module.
+  const handleSeed = __DEV__
+    ? async (code: string) => {
+        const state = states.find((item) => item.code === code);
+        if (!state) return;
+        try {
+          const { seedDemoData } = await import("@services/demo/demoData");
+          await seedDemoData({
+            state: state.code as StateCode,
+            abiturYear: profile?.abiturYear ?? 2027,
+          });
+          showSuccess(t("settings.seedDemoDone", { state: state.name }));
+        } catch (error) {
+          showError(t("settings.seedDemoFailed"), error);
+        }
+      }
+    : undefined;
 
   const handleResetOnboarding = async () => {
     try {
@@ -345,45 +305,33 @@ export default function SettingsScreen() {
   return (
     <ScreenLayout contentContainerStyle={styles.content}>
       {profile ? (
-        <Section title={t("settings.profile")} separatorInset={58}>
+        <Section title={t("settings.profile")} separatorInset={48}>
           <ListRow
             title={t("settings.state")}
             value={stateName}
             valueMaxWidth="62%"
-            leading={
-              <SettingsIcon sf="map" fallback={MapIcon} color={TILE.profile} />
-            }
+            leading={<SettingsIcon icon={MapIcon} />}
             chevron
             onPress={openProfile}
           />
           <ListRow
             title={t("settings.abiturYear")}
             value={String(profile.abiturYear)}
-            leading={
-              <SettingsIcon
-                sf="calendar"
-                fallback={Calendar}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={Calendar} />}
             chevron
             onPress={openProfile}
           />
           <ListRow
             title={t("settings.ruleset")}
-            subtitle={ruleset?.label ?? profile.rulesetId}
+            subtitle={
+              ruleset ? rulesetVersionLabel(ruleset) : profile.rulesetId
+            }
             badges={
               ruleset && isProvisional(ruleset) ? (
                 <Chip label={t("settings.draft")} tone="warning" />
               ) : undefined
             }
-            leading={
-              <SettingsIcon
-                sf="doc.text"
-                fallback={ScrollText}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={ScrollText} />}
             chevron
             onPress={openProfile}
           />
@@ -391,13 +339,7 @@ export default function SettingsScreen() {
             <ListRow
               title={t("settings.examVariant")}
               subtitle={variant?.label ?? t("settings.notSet")}
-              leading={
-                <SettingsIcon
-                  sf="list.number"
-                  fallback={ListOrdered}
-                  color={TILE.profile}
-                />
-              }
+              leading={<SettingsIcon icon={ListOrdered} />}
               chevron
               onPress={() => open("/setup/exams")}
             />
@@ -405,13 +347,7 @@ export default function SettingsScreen() {
           <ListRow
             title={t("settings.subjects")}
             value={t("settings.subjectsCount", { count: subjects.length })}
-            leading={
-              <SettingsIcon
-                sf="books.vertical"
-                fallback={BookOpenText}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={BookOpenText} />}
             chevron
             onPress={() => open("/setup/subjects")}
           />
@@ -423,13 +359,7 @@ export default function SettingsScreen() {
                 : t("settings.notSet")
             }
             valueMaxWidth="55%"
-            leading={
-              <SettingsIcon
-                sf="arrow.up.square"
-                fallback={ArrowUpWideNarrow}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={ArrowUpWideNarrow} />}
             chevron
             onPress={() => open("/setup/levels")}
           />
@@ -439,13 +369,7 @@ export default function SettingsScreen() {
               count: examCount,
               total: required?.length ?? 0,
             })}
-            leading={
-              <SettingsIcon
-                sf="graduationcap"
-                fallback={GraduationCap}
-                color={TILE.profile}
-              />
-            }
+            leading={<SettingsIcon icon={GraduationCap} />}
             chevron
             onPress={() => open("/setup/exams")}
           />
@@ -468,8 +392,8 @@ export default function SettingsScreen() {
       {profile ? (
         <Section
           title={t("settings.goal")}
-          footer={t("settings.goalFooter")}
-          separatorInset={58}
+          info={t("settings.goalFooter")}
+          separatorInset={48}
         >
           <ListRow
             title={t("settings.goalRow")}
@@ -478,16 +402,14 @@ export default function SettingsScreen() {
                 ? formatGrade(profile.targetTenths, locale)
                 : t("settings.notSet")
             }
-            leading={
-              <SettingsIcon sf="target" fallback={Target} color={TILE.goal} />
-            }
+            leading={<SettingsIcon icon={Target} />}
             chevron
             onPress={() => open("/goal-editor")}
           />
         </Section>
       ) : null}
 
-      <Section title={t("settings.appearance")} separatorInset={58}>
+      <Section title={t("settings.appearance")} separatorInset={48}>
         <NativeMenu
           title={t("settings.chooseTheme")}
           actions={themeActions}
@@ -499,17 +421,12 @@ export default function SettingsScreen() {
             <ListRow
               title={t("settings.theme")}
               accessibilityLabel={`${t("settings.theme")}, ${t(THEME_LABEL_KEYS[themeMode])}`}
-              leading={
-                <SettingsIcon
-                  sf="circle.lefthalf.filled"
-                  fallback={SunMoon}
-                  color={TILE.appearance}
-                />
-              }
+              leading={<SettingsIcon icon={SunMoon} />}
               trailing={pickerValue(t(THEME_LABEL_KEYS[themeMode]))}
             />
           }
         />
+        <AccentPicker />
         <NativeMenu
           title={t("settings.chooseLanguage")}
           actions={languageActions}
@@ -521,167 +438,137 @@ export default function SettingsScreen() {
             <ListRow
               title={t("settings.language")}
               accessibilityLabel={`${t("settings.language")}, ${t(LANGUAGE_LABEL_KEYS[languageMode])}`}
-              leading={
-                <SettingsIcon
-                  sf="globe"
-                  fallback={Languages}
-                  color={TILE.appearance}
-                />
-              }
+              leading={<SettingsIcon icon={Languages} />}
               trailing={pickerValue(t(LANGUAGE_LABEL_KEYS[languageMode]))}
             />
           }
         />
       </Section>
 
+      <CloudBackupSection />
+
       <Section
         title={t("settings.data")}
-        footer={t("settings.dataFooter")}
-        separatorInset={58}
+        info={t("settings.dataFooter")}
+        separatorInset={48}
       >
         <ListRow
           title={t("settings.exportBackup")}
-          leading={
-            <SettingsIcon
-              sf="square.and.arrow.up"
-              fallback={Upload}
-              color={TILE.data}
-            />
-          }
+          leading={<SettingsIcon icon={Upload} />}
           onPress={() => void handleExport()}
         />
         <ListRow
           title={t("settings.importBackup")}
-          leading={
-            <SettingsIcon
-              sf="square.and.arrow.down"
-              fallback={Download}
-              color={TILE.data}
-            />
-          }
+          leading={<SettingsIcon icon={Download} />}
           onPress={() => void handleImport()}
         />
         <ListRow
           title={t("settings.deleteAll")}
           destructive
-          leading={
-            <SettingsIcon sf="trash" fallback={Trash2} color={TILE.danger} />
-          }
+          leading={<SettingsIcon icon={Trash2} tone="destructive" />}
           onPress={() => void handleDeleteAll()}
         />
       </Section>
 
-      <Section title={t("settings.feedback")} separatorInset={58}>
+      <Section title={t("settings.feedback")} separatorInset={48}>
         {isFeaturamaConfigured ? (
           <ListRow
             title={t("settings.featureRequests")}
-            leading={
-              <SettingsIcon
-                sf="lightbulb"
-                fallback={Lightbulb}
-                color={TILE.feedback}
-              />
-            }
+            leading={<SettingsIcon icon={Lightbulb} />}
             chevron
             onPress={() => open("/feature-requests")}
           />
         ) : null}
         <ListRow
           title={t("settings.rate")}
-          leading={
-            <SettingsIcon sf="star" fallback={Star} color={TILE.feedback} />
-          }
-          onPress={() => void handleRate()}
+          leading={<SettingsIcon icon={Star} />}
+          onPress={handleRate}
         />
       </Section>
 
-      <Section title={t("settings.about")} separatorInset={58}>
+      <Section title={t("settings.join")} separatorInset={48}>
+        <ListRow
+          title={t("settings.clipping")}
+          subtitle={t("settings.clippingSubtitle")}
+          leading={<SettingsIcon icon={Banknote} />}
+          chevron
+          onPress={openClipping}
+        />
+      </Section>
+
+      <Section title={t("settings.about")} separatorInset={48}>
         <ListRow
           title={t("settings.openSource")}
-          leading={
-            <SettingsIcon
-              sf="chevron.left.forwardslash.chevron.right"
-              fallback={CodeXml}
-              color={TILE.about}
-            />
-          }
+          leading={<SettingsIcon icon={CodeXml} />}
           chevron
           onPress={() => void openUrl(GITHUB_URL)}
         />
         <ListRow
           title={t("settings.privacyPolicy")}
-          leading={
-            <SettingsIcon sf="hand.raised" fallback={Hand} color={TILE.about} />
-          }
+          leading={<SettingsIcon icon={Hand} />}
           chevron
           onPress={() => void openUrl(PRIVACY_URL)}
         />
         <ListRow
           title={t("settings.imprint")}
-          leading={
-            <SettingsIcon
-              sf="doc.plaintext"
-              fallback={FileText}
-              color={TILE.about}
-            />
-          }
+          leading={<SettingsIcon icon={FileText} />}
           chevron
           onPress={() => void openUrl(IMPRINT_URL)}
         />
         <ListRow
           title={t("settings.version")}
           value={version}
-          leading={
-            <SettingsIcon sf="info.circle" fallback={Info} color={TILE.about} />
-          }
+          leading={<SettingsIcon icon={Info} />}
         />
       </Section>
 
       {__DEV__ ? (
         <Section
           title={t("settings.developer")}
-          footer={t("settings.developerFooter")}
-          separatorInset={58}
+          info={t("settings.developerFooter")}
+          separatorInset={48}
         >
           <NativeMenu
             title={t("settings.seedDemoFor")}
             actions={demoActions}
-            onSelect={(id) => void handleSeed(id)}
+            onSelect={(id) => void handleSeed?.(id)}
             fullWidth
             trigger={
               <ListRow
                 title={t("settings.seedDemo")}
-                leading={
-                  <SettingsIcon
-                    sf="wand.and.stars"
-                    fallback={WandSparkles}
-                    color={TILE.developer}
-                  />
-                }
+                leading={<SettingsIcon icon={WandSparkles} />}
                 trailing={pickerValue(profile?.state ?? "SN")}
               />
             }
           />
           <ListRow
             title={t("settings.resetOnboarding")}
-            leading={
-              <SettingsIcon
-                sf="arrow.counterclockwise"
-                fallback={RotateCcw}
-                color={TILE.developer}
-              />
-            }
+            leading={<SettingsIcon icon={RotateCcw} />}
             onPress={() => void handleResetOnboarding()}
           />
           <ListRow
+            title={t("engagement.dev.rating")}
+            leading={<SettingsIcon icon={Star} />}
+            onPress={() => presentPrompt("rating")}
+          />
+          <ListRow
+            title={t("engagement.dev.recommend")}
+            leading={<SettingsIcon icon={Share2} />}
+            onPress={() => presentPrompt("recommend")}
+          />
+          <ListRow
+            title={t("engagement.dev.clipping")}
+            leading={<SettingsIcon icon={Banknote} />}
+            onPress={() => presentPrompt("clipping")}
+          />
+          <ListRow
+            title={t("engagement.dev.reset")}
+            leading={<SettingsIcon icon={RotateCcw} />}
+            onPress={handleResetEngagement}
+          />
+          <ListRow
             title={t("settings.designGallery")}
-            leading={
-              <SettingsIcon
-                sf="paintpalette"
-                fallback={Palette}
-                color={TILE.developer}
-              />
-            }
+            leading={<SettingsIcon icon={Palette} />}
             chevron
             onPress={() => open("/dev-gallery")}
           />

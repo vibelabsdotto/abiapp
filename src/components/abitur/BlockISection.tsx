@@ -1,11 +1,11 @@
 // Block I on the Abitur tab: summary (points, counts, deficits, weighting,
 // formula, assumptions) and the inclusion matrix with overrides.
 
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { RotateCcw } from "lucide-react-native";
 
-import { Icon, PointsBadge } from "@components/ui";
+import { Icon, InfoButton, InfoText, PointsBadge } from "@components/ui";
 import type {
   AbiturEvaluation,
   EngineInput,
@@ -102,6 +102,12 @@ export const BlockISection = ({
             points: blockI.points,
           });
 
+  // Formula and assumptions explain the number; they open on the info icon.
+  const assumptions = blockI.assumptions ?? [];
+  const hasExplanation = formula !== null || assumptions.length > 0;
+  const [explained, setExplained] = useState(false);
+  const [matrixExplained, setMatrixExplained] = useState(false);
+
   const deficitsValue =
     blockI.deficits.maxTotal !== null
       ? t("abitur.blockI.deficitsValue", {
@@ -120,6 +126,14 @@ export const BlockISection = ({
       <BlockTitle
         title={t("abitur.blockI.title")}
         subtitle={blockI.weightingLabel ?? t("abitur.blockI.subtitle")}
+        info={
+          hasExplanation
+            ? {
+                open: explained,
+                onToggle: () => setExplained((value) => !value),
+              }
+            : undefined
+        }
       />
       <BlockHead
         points={blockI.points}
@@ -158,41 +172,46 @@ export const BlockISection = ({
               : null
           }
         />
-        {formula ? (
+        {explained && formula ? (
           <>
             <View
               style={[styles.divider, { backgroundColor: colors.separator }]}
             />
-            <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-              {formula}
-            </Text>
+            <InfoText>{formula}</InfoText>
           </>
         ) : null}
-        {blockI.assumptions && blockI.assumptions.length > 0 ? (
+        {explained && assumptions.length > 0 ? (
           <View style={styles.assumptions}>
             <Text
               style={[Type.footnote, styles.strong, { color: colors.text }]}
             >
               {t("abitur.blockI.assumptions")}
             </Text>
-            <Bullets items={blockI.assumptions} />
+            <Bullets items={assumptions} />
           </View>
         ) : null}
       </BlockHead>
 
       <View style={styles.matrixHeader}>
-        <Text
-          accessibilityRole="header"
-          style={[Type.title3, { color: colors.text }]}
-        >
-          {t("abitur.blockI.matrixTitle")}
-        </Text>
-        <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-          {t("abitur.blockI.matrixHint")}
-        </Text>
+        <View style={styles.matrixTitle}>
+          <Text
+            accessibilityRole="header"
+            style={[Type.title3, { color: colors.text }]}
+          >
+            {t("abitur.blockI.matrixTitle")}
+          </Text>
+          <InfoButton
+            open={matrixExplained}
+            topic={t("abitur.blockI.matrixTitle")}
+            onPress={() => setMatrixExplained((value) => !value)}
+          />
+        </View>
+        {matrixExplained ? (
+          <InfoText>{t("abitur.blockI.matrixHint")}</InfoText>
+        ) : null}
       </View>
       <InclusionMatrix rows={rows} ruleset={ruleset} />
-      <MatrixLegend />
+      {matrixExplained ? <MatrixLegend /> : null}
 
       {extras.length > 0 ? (
         <View style={[styles.extras, { backgroundColor: colors.card }]}>
@@ -261,12 +280,7 @@ export const BlockISection = ({
               pressed && styles.pressed,
             ]}
           >
-            <Icon
-              sf="arrow.counterclockwise"
-              fallback={RotateCcw}
-              size={15}
-              color={colors.destructive}
-            />
+            <Icon icon={RotateCcw} size={16} color={colors.destructive} />
             <Text style={[Type.subhead, { color: colors.destructive }]}>
               {t("abitur.blockI.reset")}
             </Text>
@@ -296,6 +310,11 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 4,
     marginTop: 8,
+  },
+  matrixTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   extras: {
     borderRadius: Radius.card,

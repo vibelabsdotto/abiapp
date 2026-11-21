@@ -1,10 +1,10 @@
-// CheckRow - one admission/pass rule (RuleCheck): met, open or not met,
-// with the current value and a "Prognose" mark when the decision rests on
-// predicted values.
+// CheckRow - one admission/pass rule (RuleCheck): met (ink check), open
+// (grey dashed circle, "offen") or not met (red cross), with the current
+// value and a "Prognose" mark when the decision rests on predicted values.
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Circle, CircleCheck, CircleX } from "lucide-react-native";
+import { CircleCheck, CircleDashed, CircleX } from "lucide-react-native";
 
 import { useThemeStore } from "@stores/themeStore";
 import { useTranslation } from "@locales/index";
@@ -26,22 +26,19 @@ export const CheckRow = ({ check }: CheckRowProps) => {
   const status =
     passed === true
       ? {
-          sf: "checkmark.circle.fill" as const,
-          fallback: CircleCheck,
-          color: colors.success,
+          icon: CircleCheck,
+          color: colors.text,
           text: t("ui.check.passed"),
         }
       : passed === false
         ? {
-            sf: "xmark.circle.fill" as const,
-            fallback: CircleX,
+            icon: CircleX,
             color: colors.error,
             text: t("ui.check.failed"),
           }
         : {
-            sf: "circle.dashed" as const,
-            fallback: Circle,
-            color: colors.textTertiary,
+            icon: CircleDashed,
+            color: colors.textSecondary,
             text: t("ui.check.open"),
           };
 
@@ -57,9 +54,8 @@ export const CheckRow = ({ check }: CheckRowProps) => {
   return (
     <View accessible accessibilityLabel={spoken} style={styles.row}>
       <Icon
-        sf={status.sf}
-        fallback={status.fallback}
-        size={22}
+        icon={status.icon}
+        size={24}
         color={status.color}
         style={styles.icon}
       />
@@ -100,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   icon: {
-    marginTop: 0,
+    marginTop: -1,
   },
   text: {
     flex: 1,

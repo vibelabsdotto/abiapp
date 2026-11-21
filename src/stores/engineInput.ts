@@ -2,9 +2,14 @@
 //
 // The input is memoized on the identity of the store arrays, so every
 // screen that calls useEvaluation() shares one input object and one engine
-// run per data change (plan §4.2: evaluation must stay cheap).
+// run per data change.
 
-import { evaluate, targetAnalysis, validateSetup } from "@domain/index";
+import {
+  currentHalfYear,
+  evaluate,
+  targetAnalysis,
+  validateSetup,
+} from "@domain/index";
 import type { TargetAnalysis } from "@domain/index";
 import type {
   AbiturEvaluation,
@@ -31,6 +36,25 @@ export interface EngineSources {
   grades: GradeRecord[];
   results: ExamResultRecord[];
   extras: ExtraResultRecord[];
+  /** Half-year the student is in (currentHalfYearOf); earlier ones are finished. */
+  currentHalfYear: number | null;
+}
+
+/**
+ * Half-year the student is in today: school calendar, later when the data
+ * already has report-card values. Null without profile or with an unknown
+ * ruleset.
+ */
+export function currentHalfYearOf(
+  profile: Pick<ProfileRecord, "rulesetId" | "abiturYear"> | null,
+  courses: CourseRecord[],
+  date: Date = new Date(),
+): number | null {
+  if (!profile) return null;
+  const { rulesetId, abiturYear } = profile;
+  return tryDomain(() =>
+    currentHalfYear({ rulesetId, abiturYear, courses, date }),
+  ).value;
 }
 
 const courseKey = (subjectId: string, halfYear: number) =>
@@ -91,6 +115,7 @@ export function buildEngineInput(sources: EngineSources): EngineInput | null {
       oralPoints: result.oralPoints,
     })),
     extras,
+    currentHalfYear: sources.currentHalfYear,
   };
 }
 
@@ -103,7 +128,8 @@ const sameSources = (a: EngineSources, b: EngineSources) =>
   a.courses === b.courses &&
   a.grades === b.grades &&
   a.results === b.results &&
-  a.extras === b.extras;
+  a.extras === b.extras &&
+  a.currentHalfYear === b.currentHalfYear;
 
 /** buildEngineInput with a one-entry cache keyed on array identity. */
 export function selectEngineInput(sources: EngineSources): EngineInput | null {

@@ -2,7 +2,7 @@
 // ruleset extra (`?extra=seminar_paper`). Points picker, optional
 // supplementary oral exam, live preview through the engine, remove.
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Platform,
@@ -34,15 +34,22 @@ import { DestructiveAction } from "@components/overview/DestructiveAction";
 import {
   hapticSuccess,
   showError,
-  useDiscardGuard,
+  useEditorClose,
 } from "@components/overview/feedback";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import type { ExamSlot } from "@domain/model";
+import { examVariantOf } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useExamStore } from "@stores/examStore";
 import { useThemeStore } from "@stores/themeStore";
-import { FontScale, NumberType, Radius, Type } from "@constants/typography";
+import {
+  FontScale,
+  NumberType,
+  Radius,
+  Type,
+  readableContent,
+} from "@constants/typography";
 
 const SLOTS: readonly string[] = ["P1", "P2", "P3", "P4", "P5"];
 
@@ -63,10 +70,7 @@ export default function ExamEditorScreen() {
     params.slot && SLOTS.includes(params.slot)
       ? (params.slot as ExamSlot)
       : null;
-  const variantId = input?.examVariantId ?? ruleset?.examVariants[0]?.id;
-  const variant =
-    ruleset?.examVariants.find((option) => option.id === variantId) ??
-    ruleset?.examVariants[0];
+  const variant = examVariantOf(ruleset, input?.examVariantId);
   const info = slot
     ? variant?.components.find((component) => component.slot === slot)
     : undefined;
@@ -74,11 +78,15 @@ export default function ExamEditorScreen() {
   const extraInfo = extraId
     ? ruleset?.extraInputs.find((extra) => extra.id === extraId)
     : undefined;
-  const target: ExamTarget | null = extraId
-    ? { kind: "extra", slot, extraId }
-    : slot && info
-      ? { kind: "slot", slot, extraId: null }
-      : null;
+  const target = useMemo<ExamTarget | null>(
+    () =>
+      extraId
+        ? { kind: "extra", slot, extraId }
+        : slot && info
+          ? { kind: "slot", slot, extraId: null }
+          : null,
+    [extraId, slot, info],
+  );
 
   const stored = results.find((result) => result.slot === slot);
   const initialMain = extraId
@@ -95,7 +103,7 @@ export default function ExamEditorScreen() {
   const supplementary = !extraId && !twoPart && info?.supplementaryOral;
   const oralValue = twoPart || oralOn ? oral : null;
   const dirty = main !== initialMain || oralValue !== initialOral;
-  const allowClose = useDiscardGuard(dirty && !busy);
+  const { cancel, closeAfterSave } = useEditorClose(dirty && !busy);
 
   const subject =
     slot && evaluation
@@ -108,9 +116,13 @@ export default function ExamEditorScreen() {
     !extraId && info !== undefined && info.requiresSubject !== false;
   const component = evaluation?.blockII.components.find((c) => c.slot === slot);
 
-  // evaluate() takes a few milliseconds; recomputing per tap is fine.
-  const preview =
-    input && target ? previewEvaluation(input, target, main, oralValue) : null;
+  const preview = useMemo(
+    () =>
+      input && target
+        ? previewEvaluation(input, target, main, oralValue)
+        : null,
+    [input, target, main, oralValue],
+  );
 
   const title = extraInfo
     ? t("examEditor.extraTitle")
@@ -118,10 +130,7 @@ export default function ExamEditorScreen() {
       ? `${slot} · ${subject.name}`
       : (component?.label ?? slot ?? t("examEditor.title"));
 
-  const close = () => {
-    allowClose();
-    router.back();
-  };
+  const close = closeAfterSave;
 
   const save = async () => {
     if (!target) return;
@@ -182,7 +191,7 @@ export default function ExamEditorScreen() {
   const header = (
     <ModalHeader
       title={title}
-      onCancel={() => router.back()}
+      onCancel={cancel}
       onSave={() => void save()}
       saveDisabled={!dirty || busy || !target}
     />
@@ -194,7 +203,7 @@ export default function ExamEditorScreen() {
         {header}
         <ScreenLayout>
           <EmptyState
-            icon={{ sf: "questionmark.circle", fallback: CircleHelp }}
+            icon={CircleHelp}
             title={t("examEditor.title")}
             message={t("examEditor.unknownSlot")}
           />
@@ -209,7 +218,7 @@ export default function ExamEditorScreen() {
         {header}
         <ScreenLayout>
           <EmptyState
-            icon={{ sf: "list.number", fallback: ListOrdered }}
+            icon={ListOrdered}
             title={t("examEditor.noSubjectTitle")}
             message={t("examEditor.noSubjectMessage", { slot: slot ?? "" })}
             action={{
@@ -347,16 +356,19 @@ export default function ExamEditorScreen() {
         </View>
         <ScrollView
           contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, readableContent]}
         >
           <Section
             title={mainLabel}
             footer={
               predictedMain !== null
                 ? t("examEditor.predictedHint", { points: predictedMain })
-                : extraInfo && slot
-                  ? extraInfo.description
-                  : undefined
+                : undefined
+            }
+            info={
+              predictedMain === null && extraInfo && slot
+                ? extraInfo.description
+                : undefined
             }
             variant="plain"
           >

@@ -10,7 +10,7 @@ import type {
 import type { Ruleset } from "../rulesets/types";
 import { evaluateBlockI } from "./blockI";
 import { evaluateBlockII } from "./blockII";
-import { buildContext, computeCourseValues } from "./context";
+import { buildContext, computeCourseValues, countsAsResult } from "./context";
 import { gradeTenthsFromPoints, minPointsForTenths } from "./math";
 import { validateContext } from "./validate";
 
@@ -113,10 +113,14 @@ function withUniformOpen(
   v: number,
 ): { input: EngineInput; open: number } {
   let open = 0;
+  const examWeight = new Map(
+    input.subjects.map((s) => [s.id, s.examWeightPercent]),
+  );
   const courses = input.courses.map((c) => {
     if (
       !c.taken ||
-      (c.officialPoints !== null && c.officialPoints !== undefined)
+      (c.officialPoints !== null && c.officialPoints !== undefined) ||
+      countsAsResult(input, c, examWeight.get(c.subjectId) ?? 0)
     )
       return c;
     open++;

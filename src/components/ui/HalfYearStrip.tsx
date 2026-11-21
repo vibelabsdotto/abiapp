@@ -71,8 +71,7 @@ export const HalfYearStrip = ({
                 Type.caption2,
                 styles.label,
                 {
-                  color:
-                    index === current ? colors.accent : colors.textSecondary,
+                  color: index === current ? colors.text : colors.textSecondary,
                 },
                 index === current && styles.labelCurrent,
               ]}
@@ -81,7 +80,7 @@ export const HalfYearStrip = ({
             </Text>
           ) : index === current ? (
             <View
-              style={[styles.currentDot, { backgroundColor: colors.accent }]}
+              style={[styles.currentDot, { backgroundColor: colors.text }]}
             />
           ) : (
             <View style={styles.currentDot} />

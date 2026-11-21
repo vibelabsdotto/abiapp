@@ -12,10 +12,13 @@ import { Button } from "@components/common/Button";
 import { ScreenLayout } from "@components/common/ScreenLayout";
 import { EmptyState, Section } from "@components/ui";
 import { AddRow } from "@components/subjects/AddRow";
-import { confirmRemoveSubject, showError } from "@components/subjects/actions";
+import {
+  confirmRemoveSubject,
+  showSaveError,
+} from "@components/subjects/actions";
 import { CourseHistory } from "@components/subjects/CourseHistory";
 import { GradeRow } from "@components/subjects/GradeRow";
-import { HalfYearPicker, toolbarIcon } from "@components/subjects/headers";
+import { HalfYearPicker, SubjectHeader } from "@components/subjects/headers";
 import { InclusionNote } from "@components/subjects/InclusionNote";
 import { ResultCard } from "@components/subjects/ResultCard";
 import {
@@ -30,7 +33,7 @@ import type { GradeKind } from "@domain/model";
 import type { GradeRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
-import { useToolbarTint } from "@constants/toolbarIcons";
+import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { Radius, Type } from "@constants/typography";
 
 const EXAM_WEIGHT_PRESETS = [25, 33, 50, 67, 75];
@@ -65,7 +68,7 @@ export default function SubjectDetailScreen() {
         <Stack.Screen options={{ title: "" }} />
         <EmptyState
           fill
-          icon={{ sf: "books.vertical", fallback: BookOpen }}
+          icon={BookOpen}
           title={t("subjects.detail.notFoundTitle")}
           message={t("subjects.detail.notFoundMessage")}
           action={{
@@ -149,7 +152,7 @@ export default function SubjectDetailScreen() {
                 icon={toolbarIcon("chart.pie")}
                 isOn={percent === subject.examWeightPercent}
                 onPress={() => {
-                  setExamWeight(subject.id, percent).catch(showError);
+                  setExamWeight(subject.id, percent).catch(showSaveError);
                 }}
               >
                 {t("subjects.menu.examWeightValue", { percent })}
@@ -169,6 +172,10 @@ export default function SubjectDetailScreen() {
       </Stack.Toolbar>
 
       <ScreenLayout>
+        <SubjectHeader
+          subject={subject}
+          levelName={ruleset?.levelNames[subject.level]?.name ?? null}
+        />
         <HalfYearPicker
           labels={labels}
           value={halfYear}
@@ -199,7 +206,7 @@ export default function SubjectDetailScreen() {
               size="small"
               style={styles.notTakenButton}
               onPress={() => {
-                setCourseTaken(subject.id, halfYear, true).catch(showError);
+                setCourseTaken(subject.id, halfYear, true).catch(showSaveError);
               }}
             />
           </View>
@@ -224,7 +231,7 @@ export default function SubjectDetailScreen() {
             <Section
               title={t("subjects.detail.others")}
               separatorInset={70}
-              footer={t("subjects.detail.examShare", {
+              info={t("subjects.detail.examShare", {
                 percent: subject.examWeightPercent,
                 rest: 100 - subject.examWeightPercent,
               })}

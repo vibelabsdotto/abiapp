@@ -1,13 +1,11 @@
-// Onboarding step 2: Abiturjahrgang with the detected ruleset version.
-// "Weiter" creates the profile (or switches its rules) via setupActions.
+// Onboarding: Abiturjahrgang. One tap chooses, creates the profile (or
+// switches its rules) via setupActions, saves the story's goal into it and
+// advances.
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "expo-router";
 
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import {
   OnboardingStep,
   RulesetCard,
@@ -17,31 +15,37 @@ import {
 } from "@components/setup";
 import { resolveDraftRuleset, useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
+import { useOnboardingStory } from "@stores/onboardingStory";
 
 export default function OnboardingYearScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "year" });
   const state = useProfileDraft((draft) => draft.state);
   const abiturYear = useProfileDraft((draft) => draft.abiturYear);
   const rulesetId = useProfileDraft((draft) => draft.rulesetId);
   const setAbiturYear = useProfileDraft((draft) => draft.setAbiturYear);
+  const commitTarget = useOnboardingStory((story) => story.commitTarget);
   const [saving, setSaving] = useState(false);
+  const [missingRules, setMissingRules] = useState(false);
 
-  const ruleset = useMemo(
-    () => resolveDraftRuleset({ state, abiturYear, rulesetId }),
-    [state, abiturYear, rulesetId],
-  );
-
-  const next = async () => {
-    if (!state || abiturYear === null || !ruleset) return;
+  const choose = async (year: number) => {
+    if (!state || saving) return;
+    setAbiturYear(year);
+    const ruleset = resolveDraftRuleset({ state, abiturYear: year, rulesetId });
+    setMissingRules(ruleset === null);
+    if (!ruleset) return;
     setSaving(true);
     try {
       const result = await applyRulesChange({
         state,
-        abiturYear,
+        abiturYear: year,
         rulesetId: ruleset.id,
       });
-      if (result) router.push("/(onboarding)/subjects");
+      if (!result) return;
+      // The goal of the story's first page, now that the profile exists.
+      await commitTarget();
+      router.push("/(onboarding)/rules");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
@@ -52,24 +56,15 @@ export default function OnboardingYearScreen() {
   return (
     <OnboardingStep
       title={t("onboarding.year.title")}
-      step={ONBOARDING_STEPS.year}
-      totalSteps={ONBOARDING_TOTAL_STEPS}
+      {...progress}
       intro={t("onboarding.year.intro")}
-      primary={{
-        title: t("onboarding.next"),
-        disabled: abiturYear === null || ruleset === null,
-        loading: saving,
-        onPress: () => void next(),
-      }}
     >
-      <YearPicker value={abiturYear} onChange={setAbiturYear} />
-      {abiturYear !== null ? (
-        <RulesetCard
-          ruleset={ruleset}
-          title={t("setup.ruleset.detected")}
-          footer={t("onboarding.year.footer")}
-        />
-      ) : null}
+      <YearPicker
+        value={abiturYear}
+        onChange={(year) => void choose(year)}
+        footer={t("onboarding.year.footer")}
+      />
+      {missingRules ? <RulesetCard ruleset={null} /> : null}
     </OnboardingStep>
   );
 }

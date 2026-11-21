@@ -369,7 +369,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       issues.push({
         code: `block1.requirement.missingSubject`,
         severity: "warning",
-        message: `Für diese Pflichteinbringung fehlt noch ein Fach: ${req.label}.`,
+        message: `Es fehlt noch ein Fach: ${inlineRuleLabel(req.label)}.`,
       });
     } else if (req.options.some((o) => optionFeasible(req, o, true, true))) {
       open.push(req.label);
@@ -455,7 +455,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     issues.push({
       code: "block1.setup.incomplete",
       severity: "warning",
-      message: `Lege noch alle deine Fächer an: Es ${one ? "fehlt" : "fehlen"} mindestens ${missingPlaces} ${one ? "Kurs" : "Kurse"} für Block I.`,
+      message: `Es ${one ? "fehlt" : "fehlen"} noch mindestens ${missingPlaces} ${one ? "Kurs" : "Kurse"} für Block I. Lege alle deine Fächer an.`,
     });
   }
 
@@ -813,9 +813,10 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     PM: number,
     SM: number,
     defTM: number,
+    nMax: number,
   ): boolean {
     const kMin = Math.max(0, minN - slotsM);
-    const kMax = Math.max(0, maxN - slotsM);
+    const kMax = Math.max(0, nMax - slotsM);
     let wMin = Infinity;
     let wMax = 0;
     let clean = 0;
@@ -891,12 +892,6 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       SM += c.item.wS;
       defTM += c.item.deficits;
     }
-    // Branch and bound (exact): once a feasible selection exists, skip
-    // configurations that are infeasible anyway or cannot reach its E.
-    if (best && best.feasible) {
-      if (violationsIn.length > 0) return;
-      if (!canBeat(best, items, selected, slotsM, PM, SM, defTM)) return;
-    }
     const inGroup = (g: GroupMin, it: BlockItem) =>
       !!it.subjectId &&
       g.subjectIds.includes(it.subjectId) &&
@@ -906,6 +901,18 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       for (const c of selected.values()) if (inGroup(g, c.item)) have++;
       return Math.max(0, g.count - have);
     });
+    // With extendToMandatory, courses a sum rule still needs are mandatory
+    // places too: N may grow by up to their number (the minimum is set below).
+    const groupNeed = rules.count.extendToMandatory
+      ? need.reduce((n, x) => n + x, 0)
+      : 0;
+    const nMax = Math.max(maxN, slotsM + groupNeed);
+    // Branch and bound (exact): once a feasible selection exists, skip
+    // configurations that are infeasible anyway or cannot reach its E.
+    if (best && best.feasible) {
+      if (violationsIn.length > 0) return;
+      if (!canBeat(best, items, selected, slotsM, PM, SM, defTM, nMax)) return;
+    }
     const refLimits = rules.deficitLimits(Math.max(minN, slotsM), SM, ctx);
     const limitDef = (l: DeficitLimit, it: BlockItem) =>
       !l.filter || l.filter(it)
@@ -1052,7 +1059,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     } else {
       nTo = Math.min(maxN, slotsM + poolSize);
     }
-    const fMax = nTo - slotsM;
+    const fMax = Math.max(nTo - slotsM, groupNeed);
 
     // DP over lists (each list used as a prefix): best P per (count, S, deficits, groups).
     interface St {
@@ -1141,6 +1148,13 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
         }
       }
       states = next;
+    }
+    if (groupNeed > 0) {
+      // N = forced places plus the fewest courses that fulfil all sum rules.
+      let minT = Infinity;
+      for (const st of states.values())
+        if (st.t < minT && st.grp.every((x, gi) => x >= need[gi])) minT = st.t;
+      if (minT !== Infinity && slotsM + minT > nTo) nFrom = nTo = slotsM + minT;
     }
 
     for (const st of states.values()) {

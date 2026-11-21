@@ -1,4 +1,4 @@
-// Berlin, VO-GO vom 18.04.2007 (Stand 31.07.2026).
+// Berlin, VO-GO vom 18.04.2007, zuletzt geändert am 31.07.2026 (GVBl. S. 787).
 // BE-2027 (alter § 44, Politikwissenschaft), BE-2028 (neuer § 44,
 // Politikwissenschaft), BE-2029 (alles neu: Politische Bildung) und BE-2030
 // (geltendes Recht, KMK-Umsetzung offen). Übergangsrecht: § 49 Abs. 11, 12.
@@ -32,6 +32,7 @@ import {
   oneOf,
   requireFieldsCovered,
   taken,
+  FS_LABEL,
 } from "./helpers";
 import { roundHalfUpFrac } from "../engine/math";
 
@@ -74,6 +75,67 @@ function roundedParts(
 const takenIn = (ctx: RuleContext, s: EngineSubject, hys: number[]) =>
   hys.every((h) => ctx.takenHalfYears(s.id).includes(h));
 
+/**
+ * Two mandatory courses "Kurs 1 und 2 oder 3 und 4" (§ 25 Abs. 2 to 4): the
+ * Belegpflicht needs one complete pair; § 26 Abs. 4 lets each of the two
+ * be replaced by another course of the subject, so the best two count.
+ */
+function twoCourses(
+  ctx: RuleContext,
+  subjects: EngineSubject[],
+): RequirementOption[] {
+  return subjects
+    .filter((s) => WINDOWS.some((w) => takenIn(ctx, s, w)))
+    .map((s) => ({ label: s.name, picks: [{ subjectId: s.id, count: 2 }] }));
+}
+
+/**
+ * § 10 Abs. 2 and 3, § 25 Abs. 1: four courses of one durchgängig belegte
+ * Fremdsprache. A second FS begun in the Einführungsphase (fs_new) counts
+ * with all four courses, or the first FS counts and two consecutive
+ * courses of the new one are added.
+ */
+function languageOptions(ctx: RuleContext): RequirementOption[] {
+  const fresh = byKey(ctx, "fs_new");
+  let first = continuedLanguages(ctx);
+  if (first.length === 0 && fresh.length === 0)
+    first = taken(ctx, (s) => hasTag(s, "foreign_language"));
+  const options: RequirementOption[] = first.map((s) => ({
+    label: s.name,
+    picks: [{ subjectId: s.id, count: 4, label: FS_LABEL }],
+  }));
+  if (fresh.length === 0) return options;
+  const pairs = [
+    [0, 1],
+    [1, 2],
+    [2, 3],
+  ].filter((w) => fresh.some((n) => takenIn(ctx, n, w)));
+  const out: RequirementOption[] = fresh.map((n) => ({
+    label: n.name,
+    picks: [{ subjectId: n.id, count: 4, label: FS_LABEL }],
+  }));
+  for (const o of options) {
+    for (const n of fresh) {
+      for (const w of pairs) {
+        if (!takenIn(ctx, n, w)) continue;
+        out.push({
+          label: `${o.label} und ${n.name} Kurs ${w[0] + 1} und ${w[1] + 1}`,
+          picks: [
+            ...o.picks,
+            {
+              subjectId: n.id,
+              count: 2,
+              halfYears: w,
+              label: "neu begonnene Fremdsprache",
+            },
+          ],
+        });
+      }
+    }
+  }
+  return out;
+}
+
 function requirements(ctx: RuleContext, v: Version): Requirement[] {
   const reqs: Requirement[] = [];
   const four = (s: EngineSubject) => ({ subjectId: s.id, count: 4 });
@@ -97,33 +159,21 @@ function requirements(ctx: RuleContext, v: Version): Requirement[] {
   }
   reqs.push(oneOf("de", "4 Kurse Deutsch", byKey(ctx, "de"), 4));
   reqs.push(oneOf("ma", "4 Kurse Mathematik", byKey(ctx, "ma"), 4));
-  let fs = continuedLanguages(ctx);
-  if (fs.length === 0)
-    fs = taken(
-      ctx,
-      (s) =>
-        hasTag(s, "foreign_language") && ctx.takenHalfYears(s.id).length === 4,
-    );
-  reqs.push(oneOf("fs", "4 Kurse einer Fremdsprache", fs, 4));
+  reqs.push({
+    id: "fs",
+    label: "4 Kurse einer Fremdsprache",
+    short: FS_LABEL,
+    options: languageOptions(ctx),
+  });
   const nws = byKey(ctx, ...NWS);
   const nws4 = nws.filter((s) => ctx.takenHalfYears(s.id).length === 4);
   reqs.push(oneOf("nw", "4 Kurse einer Naturwissenschaft", nws4, 4));
   // § 25 Abs. 4: Biologie as the only continuous science needs Physik or Chemie.
   if (nws4.length === 1 && hasKey(nws4[0], "bio")) {
-    const options: RequirementOption[] = [];
-    for (const s of byKey(ctx, "ph", "ch")) {
-      for (const w of WINDOWS) {
-        if (!takenIn(ctx, s, w)) continue;
-        options.push({
-          label: `${s.name} Kurs ${w[0] + 1} und ${w[1] + 1}`,
-          picks: [{ subjectId: s.id, count: 2, halfYears: w }],
-        });
-      }
-    }
     reqs.push({
       id: "phch",
       label: "2 Kurse Physik oder Chemie (Kurs 1 und 2 oder 3 und 4)",
-      options,
+      options: twoCourses(ctx, byKey(ctx, "ph", "ch")),
     });
   }
   // Aufgabenfeld II (§ 26 Abs. 2 Nr. 3 and 7).
@@ -136,10 +186,11 @@ function requirements(ctx: RuleContext, v: Version): Requirement[] {
   const af: RequirementOption[] = [];
   for (const s of af2) {
     if (hasKey(s, "ge")) {
+      // Kurse 3 und 4 belegt; § 26 Abs. 4: the best two PB courses count.
       if (pb && takenIn(ctx, pb, [2, 3])) {
         af.push({
           label: `${s.name} und ${pb.name} Kurs 3 und 4`,
-          picks: [four(s), { subjectId: pb.id, count: 2, halfYears: [2, 3] }],
+          picks: [four(s), { subjectId: pb.id, count: 2 }],
         });
       }
       const other = af2.find((x) => !hasKey(x, "ge", "pol"));
@@ -159,26 +210,17 @@ function requirements(ctx: RuleContext, v: Version): Requirement[] {
   }
   reqs.push({
     id: "af2",
-    label: `4 Kurse eines Fachs im Aufgabenfeld II, dazu Geschichte (2) oder ${pbName} Kurs 3 und 4`,
+    label: `4 Kurse eines Fachs im Aufgabenfeld II, dazu 2 Kurse Geschichte oder Kurs 3 und 4 in ${pbName}`,
     options: af,
   });
   // § 25 Abs. 2: Musik, Bildende Kunst oder Darstellendes Spiel, Kurs 1+2 oder 3+4.
+  // Not with a second FS begun in the Einführungsphase.
   if (!taken(ctx, (s) => hasTag(s, "new_foreign_language")).length) {
-    const arts: RequirementOption[] = [];
-    for (const s of byKey(ctx, ...ARTS)) {
-      for (const w of WINDOWS) {
-        if (!takenIn(ctx, s, w)) continue;
-        arts.push({
-          label: `${s.name} Kurs ${w[0] + 1} und ${w[1] + 1}`,
-          picks: [{ subjectId: s.id, count: 2, halfYears: w }],
-        });
-      }
-    }
     reqs.push({
       id: "arts",
       label:
         "2 Kurse Musik, Bildende Kunst oder Darstellendes Spiel (Kurs 1 und 2 oder 3 und 4)",
-      options: arts,
+      options: twoCourses(ctx, byKey(ctx, ...ARTS)),
     });
   }
   return reqs;
@@ -203,10 +245,13 @@ function writtenFiveCheck(c: BlockIIContext): RuleCheck {
 function validate(ctx: RuleContext): Issue[] {
   const out: Issue[] = [];
   const ex = examSubjects(ctx);
-  const core = (s: EngineSubject) =>
-    hasKey(s, "de", "ma") || hasTag(s, "foreign_language");
+  // § 23 Abs. 2: two of the three subject areas, two FS count once.
   const p14 = ex.filter((s) => s.examSlot !== "P5");
-  if (p14.length >= 4 && p14.filter(core).length < 2) {
+  const core =
+    Number(p14.some((s) => hasKey(s, "de"))) +
+    Number(p14.some((s) => hasKey(s, "ma"))) +
+    Number(p14.some((s) => hasTag(s, "foreign_language")));
+  if (p14.length >= 4 && core < 2) {
     out.push(
       issue(
         "exam.core",
@@ -348,18 +393,19 @@ function be(v: Version): Ruleset {
     summary: [
       "Qualifikationsphase mit vier Kurshalbjahren, zwei Leistungskurse (1. und 2. Prüfungsfach).",
       "Block I: genau 8 LK doppelt und 24 GK einfach, E_I = 2 × Summe LK + Summe GK, ohne Rundung.",
-      `Pflicht: alle LK, 3. und 4. Prüfungsfach, je 4 Kurse Deutsch, Fremdsprache, Mathematik, Naturwissenschaft und ein Fach aus Aufgabenfeld II, dazu Geschichte (2) oder ${pbName} Kurs 3 und 4, 2 Kurse Musik, Kunst oder DS, Abschlusskurs im Referenzfach der 5. PK.`,
-      "Zulassung: höchstens 2 LK und 4 GK unter 5 Punkten, LK zusammen mindestens 80 (doppelt), GK mindestens 120, Block I mindestens 200, kein eingebrachter Kurs mit 0 Punkten.",
-      "Block II: P1 bis P3 schriftlich, P4 mündlich, 5. Prüfungskomponente als Präsentationsprüfung oder Besondere Lernleistung, alle vierfach.",
-      "Zusätzliche mündliche Prüfung: 4 × (2 × schriftlich + mündlich) / 3, kaufmännisch gerundet.",
+      `Pflicht: alle Kurse der Prüfungsfächer 1 bis 4, je 4 Kurse Deutsch, Mathematik, einer Fremdsprache, einer Naturwissenschaft und eines Fachs aus Aufgabenfeld II, dazu 2 Kurse Geschichte oder ${pbName} Kurs 3 und 4, 2 Kurse Musik, Kunst oder DS und der letzte Kurs im Referenzfach der 5. PK.`,
+      "Ist Biologie deine einzige durchgehende Naturwissenschaft, kommen 2 Kurse Physik oder Chemie dazu. Hast du die zweite Fremdsprache erst in der Einführungsphase begonnen, entfällt Musik/Kunst/DS. Belegst du ein Zwei-Kurs-Fach länger, zählen die besten zwei Kurse.",
+      "Zulassung: Block I mindestens 200, LK zusammen mindestens 80 (doppelt), GK mindestens 120, höchstens 2 LK und 4 GK unter 5 Punkten. Kurse mit 0 Punkten gelten als nicht belegt und zählen nicht.",
+      "Block II: P1 bis P3 schriftlich, P4 mündlich, dazu die 5. Prüfungskomponente (Präsentationsprüfung oder Besondere Lernleistung), alle vierfach. Mit zusätzlicher mündlicher Prüfung zählt 4 × (2 × schriftlich + mündlich) ÷ 3, kaufmännisch gerundet (Anlage 2).",
       `${p5.presentation}. ${p5.bllText}.`,
       "Bestehen: Block II mindestens 100, zwei Prüfungsfächer (P1 bis P4) mit je 20 Punkten, darunter ein LK, eine schriftliche Prüfung mit mindestens 5 Punkten.",
       ...v.note,
     ],
     sources: [
       {
-        title: "Verordnung über die gymnasiale Oberstufe (VO-GO)",
-        section: "§§ 13, 15, 19–30, 42–45, 49, Anlagen 2 und 3",
+        title:
+          "Verordnung über die gymnasiale Oberstufe (VO-GO), zuletzt geändert am 31.07.2026",
+        section: "§§ 10, 13, 15, 19–30, 42–45, 49, Anlagen 2 und 3",
         url: "https://gesetze.berlin.de/perma?a=GymOstV_BE",
       },
       {
@@ -385,6 +431,7 @@ function be(v: Version): Ruleset {
       },
       {
         title: "SenBJF: Auf Kurs zum Abitur (Broschüre ab 2026/2027)",
+        section: "S. 19, 24, 27 f., 39 f.",
         url: "https://www.berlin.de/sen/bildung/schule/bildungswege/gymnasium/broschuere-auf-kurs-zum-abitur.pdf",
       },
     ],

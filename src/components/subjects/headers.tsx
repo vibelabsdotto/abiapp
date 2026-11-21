@@ -1,7 +1,5 @@
-// Native header controls of the subjects lane.
-// - ModalHeader: title plus native bar buttons "Abbrechen" (left) and the
-//   prominent "Sichern" (right) via Stack.Toolbar (UIBarButtonItem on iOS).
-// - HalfYearPicker: segmented half-year switcher with the ruleset labels.
+// Header pieces of the subject screens: half-year switcher with the ruleset
+// labels, subject context line of the editors and the subject detail header.
 
 import React from "react";
 import {
@@ -81,7 +79,55 @@ export const SubjectContext = ({
   );
 };
 
+/**
+ * Top of the subject detail: the subject avatar (the only place the
+ * subject's accent shows here) with level and exam slot in neutral text.
+ * The name is the nav title.
+ */
+export const SubjectHeader = ({
+  subject,
+  levelName,
+}: {
+  subject: SubjectRecord;
+  levelName: string | null;
+}) => {
+  const colors = useThemeStore((state) => state.colors);
+  const line = [levelName, subject.examSlot].filter(Boolean).join(" · ");
+  return (
+    <View style={styles.header}>
+      <SubjectAvatar
+        catalogKey={subject.catalogKey}
+        color={subject.color}
+        name={subject.name}
+        tags={subject.tags}
+        size={44}
+      />
+      {line ? (
+        <Text
+          style={[
+            Type.subhead,
+            styles.headerLine,
+            { color: colors.textSecondary },
+          ]}
+          numberOfLines={2}
+        >
+          {line}
+        </Text>
+      ) : null}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 4,
+  },
+  headerLine: {
+    flexShrink: 1,
+  },
   context: {
     flexDirection: "row",
     alignItems: "center",
@@ -92,6 +138,3 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 });
-
-/** SF Symbol on iOS, Material drawable on Android (see constants). */
-export { toolbarIcon } from "@constants/toolbarIcons";

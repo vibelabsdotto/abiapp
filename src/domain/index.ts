@@ -17,6 +17,10 @@ import {
   validateWithRuleset,
   type TargetAnalysis,
 } from "./engine/evaluate";
+import {
+  currentHalfYear as halfYearOn,
+  type HalfYearCourse,
+} from "./engine/calendar";
 import { gradeTenthsFromPoints, minPointsForTenths } from "./engine/math";
 import {
   halfYearPrognosis as prognosis,
@@ -32,7 +36,7 @@ import {
 } from "./rulesets/registry";
 
 export type * from "./model";
-export type { RequiredGradeStatus, TargetAnalysis };
+export type { HalfYearCourse, RequiredGradeStatus, TargetAnalysis };
 
 /** Full evaluation (Block I optimization, Block II, total, checks, issues). */
 export function evaluate(input: EngineInput): AbiturEvaluation {
@@ -44,12 +48,21 @@ export function validateSetup(input: EngineInput): Issue[] {
   return validateWithRuleset(input, getRuleset(input.rulesetId));
 }
 
-/** Prognosis of a half-year from single grades (rounded once, half up). */
+/**
+ * Prognosis of a half-year from single grades, rounded once like the engine
+ * does for the ruleset (half up; BY never rounds up to 1 point). Throws for
+ * an unknown ruleset id.
+ */
 export function halfYearPrognosis(
   grades: EngineGrade[],
   examWeightPercent: number,
+  rulesetId: string,
 ): { exact: number | null; points: number | null } {
-  return prognosis(grades, examWeightPercent);
+  return prognosis(
+    grades,
+    examWeightPercent,
+    getRuleset(rulesetId).roundHalfYear,
+  );
 }
 
 /** Minimum points of the next grade of `kind` so the half-year reaches `targetPoints`. */
@@ -58,8 +71,15 @@ export function requiredNextGrade(
   examWeightPercent: number,
   kind: GradeKind,
   targetPoints: number,
+  rulesetId: string,
 ): { points: number | null; status: RequiredGradeStatus } {
-  return nextGrade(grades, examWeightPercent, kind, targetPoints);
+  return nextGrade(
+    grades,
+    examWeightPercent,
+    kind,
+    targetPoints,
+    getRuleset(rulesetId).roundHalfYear,
+  );
 }
 
 /** Grade in tenths (10 = 1,0 … 40 = 4,0); null below 300 points. */
@@ -85,6 +105,26 @@ export function targetAnalysis(
     getRuleset(input.rulesetId),
     targetTenths,
   );
+}
+
+/**
+ * Half-year index the student is in on `date`: from Abitur year and school
+ * calendar, later when the data already has official results for it.
+ */
+export function currentHalfYear(input: {
+  rulesetId: string;
+  abiturYear: number;
+  courses: readonly HalfYearCourse[];
+  date: Date;
+}): number {
+  const ruleset = getRuleset(input.rulesetId);
+  return halfYearOn({
+    state: ruleset.state,
+    abiturYear: input.abiturYear,
+    halfYearCount: ruleset.halfYears.length,
+    courses: input.courses,
+    date: input.date,
+  });
 }
 
 export function listStates(): { code: StateCode; name: string }[] {

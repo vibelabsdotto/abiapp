@@ -52,6 +52,8 @@ import {
   type SubjectRecord,
 } from "@services/database";
 
+import { defaultSubjectColor } from "@utils/subjectColor";
+
 import { defaultHalfYearsOf, requireRuleset } from "./domainAccess";
 import { useProfileStore } from "./profileStore";
 
@@ -62,6 +64,12 @@ interface CourseState {
   courses: CourseRecord[];
   grades: GradeRecord[];
   isLoaded: boolean;
+  /**
+   * Bumped by every full load and reset (start, backup import, cloud copy,
+   * demo data, rules change): what changes with it is a baseline, never a
+   * new entry by the user (engagement prompts).
+   */
+  loadGeneration: number;
 
   load: () => Promise<void>;
   /** Re-reads the given tables (default: all three). */
@@ -109,6 +117,10 @@ interface CourseState {
     subjectId: string,
     halfYear: number,
     inclusion: CourseInclusion,
+  ) => Promise<void>;
+  /** Sets the given courses back to "auto" in one transaction. */
+  resetInclusions: (
+    courses: readonly { subjectId: string; halfYear: number }[],
   ) => Promise<void>;
   /** Half-year goal 0..15, null removes it. */
   setTargetPoints: (
@@ -168,6 +180,21 @@ const validateGrade = (
   assertOptionalDate(input.date);
 };
 
+/** Ids of subjects with grades, an official result or a goal. */
+export function subjectsWithData(data: {
+  courses: readonly CourseRecord[];
+  grades: readonly GradeRecord[];
+}): Set<string> {
+  const ids = new Set<string>();
+  for (const grade of data.grades) ids.add(grade.subjectId);
+  for (const course of data.courses) {
+    if (course.officialPoints !== null || course.targetPoints !== null) {
+      ids.add(course.subjectId);
+    }
+  }
+  return ids;
+}
+
 export const useCourseStore = create<CourseState>()((set, get) => {
   const refresh = async (parts: readonly Part[] = ALL_PARTS) => {
     set(await readParts(parts));
@@ -200,9 +227,15 @@ export const useCourseStore = create<CourseState>()((set, get) => {
     courses: [],
     grades: [],
     isLoaded: false,
+    loadGeneration: 0,
 
     load: async () => {
-      set({ ...(await readParts(ALL_PARTS)), isLoaded: true });
+      const parts = await readParts(ALL_PARTS);
+      set((state) => ({
+        ...parts,
+        isLoaded: true,
+        loadGeneration: state.loadGeneration + 1,
+      }));
     },
 
     refresh,
@@ -219,6 +252,15 @@ export const useCourseStore = create<CourseState>()((set, get) => {
         const created = await insertSubject(db, {
           ...input,
           examWeightPercent,
+          // `color: null` is an explicit "no colour"; without the field the
+          // subject gets its default colour.
+          color:
+            input.color !== undefined
+              ? input.color
+              : defaultSubjectColor(
+                  input,
+                  get().subjects.map((existing) => existing.color),
+                ),
         });
         await ensureCourses(db, created.id, count);
         return created;
@@ -246,10 +288,16 @@ export const useCourseStore = create<CourseState>()((set, get) => {
         return entry;
       });
       const count = ruleset.halfYears.length;
+      const usedColors = get().subjects.map((subject) => subject.color);
       const created = await writeTransaction(async (db) => {
         const result: SubjectRecord[] = [];
         for (const entry of entries) {
           if (existing.has(entry.key)) continue;
+          const color = defaultSubjectColor(
+            { catalogKey: entry.key, tags: entry.tags },
+            usedColors,
+          );
+          usedColors.push(color);
           const subject = await insertSubject(db, {
             catalogKey: entry.key,
             name: entry.name,
@@ -261,6 +309,7 @@ export const useCourseStore = create<CourseState>()((set, get) => {
                 ? "elevated"
                 : "basic",
             examWeightPercent: ruleset.defaults.examWeightPercent,
+            color,
           });
           await ensureCourses(db, subject.id, count, defaultHalfYearsOf(entry));
           result.push(subject);
@@ -358,6 +407,20 @@ export const useCourseStore = create<CourseState>()((set, get) => {
       return writeCourse(subjectId, halfYear, { inclusion });
     },
 
+    resetInclusions: async (courses) => {
+      const count = halfYearCount();
+      for (const { subjectId, halfYear } of courses) {
+        assertSubject(subjectId);
+        assertHalfYear(halfYear, count);
+      }
+      await writeTransaction(async (db) => {
+        for (const { subjectId, halfYear } of courses) {
+          await upsertCourse(db, subjectId, halfYear, { inclusion: "auto" });
+        }
+      });
+      await refresh(["courses"]);
+    },
+
     setTargetPoints: (subjectId, halfYear, points) => {
       assertOptionalPoints(points, "Das Halbjahresziel");
       return writeCourse(subjectId, halfYear, { targetPoints: points });
@@ -392,6 +455,13 @@ export const useCourseStore = create<CourseState>()((set, get) => {
       await refresh(["grades"]);
     },
 
-    reset: () => set({ subjects: [], courses: [], grades: [], isLoaded: true }),
+    reset: () =>
+      set((state) => ({
+        subjects: [],
+        courses: [],
+        grades: [],
+        isLoaded: true,
+        loadGeneration: state.loadGeneration + 1,
+      })),
   };
 });

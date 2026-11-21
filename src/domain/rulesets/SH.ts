@@ -2,7 +2,7 @@
 // SH-2027 (Abitur 2027, Fassung vom 31.07.2026 nach § 40 Abs. 5) und
 // SH-2028 (Abitur ab 2028, Fassung ab 01.08.2026). Die Rechenregeln sind gleich.
 
-import type { EngineSubject, Issue, SubjectField } from "../model";
+import type { EngineSubject, Issue, RuleCheck, SubjectField } from "../model";
 import type {
   BlockIExtraDef,
   Requirement,
@@ -15,6 +15,7 @@ import {
   checkBlockIIMin,
   checkMinComponents,
   component,
+  continuedLanguages,
   elevatedSubjects,
   examSubjectRequirements,
   hasKey,
@@ -57,11 +58,54 @@ const bllBlockI: BlockIExtraDef = {
   ],
 };
 
+/**
+ * § 9 Abs. 5: whoever does not continue a second language from Sek I takes a
+ * new one (no semester with 0 points, § 32 Abs. 2 Nr. 4: Q2.1 and Q2.2
+ * count). With two continued languages a new one is voluntary; with at most
+ * one the app assumes it is compulsory.
+ */
+function compulsoryNewFs(ctx: RuleContext): EngineSubject[] {
+  return continuedLanguages(ctx).length <= 1 ? taken(ctx, isNewFs) : [];
+}
+
+/** § 9 Abs. 5 S. 2: no semester of the compulsory new language with 0 points. */
+function newFsZeroCheck(ctx: RuleContext): RuleCheck[] {
+  const subs = compulsoryNewFs(ctx);
+  if (subs.length === 0) return [];
+  const zeros: string[] = [];
+  let predicted = false;
+  for (const s of subs) {
+    for (const hy of ctx.takenHalfYears(s.id)) {
+      const v = ctx.values.get(`${s.id}:${hy}`);
+      if (v?.points === 0) {
+        zeros.push(`${s.name} ${ctx.ruleset.halfYears[hy]}`);
+        if (v.source !== "official") predicted = true;
+      }
+    }
+  }
+  return [
+    {
+      id: "block1.newFsZero",
+      label: "Kein Halbjahr der neu beginnenden Fremdsprache mit 0 Punkten",
+      passed: zeros.length === 0,
+      detail: zeros.length ? zeros.join(", ") : null,
+      predicted,
+    },
+  ];
+}
+
 function requirements(ctx: RuleContext): Requirement[] {
   const reqs: Requirement[] = [...examSubjectRequirements(ctx)];
   reqs.push(oneOf("de", "4 Ergebnisse Deutsch", byKey(ctx, "de"), 4));
   reqs.push(oneOf("ma", "4 Ergebnisse Mathematik", byKey(ctx, "ma"), 4));
-  const fs = taken(ctx, isFs);
+  // § 13 Abs. 2 Nr. 1: a language written as P1/P2 is the Kern-Fremdsprache;
+  // otherwise a continued one (a new one only without a continued language).
+  const examFs = taken(
+    ctx,
+    (s) => isFs(s) && (s.examSlot === "P1" || s.examSlot === "P2"),
+  );
+  let fs = examFs.length ? examFs : continuedLanguages(ctx);
+  if (fs.length === 0) fs = taken(ctx, isFs);
   reqs.push(
     oneOf(
       "kernFs",
@@ -92,7 +136,7 @@ function requirements(ctx: RuleContext): Requirement[] {
     ),
     short: "künstlerisches Fach",
   });
-  for (const s of taken(ctx, isNewFs)) {
+  for (const s of compulsoryNewFs(ctx)) {
     reqs.push({
       id: `newFs.${s.id}`,
       label: `${s.name}: Ergebnisse aus Q2.1 und Q2.2`,
@@ -100,16 +144,20 @@ function requirements(ctx: RuleContext): Requirement[] {
     });
   }
   reqs.push(oneOf("ge", "4 Ergebnisse Geschichte", byKey(ctx, "ge"), 4));
+  const geoWipoLabel = "2 Ergebnisse aus Geographie und Wirtschaft/Politik";
+  const geoWipoShort = "Geographie/Wirtschaft-Politik";
   reqs.push({
     id: "geoWipo",
-    label: "2 Ergebnisse aus Geographie und Wirtschaft/Politik",
+    label: geoWipoLabel,
+    short: geoWipoShort,
     options: [
       {
         picks: [],
         groupMins: [
           {
             id: "geoWipo",
-            label: "2 Ergebnisse aus Geographie und Wirtschaft/Politik",
+            label: geoWipoLabel,
+            short: geoWipoShort,
             subjectIds: byKey(ctx, "geo", "pol").map((s) => s.id),
             count: 2,
           },
@@ -255,14 +303,14 @@ function sh(
     defaults: { examWeightPercent: 50 },
     summary: [
       "Profiloberstufe Q1.1 bis Q2.2 mit genau zwei Fächern auf erhöhtem Niveau: dein Profilfach und ein Kernfach (Deutsch, Mathematik oder Kern-Fremdsprache).",
-      "Block I: genau 36 Ergebnisse, die beiden eA-Fächer zählen doppelt. Punkte = Summe / 44 × 40, ab 0,5 aufgerundet.",
+      "Block I: 36 Ergebnisse, die beiden eA-Fächer zählen doppelt. Punkte = Summe ÷ 44 × 40, ab ,5 aufgerundet. Brauchst du wegen deiner Fächerwahl mehr Pflichtergebnisse, rechnet die App mit dieser Zahl.",
       "Pflicht: alle Prüfungsfächer, alle drei Kernfächer, eine Naturwissenschaft und Geschichte (je 4), Geographie und Wirtschaft/Politik zusammen 2, Religion oder Philosophie 2, je 1 aus Profilseminar und Kunst, Musik oder Darstellendem Spiel.",
+      "Hast du eine Fremdsprache neu begonnen, weil du keine zweite aus der Sek I fortführst, zählen Q2.1 und Q2.2 davon. Kein Halbjahr darin darf 0 Punkte haben.",
       "Den Rest wählst du frei, die App nimmt die besten Ergebnisse. Sport zählt höchstens dreimal, wenn es kein Prüfungsfach ist.",
-      "Zulassung: mindestens 200 Punkte, mindestens 29 Ergebnisse mit 5 oder mehr Punkten (höchstens 7 darunter), kein eingebrachtes Ergebnis mit 0 Punkten.",
-      "Block II: P1 eA-Kernfach, P2 gA-Kernfach und P3 Profilfach schriftlich, P4 mündlich oder als Präsentation. Bei 4 Prüfungen zählt jede fünffach, bei 5 vierfach.",
-      "Zusätzliche mündliche Prüfung nur auf deinen Antrag: (2 × schriftlich + mündlich) / 3 × Faktor, erst danach gerundet.",
-      "Bestehen: Block II mindestens 100 Punkte, bei 4 Prüfungen zwei und bei 5 Prüfungen drei mit je mindestens 5 Punkten (einfach).",
-      "Eine Besondere Lernleistung zählt als ein Ergebnis in Block I oder als 5. Prüfung.",
+      "Zulassung: mindestens 200 Punkte, mindestens 29 Ergebnisse mit 5 oder mehr Punkten (bei 36 also höchstens 7 darunter), kein eingebrachtes Ergebnis mit 0 Punkten.",
+      "Block II: P1 eA-Kernfach, P2 gA-Kernfach und P3 Profilfach schriftlich, P4 mündlich oder als Präsentation, auf Wunsch P5 mündlich oder als Besondere Lernleistung. Bei 4 Prüfungen zählt jede fünffach, bei 5 vierfach.",
+      "Zusätzliche mündliche Prüfung nur auf deinen Antrag: (2 × schriftlich + mündlich) ÷ 3 × Faktor, erst danach gerundet.",
+      "Bestehen: Block II mindestens 100 Punkte, bei 4 Prüfungen zwei und bei 5 Prüfungen drei mit je mindestens 5 Punkten (einfach). Eine Besondere Lernleistung kann auch ein Ergebnis in Block I sein.",
       note,
     ],
     sources,
@@ -277,15 +325,20 @@ function sh(
       requirements,
       extras: [bllBlockI],
       maxPerSubject: (s) => (hasKey(s, "sp") && !s.examSlot ? 3 : null),
-      deficitLimits: () => [
-        limit(
-          "total",
-          7,
-          "Mindestens 29 Ergebnisse mit 5 oder mehr Punkten (höchstens 7 darunter)",
-        ),
-      ],
+      // § 32 Abs. 1: 29 results with 5+ points, also when § 32 Abs. 3 raises N above 36.
+      deficitLimits: (n) => {
+        const max = Math.max(n, 36) - 29;
+        return [
+          limit(
+            "total",
+            max,
+            `Mindestens 29 Ergebnisse mit 5 oder mehr Punkten (höchstens ${max} darunter)`,
+          ),
+        ];
+      },
       // 0 points: not includable; a mandatory course with 0 makes its duty unfulfillable (§ 12 Abs. 2).
-      zero: { includable: false, failIfTaken: isNewFs },
+      zero: { includable: false, failIfTaken: false },
+      checks: (ctx) => newFsZeroCheck(ctx),
     },
     blockII: {
       maxPoints: 300,
@@ -374,12 +427,17 @@ function sh(
 }
 
 const OAPVO = {
-  title: "OAPVO Schleswig-Holstein vom 23.10.2020",
-  section: "§§ 6, 7, 9, 12, 13, 20, 22, 28, 30–33, Anlagen 2, 2.1, 4",
+  title: "OAPVO Schleswig-Holstein vom 23.10.2020 (Landesrecht SH)",
+  section: "§§ 6, 7, 9, 12, 13, 22, 28, 30–33, 40, Anlagen 2, 2.1, 4",
   url: "https://www.gesetze-rechtsprechung.sh.juris.de/perma?j=GymOAbiPrO_SH",
 };
+const OAPVO_32 = {
+  title: "OAPVO § 32 Berechnung von Block I (Normtext, landesrecht.online)",
+  section: "§ 32 Abs. 1–4, § 33, Anlage 4",
+  url: "https://www.landesrecht.online/SH/OAPVO/32",
+};
 const FAQ = {
-  title: "MBWFK: FAQ eA-Fächer ab Q1 2025 und Abiturprüfung ab 2027",
+  title: "MBWFK: FAQ eA-Fächer ab Q1 2025 und Abiturprüfung ab 2027 (02/2025)",
   section: "Fragen 1, 2, 5–7, 9",
   url: "https://www.schleswig-holstein.de/DE/fachinhalte/S/schulrecht/Downloads/Verordnungen/Downloads/OAPVO_FAQ.pdf?__blob=publicationFile&v=1",
 };
@@ -395,6 +453,7 @@ export const SH_2027 = sh(
   2027,
   [
     OAPVO,
+    OAPVO_32,
     {
       title: "OAPVO, Übergangsbestimmung",
       section: "§ 40 Abs. 5",
@@ -412,6 +471,7 @@ export const SH_2028 = sh(
   null,
   [
     OAPVO,
+    OAPVO_32,
     FAQ,
     {
       title: "MBWFK: Oberstufen-Verordnung, Verbandsanhörung",

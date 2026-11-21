@@ -4,6 +4,7 @@
 export { ArchGauge, type ArchGaugeProps, type ArchMarker } from "./ArchGauge";
 export { CheckRow, type CheckRowProps } from "./CheckRow";
 export { Chip, type ChipProps, type ChipTone } from "./Chip";
+export { ColorSwatch, type ColorSwatchProps } from "./ColorSwatch";
 export { EmptyState, type EmptyStateProps } from "./EmptyState";
 export { GradeHero, type GradeHeroProps } from "./GradeHero";
 export {
@@ -11,7 +12,14 @@ export {
   type HalfYearStripProps,
   type HalfYearValue,
 } from "./HalfYearStrip";
-export { Icon, type IconProps } from "./Icon";
+export { Icon, iconStroke, type IconProps, type IconSize } from "./Icon";
+export {
+  InfoButton,
+  InfoNote,
+  InfoText,
+  type InfoButtonProps,
+  type InfoNoteProps,
+} from "./InfoNote";
 export { IssueBanner, type IssueBannerProps } from "./IssueBanner";
 export { ListRow, type ListRowMenu, type ListRowProps } from "./ListRow";
 export {
@@ -40,12 +48,14 @@ export {
 } from "./points";
 export {
   SUBJECT_COLOR_KEYS,
-  SubjectColors,
-  hashSubjectColor,
+  SubjectPalette,
+  isSubjectColorKey,
   resolveSubjectColor,
   subjectVisual,
   type SubjectColorKey,
   type SubjectVisual,
   type SubjectVisualHints,
 } from "./subjects";
+export { subjectTile } from "./subjectPalette";
 export { useSubjectVisualResolver, type SubjectLike } from "./useSubjectVisual";
+export { spokenPoints, spokenPointsWithGrade } from "./spokenPoints";

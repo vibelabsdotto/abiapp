@@ -28,14 +28,14 @@ import {
   trackProfile,
 } from "@services/analytics/appEvents";
 
-import { useCourseStore } from "./courseStore";
+import { subjectsWithData, useCourseStore } from "./courseStore";
 import {
   defaultHalfYearsOf,
   errorMessage,
   requireRuleset,
   tryDomain,
 } from "./domainAccess";
-import { buildEngineInput } from "./engineInput";
+import { currentHalfYearOf, selectEngineInput } from "./engineInput";
 import { useExamStore } from "./examStore";
 import { usePreferencesStore } from "./preferencesStore";
 import { useProfileStore } from "./profileStore";
@@ -57,18 +57,22 @@ export function resetAllStores(): void {
   usePreferencesStore.getState().reset();
 }
 
-/** Current EngineInput outside React (services, dev tools). */
+/**
+ * Current EngineInput outside React (services, dev tools). Same memoized
+ * object as useEngineInput, so evaluateCached shares the screen's result.
+ */
 export function getEngineInputSnapshot() {
   const { profile } = useProfileStore.getState();
   const { subjects, courses, grades } = useCourseStore.getState();
   const { results, extras } = useExamStore.getState();
-  return buildEngineInput({
+  return selectEngineInput({
     profile,
     subjects,
     courses,
     grades,
     results,
     extras,
+    currentHalfYear: currentHalfYearOf(profile, courses),
   });
 }
 
@@ -145,18 +149,6 @@ export async function startSetup(input: {
   return { applied: true, rulesetId: ruleset.id, issues: [] };
 }
 
-const hasEnteredData = (subjectId: string): boolean => {
-  const { courses, grades } = useCourseStore.getState();
-  return (
-    grades.some((grade) => grade.subjectId === subjectId) ||
-    courses.some(
-      (course) =>
-        course.subjectId === subjectId &&
-        (course.officialPoints !== null || course.targetPoints !== null),
-    )
-  );
-};
-
 /**
  * Onboarding step "Fächer": makes the catalog subjects match `keys`.
  * Missing keys are created, deselected catalog subjects are removed unless
@@ -175,13 +167,14 @@ export async function syncCatalogSubjects(
     requireRuleset(profile.rulesetId).catalog.map((entry) => entry.key),
   );
   const courseStore = useCourseStore.getState();
+  const withData = subjectsWithData(courseStore);
   const wanted = new Set(keys);
   const issues: Issue[] = [];
   const toRemove: SubjectRecord[] = [];
   for (const subject of courseStore.subjects) {
     if (!subject.catalogKey || !catalogKeys.has(subject.catalogKey)) continue;
     if (wanted.has(subject.catalogKey)) continue;
-    if (hasEnteredData(subject.id)) {
+    if (withData.has(subject.id)) {
       issues.push({
         code: "setup.subject.keptWithData",
         severity: "warning",
@@ -231,6 +224,7 @@ export async function completeOnboarding(): Promise<void> {
       subject_count: subjects.length,
       elevated_count: subjects.filter((s) => s.level === "elevated").length,
       exam_slots_set: subjects.filter((s) => s.examSlot !== null).length,
+      has_goal: profile.targetTenths !== null,
     });
   }
 }

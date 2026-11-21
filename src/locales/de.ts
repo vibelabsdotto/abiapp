@@ -1,14 +1,20 @@
 // German strings. This file is the source of truth for keys and structure;
 // en.ts must satisfy the same shape.
 
+import { backupDE } from "./parts/backup.de";
+import { engagementDE } from "./parts/engagement.de";
+import { onboardingDE } from "./parts/onboarding.de";
 import { overviewDE } from "./parts/overview.de";
 import { setupDE } from "./parts/setup.de";
 import { subjectsDE } from "./parts/subjects.de";
 
 export const de = {
   ...setupDE,
+  ...backupDE,
+  ...onboardingDE,
   ...subjectsDE,
   ...overviewDE,
+  ...engagementDE,
   common: {
     cancel: "Abbrechen",
     save: "Sichern",
@@ -25,20 +31,25 @@ export const de = {
   },
   errors: {
     title: "Etwas ist schiefgelaufen",
-    message: "Die App ist auf einen unerwarteten Fehler gestoßen.",
-    initFailed: "Die Datenbank konnte nicht geöffnet werden.",
+    message:
+      "AbiApp ist auf einen unerwarteten Fehler gestoßen. Deine Daten sind sicher. Versuche es noch einmal.",
+    initFailed:
+      "AbiApp konnte deine Daten nicht öffnen. Versuche es noch einmal.",
   },
   notFound: {
     title: "Seite nicht gefunden",
-    back: "Zur Übersicht",
+    back: "Übersicht öffnen",
   },
   ui: {
     points: "Punkte",
     pointsValue: "{{points}} Punkte",
     pointsWithGrade: "{{points}} Punkte, Note {{grade}}",
+    pointValue: "{{points}} Punkt",
+    pointWithGrade: "{{points}} Punkt, Note {{grade}}",
     noValue: "Noch kein Wert",
     source: {
       official: "amtlich",
+      settled: "aus Noten",
       grades: "Prognose",
       estimate: "Schätzung",
       none: "Noch kein Wert",
@@ -47,13 +58,13 @@ export const de = {
       prognosis: "Prognose",
       result: "Ergebnis",
       notPassed: "Nicht bestanden",
-      noGrade: "Noch keine Note",
+      noGrade: "Noch kein Schnitt",
       totalOf: "{{points}} von {{max}} Punkten",
       passMarker: "Bestanden ab {{points}}",
       topMarker: "1,0 ab {{points}}",
       goal: "Ziel {{grade}}",
       goalMarker: "Dein Ziel",
-      gradeLabel: "Abiturschnitt {{grade}}",
+      gradeLabel: "Abischnitt {{grade}}",
     },
     check: {
       passed: "Erfüllt",
@@ -65,6 +76,10 @@ export const de = {
       error: "Fehler",
       warning: "Hinweis",
       info: "Info",
+    },
+    info: {
+      show: "Erklärung anzeigen",
+      hide: "Erklärung ausblenden",
     },
     halfYear: "Halbjahr {{name}}",
     progress: "{{value}} von {{max}}",

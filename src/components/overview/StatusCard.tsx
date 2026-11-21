@@ -21,6 +21,9 @@ import { Type } from "@constants/typography";
 import { allChecks, isMissingSubjectIssue, statusItems } from "./data";
 
 const openAbitur = () => router.navigate("/abitur");
+/** "Alle anzeigen": the Abitur tab scrolled to "Zulassung und Bestehen". */
+const openChecklist = () =>
+  router.navigate({ pathname: "/abitur", params: { focus: "checks" } });
 const openSubjectSetup = () => router.push("/setup/subjects" as Href);
 
 export const StatusCard = ({
@@ -44,12 +47,12 @@ export const StatusCard = ({
       : t("home.status.allPassed")
     : t("home.status.count", { passed, total: checks.length });
   const summaryIcon = allPassed
-    ? { sf: "checkmark.seal.fill" as const, fallback: BadgeCheck }
+    ? BadgeCheck
     : failed
-      ? { sf: "xmark.octagon.fill" as const, fallback: OctagonAlert }
-      : { sf: "circle.dashed" as const, fallback: CircleDashed };
+      ? OctagonAlert
+      : CircleDashed;
   const summaryColor = allPassed
-    ? colors.success
+    ? colors.text
     : failed
       ? colors.error
       : colors.textSecondary;
@@ -57,7 +60,7 @@ export const StatusCard = ({
   return (
     <Section
       title={t("home.status.title")}
-      action={{ title: t("home.status.all"), onPress: openAbitur }}
+      action={{ title: t("home.status.all"), onPress: openChecklist }}
       separatorInset={50}
     >
       <Pressable
@@ -69,20 +72,14 @@ export const StatusCard = ({
           pressed && { backgroundColor: colors.fill },
         ]}
       >
-        <Icon
-          sf={summaryIcon.sf}
-          fallback={summaryIcon.fallback}
-          size={22}
-          color={summaryColor}
-        />
+        <Icon icon={summaryIcon} size={24} color={summaryColor} />
         <Text style={[Type.body, styles.summaryText, { color: colors.text }]}>
           {summary}
         </Text>
         <Icon
-          sf="chevron.right"
-          fallback={ChevronRight}
-          size={13}
-          weight="bold"
+          icon={ChevronRight}
+          size={16}
+
           color={colors.textTertiary}
         />
       </Pressable>
@@ -123,14 +120,9 @@ const IssueRow = ({ issue }: { issue: Issue }) => {
       style={styles.issue}
     >
       <Icon
-        sf={
-          error
-            ? "exclamationmark.octagon.fill"
-            : "exclamationmark.triangle.fill"
-        }
-        fallback={error ? OctagonAlert : TriangleAlert}
-        size={22}
-        color={error ? colors.error : colors.warning}
+        icon={error ? OctagonAlert : TriangleAlert}
+        size={24}
+        color={error ? colors.error : colors.text}
       />
       <View style={styles.issueText}>
         <Text style={[Type.body, { color: colors.text }]}>{issue.message}</Text>

@@ -1,11 +1,13 @@
-// Step numbers of the onboarding flow (welcome and done are not counted).
+// Progress of the onboarding flow: the story pages (goal, questions,
+// scenes) and the setup steps (welcome and result are not counted).
 
-export const ONBOARDING_STEPS = {
-  state: 1,
-  year: 2,
-  subjects: 3,
-  levels: 4,
-  exams: 5,
-} as const;
+import { useOnboardingStory } from "@stores/onboardingStory";
+import { stepProgress, type OnboardingStepId } from "@utils/onboardingStory";
 
-export const ONBOARDING_TOTAL_STEPS = 5;
+export const useStepProgress = (
+  id: OnboardingStepId,
+): { step: number; totalSteps: number } => {
+  const skippedAt = useOnboardingStory((state) => state.skippedAt);
+  const { step, total } = stepProgress(id, skippedAt);
+  return { step, totalSteps: total };
+};

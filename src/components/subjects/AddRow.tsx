@@ -27,13 +27,7 @@ export const AddRow = ({ title, onPress, accessibilityLabel }: AddRowProps) => {
         pressed && { backgroundColor: colors.fill },
       ]}
     >
-      <Icon
-        sf="plus.circle.fill"
-        fallback={CirclePlus}
-        size={22}
-        color={colors.accent}
-        weight="regular"
-      />
+      <Icon icon={CirclePlus} size={24} color={colors.accent} />
       <Text style={[Type.body, styles.title, { color: colors.accent }]}>
         {title}
       </Text>

@@ -1,19 +1,16 @@
-// Onboarding step 3: subjects from the state's catalog plus own subjects.
+// Onboarding: subjects from the state's catalog plus own subjects.
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 
-import {
-  ONBOARDING_STEPS,
-  ONBOARDING_TOTAL_STEPS,
-} from "@components/onboarding/steps";
+import { useStepProgress } from "@components/onboarding/steps";
 import {
   OnboardingStep,
   SubjectPicker,
   saveSubjectsDraft,
   showError,
 } from "@components/setup";
-import { useSubjectsDraft } from "@hooks/useSetupFlows";
+import { subjectsNote, useSubjectsDraft } from "@hooks/useSetupFlows";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
 
@@ -23,6 +20,7 @@ const PRESELECT = ["de", "ma"] as const;
 export default function OnboardingSubjectsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const progress = useStepProgress({ kind: "setup", step: "subjects" });
   const draft = useSubjectsDraft({ preselect: PRESELECT });
   const subjects = useCourseStore((state) => state.subjects);
   const [saving, setSaving] = useState(false);
@@ -41,15 +39,10 @@ export default function OnboardingSubjectsScreen() {
   return (
     <OnboardingStep
       title={t("onboarding.subjects.title")}
-      step={ONBOARDING_STEPS.subjects}
-      totalSteps={ONBOARDING_TOTAL_STEPS}
+      {...progress}
       intro={t("onboarding.subjects.intro")}
       keyboardAware
-      footerNote={
-        draft.canSave
-          ? t("setup.subjects.selected", { count: draft.selectedCount })
-          : t("setup.subjects.minHint", { count: draft.minimum })
-      }
+      footerNote={subjectsNote(draft)}
       primary={{
         title: t("onboarding.next"),
         disabled: !draft.canSave,

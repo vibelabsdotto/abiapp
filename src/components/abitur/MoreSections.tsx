@@ -26,10 +26,7 @@ export const ExtrasSection = ({
   const { t } = useTranslation();
   if (ruleset.extraInputs.length === 0) return null;
   return (
-    <Section
-      title={t("abitur.extras.title")}
-      footer={t("abitur.extras.footer")}
-    >
+    <Section title={t("abitur.extras.title")} info={t("abitur.extras.footer")}>
       {ruleset.extraInputs.map((extra) => {
         const points = extras[extra.id] ?? null;
         return (
@@ -134,14 +131,7 @@ export const RulesLink = ({ ruleset }: { ruleset: RulesetSummary }) => {
       <ListRow
         title={t("abitur.rulesLink", { state: ruleset.stateName })}
         subtitle={t("abitur.rulesLinkHint")}
-        leading={
-          <Icon
-            sf="text.book.closed"
-            fallback={BookOpen}
-            size={22}
-            color={colors.accent}
-          />
-        }
+        leading={<Icon icon={BookOpen} size={24} color={colors.accent} />}
         chevron
         onPress={() => router.push("/rules")}
       />

@@ -32,7 +32,7 @@ export const EmptyOverview = ({
     return (
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         <EmptyState
-          icon={{ sf: "books.vertical", fallback: BookOpen }}
+          icon={BookOpen}
           title={t("home.empty.noSubjectsTitle")}
           message={t("home.empty.noSubjectsMessage")}
           action={{
@@ -72,12 +72,7 @@ export const EmptyOverview = ({
             accessibilityLabel={t("home.empty.action")}
             style={[styles.button, { backgroundColor: colors.accent }]}
           >
-            <Icon
-              sf="plus"
-              fallback={Plus}
-              size={17}
-              color={colors.accentForeground}
-            />
+            <Icon icon={Plus} size={16} color={colors.accentForeground} />
             <Text style={[Type.headline, { color: colors.accentForeground }]}>
               {t("home.empty.action")}
             </Text>

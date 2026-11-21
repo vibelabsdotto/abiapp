@@ -19,7 +19,7 @@ import {
 import {
   deleteGradeWithUndo,
   savedFeedback,
-  showError,
+  showSaveError,
 } from "@components/subjects/actions";
 import {
   ChoiceChips,
@@ -39,12 +39,13 @@ import {
 } from "@components/subjects/format";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { SubjectContext } from "@components/subjects/headers";
-import { useEditorClose } from "@components/subjects/useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 import { halfYearPrognosis } from "@domain/index";
 import type { EngineGrade, GradeKind } from "@domain/model";
 import { useHalfYearLabels } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
+import { useProfileStore } from "@stores/profileStore";
 import { tryDomain } from "@stores/domainAccess";
 import { useThemeStore } from "@stores/themeStore";
 import { Radius, Type } from "@constants/typography";
@@ -69,6 +70,9 @@ export default function GradeEditorScreen() {
   const { t, locale } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
   const labels = useHalfYearLabels();
+  const rulesetId = useProfileStore(
+    (state) => state.profile?.rulesetId ?? null,
+  );
   const subjects = useCourseStore((state) => state.subjects);
   const grades = useCourseStore((state) => state.grades);
   const courses = useCourseStore((state) => state.courses);
@@ -114,7 +118,7 @@ export default function GradeEditorScreen() {
     draft.title.trim() !== initial.title.trim() ||
     draft.date !== initial.date ||
     draft.weight !== initial.weight;
-  const close = useEditorClose(dirty && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(dirty && !saving);
 
   const halfYearLabel = labels[halfYear] ?? "";
   const course = courses.find(
@@ -134,7 +138,7 @@ export default function GradeEditorScreen() {
   );
 
   const preview = useMemo(() => {
-    if (!subject || draft.points === null) return null;
+    if (!subject || draft.points === null || !rulesetId) return null;
     const toEngine = (list: typeof siblings): EngineGrade[] =>
       list.map(({ id, kind, points, weight }) => ({
         id,
@@ -146,6 +150,7 @@ export default function GradeEditorScreen() {
       halfYearPrognosis(
         toEngine(existing ? [...siblings, existing] : siblings),
         subject.examWeightPercent,
+        rulesetId,
       ),
     ).value;
     const after = tryDomain(() =>
@@ -160,10 +165,11 @@ export default function GradeEditorScreen() {
           },
         ],
         subject.examWeightPercent,
+        rulesetId,
       ),
     ).value;
     return { before, after };
-  }, [subject, draft, siblings, existing]);
+  }, [subject, draft, siblings, existing, rulesetId]);
 
   const examCount = siblings.filter((grade) => grade.kind === "exam").length;
   const suggestions =
@@ -201,16 +207,16 @@ export default function GradeEditorScreen() {
         await addGrade({ subjectId: subject.id, halfYear, ...values });
       }
       savedFeedback();
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
   const remove = () => {
     if (!existing) return;
-    close(true);
+    closeAfterSave();
     void deleteGradeWithUndo(existing);
   };
 
@@ -223,10 +229,10 @@ export default function GradeEditorScreen() {
   if (!subject) {
     return (
       <>
-        <ModalHeader title={title} onCancel={() => close(true)} />
+        <ModalHeader title={title} onCancel={() => closeAfterSave()} />
         <EditorScroll>
           <EmptyState
-            icon={{ sf: "books.vertical", fallback: BookOpen }}
+            icon={BookOpen}
             title={t("subjects.common.missingSubject")}
           />
         </EditorScroll>
@@ -240,7 +246,7 @@ export default function GradeEditorScreen() {
     <>
       <ModalHeader
         title={title}
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveDisabled={
           draft.points === null || saving || (existing !== null && !dirty)
@@ -326,7 +332,7 @@ export default function GradeEditorScreen() {
         />
 
         <Section
-          footer={
+          info={
             draft.kind === "exam"
               ? t("subjects.gradeEditor.weightFooterExam")
               : t("subjects.gradeEditor.weightFooterOther")

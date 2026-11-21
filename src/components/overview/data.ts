@@ -1,6 +1,6 @@
 // Pure helpers shared by the overview and Abitur screens: "has data",
 // status items and number formatting. No React imports. The current
-// half-year lives in utils/currentHalfYear (shared with the subjects tab).
+// half-year comes from hooks/useCurrentHalfYear (shared with the subjects tab).
 
 import type {
   AbiturEvaluation,

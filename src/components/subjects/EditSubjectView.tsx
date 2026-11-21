@@ -3,20 +3,17 @@
 // exam slot (link to the setup flow) and removal.
 
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Check } from "lucide-react-native";
 
 import {
-  Icon,
+  ColorSwatch,
   IssueBanner,
   ListRow,
   SUBJECT_COLOR_KEYS,
   Section,
   SegmentedControl,
-  SubjectColors,
-  resolveSubjectColor,
-  subjectVisual,
+  SubjectPalette,
   type SubjectColorKey,
 } from "@components/ui";
 import { validateSetup } from "@domain/index";
@@ -29,11 +26,11 @@ import { tryDomain } from "@stores/domainAccess";
 import { useThemeStore } from "@stores/themeStore";
 import { Radius, Type } from "@constants/typography";
 
-import { confirmRemoveSubject, savedFeedback, showError } from "./actions";
+import { confirmRemoveSubject, savedFeedback, showSaveError } from "./actions";
 import { EditorScroll, FormRow, FormSwitchRow, FormTextInput } from "./form";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { levelLabel } from "./NewSubjectView";
-import { useEditorClose } from "./useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 
 const EXAM_WEIGHT_PRESETS = [25, 33, 50, 67, 75];
 
@@ -55,6 +52,7 @@ export const EditSubjectView = ({
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useThemeStore((state) => state.colors);
+  const isDark = useThemeStore((state) => state.isDark);
   const courses = useCourseStore((state) => state.courses);
   const grades = useCourseStore((state) => state.grades);
   const updateSubject = useCourseStore((state) => state.updateSubject);
@@ -95,7 +93,9 @@ export const EditSubjectView = ({
     takenChanged ||
     draft.examWeightPercent !== initial.examWeightPercent ||
     draft.color !== initial.color;
-  const close = useEditorClose(dirty && !saving);
+  const { cancel, closeAfterSave, allowClose } = useEditorClose(
+    dirty && !saving,
+  );
 
   const catalogEntry = subject.catalogKey
     ? (ruleset?.catalog.find((entry) => entry.key === subject.catalogKey) ??
@@ -150,26 +150,23 @@ export const EditSubjectView = ({
         }
       }
       savedFeedback();
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
   const presets = EXAM_WEIGHT_PRESETS.includes(draft.examWeightPercent)
     ? EXAM_WEIGHT_PRESETS
     : [...EXAM_WEIGHT_PRESETS, draft.examWeightPercent].sort((a, b) => a - b);
-  const defaultColor = subjectVisual(subject.catalogKey, {
-    name: subject.name,
-  }).color;
   const stateName = ruleset?.stateName ?? "";
 
   return (
     <>
       <ModalHeader
         title={t("subjects.subjectEditor.titleEdit")}
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveDisabled={!dirty || saving || draft.name.trim().length === 0}
       />
@@ -239,7 +236,7 @@ export const EditSubjectView = ({
         {labels.length > 0 ? (
           <Section
             title={t("subjects.subjectEditor.halfYears")}
-            footer={t("subjects.subjectEditor.halfYearsFooter")}
+            info={t("subjects.subjectEditor.halfYearsFooter")}
           >
             {labels.map((label, halfYear) => (
               <FormSwitchRow
@@ -263,13 +260,15 @@ export const EditSubjectView = ({
           </Section>
         ) : null}
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.examWeight")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.examWeight")}
+          info={t("subjects.subjectEditor.examWeightFooter", {
+            exam: draft.examWeightPercent,
+            other: 100 - draft.examWeightPercent,
+            default: ruleset?.defaults.examWeightPercent ?? 50,
+          })}
+          variant="plain"
+        >
           <SegmentedControl<number>
             options={presets.map((percent) => ({
               value: percent,
@@ -279,47 +278,31 @@ export const EditSubjectView = ({
             onChange={(examWeightPercent) => update({ examWeightPercent })}
             accessibilityLabel={t("subjects.subjectEditor.examWeight")}
           />
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("subjects.subjectEditor.examWeightFooter", {
-              exam: draft.examWeightPercent,
-              other: 100 - draft.examWeightPercent,
-              default: ruleset?.defaults.examWeightPercent ?? 50,
-            })}
-          </Text>
-        </View>
+        </Section>
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.color")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.color")}
+          info={t("subjects.subjectEditor.colorFooter")}
+          variant="plain"
+        >
           <View style={[styles.colors, { backgroundColor: colors.card }]}>
             <ColorSwatch
-              color={resolveSubjectColor(defaultColor)}
+              color={null}
               selected={draft.color === null}
-              label={t("subjects.subjectEditor.colorAuto")}
-              auto
+              label={t("subjects.subjectEditor.colorNone")}
               onPress={() => update({ color: null })}
             />
             {SUBJECT_COLOR_KEYS.map((key: SubjectColorKey) => (
               <ColorSwatch
                 key={key}
-                color={SubjectColors[key]}
+                color={SubjectPalette[key][isDark ? "dark" : "light"]}
                 selected={draft.color === key}
                 label={t(`subjects.subjectEditor.colors.${key}`)}
                 onPress={() => update({ color: key })}
               />
             ))}
           </View>
-        </View>
+        </Section>
 
         <Section>
           <FormRow
@@ -339,7 +322,7 @@ export const EditSubjectView = ({
             destructive
             onPress={() =>
               confirmRemoveSubject(subject, () => {
-                close(true);
+                allowClose();
                 router.dismissTo("/subjects");
               })
             }
@@ -347,50 +330,6 @@ export const EditSubjectView = ({
         </Section>
       </EditorScroll>
     </>
-  );
-};
-
-const ColorSwatch = ({
-  color,
-  selected,
-  label,
-  auto = false,
-  onPress,
-}: {
-  color: string;
-  selected: boolean;
-  label: string;
-  auto?: boolean;
-  onPress: () => void;
-}) => {
-  const colors = useThemeStore((state) => state.colors);
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={{ checked: selected }}
-      hitSlop={4}
-      style={({ pressed }) => [
-        styles.swatchRing,
-        { borderColor: selected ? colors.text : "transparent" },
-        pressed && styles.pressed,
-      ]}
-    >
-      <View
-        style={[
-          styles.swatch,
-          { backgroundColor: color },
-          auto && [styles.auto, { borderColor: colors.card }],
-        ]}
-      >
-        {selected ? (
-          <Icon sf="checkmark" fallback={Check} size={14} color="#FFFFFF" />
-        ) : auto ? (
-          <Text style={[Type.caption2, styles.autoLabel]}>A</Text>
-        ) : null}
-      </View>
-    </Pressable>
   );
 };
 
@@ -412,28 +351,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-  },
-  swatchRing: {
-    padding: 2,
-    borderRadius: 20,
-    borderWidth: 2,
-  },
-  swatch: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  auto: {
-    borderWidth: 2,
-    borderStyle: "dashed",
-  },
-  autoLabel: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  pressed: {
-    opacity: 0.6,
   },
 });

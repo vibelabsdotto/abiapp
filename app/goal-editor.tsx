@@ -4,16 +4,15 @@
 
 import React, { useDeferredValue, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
 
 import { ModalHeader, ScreenLayout } from "@components/common";
-import { formatGrade } from "@components/ui";
+import { InfoNote, formatGrade } from "@components/ui";
 import { Fact } from "@components/abitur/parts";
 import { DestructiveAction } from "@components/overview/DestructiveAction";
 import {
   hapticSuccess,
   showError,
-  useDiscardGuard,
+  useEditorClose,
 } from "@components/overview/feedback";
 import { GradeGrid } from "@components/overview/GradeGrid";
 import { minPointsForGrade } from "@domain/index";
@@ -47,13 +46,10 @@ export default function GoalEditorScreen() {
   const stale = deferred !== selected;
 
   const dirty = selected !== initial;
-  const allowClose = useDiscardGuard(dirty && !busy);
+  const { cancel, closeAfterSave } = useEditorClose(dirty && !busy);
   const total = evaluation?.total.points ?? null;
 
-  const close = () => {
-    allowClose();
-    router.back();
-  };
+  const close = closeAfterSave;
 
   const save = async (value: number | null) => {
     setBusy(true);
@@ -100,7 +96,7 @@ export default function GoalEditorScreen() {
     <>
       <ModalHeader
         title={t("goalEditor.title")}
-        onCancel={() => router.back()}
+        onCancel={cancel}
         onSave={() => void save(selected)}
         saveDisabled={!dirty || busy}
       />
@@ -170,15 +166,7 @@ export default function GoalEditorScreen() {
           onChange={setSelected}
         />
 
-        <Text
-          style={[
-            Type.footnote,
-            styles.footer,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("goalEditor.explain")}
-        </Text>
+        <InfoNote text={t("goalEditor.explain")} style={styles.footer} />
 
         {initial !== null ? (
           <DestructiveAction

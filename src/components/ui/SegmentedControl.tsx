@@ -1,11 +1,10 @@
 // SegmentedControl - half-year switcher and other 2-5 option toggles.
-// iOS: native SwiftUI segmented Picker via @expo/ui (Liquid Glass look,
-// system haptics and accessibility). Android: a drawn fallback with the same
-// API (thumb on a filled track).
+// Drawn on both platforms so the selection is ink: the selected segment is
+// filled with the text colour (black, white in dark) on a grey track. The
+// native SwiftUI picker cannot take an ink thumb, so it is not used here.
 
 import React from "react";
 import {
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -14,14 +13,9 @@ import {
   type ViewStyle,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Host, Picker, Text as SwiftText } from "@expo/ui/swift-ui";
-import { pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
 
 import { useThemeStore } from "@stores/themeStore";
-import { FontScale, Type } from "@constants/typography";
-
-/** Android fallback thumb in dark mode (iOS: tertiarySystemFill on dark). */
-const DARK_THUMB = "#4A4D5E";
+import { FontScale, Radius, Type } from "@constants/typography";
 
 export interface SegmentedOption<T extends string | number> {
   value: T;
@@ -46,38 +40,12 @@ export function SegmentedControl<T extends string | number>({
   style,
 }: SegmentedControlProps<T>) {
   const colors = useThemeStore((state) => state.colors);
-  const isDark = useThemeStore((state) => state.isDark);
 
   const select = (next: T) => {
     if (next === value) return;
     void Haptics.selectionAsync();
     onChange(next);
   };
-
-  if (Platform.OS === "ios") {
-    return (
-      <Host
-        matchContents={{ vertical: true }}
-        colorScheme={isDark ? "dark" : "light"}
-        style={[styles.host, style]}
-      >
-        <Picker<T>
-          selection={value}
-          onSelectionChange={(next) => select(next)}
-          modifiers={[pickerStyle("segmented")]}
-        >
-          {options.map((option) => (
-            <SwiftText
-              key={String(option.value)}
-              modifiers={[tag(option.value)]}
-            >
-              {option.label}
-            </SwiftText>
-          ))}
-        </Picker>
-      </Host>
-    );
-  }
 
   return (
     <View
@@ -94,15 +62,10 @@ export function SegmentedControl<T extends string | number>({
             accessibilityRole="tab"
             accessibilityLabel={option.accessibilityLabel ?? option.label}
             accessibilityState={{ selected }}
-            style={[
+            style={({ pressed }) => [
               styles.segment,
-              selected && [
-                styles.thumb,
-                // Dark: the card color is darker than the track, so the
-                // thumb looked pressed in. Lighter thumb like iOS's
-                // segmented control in dark mode.
-                { backgroundColor: isDark ? DARK_THUMB : colors.card },
-              ],
+              selected && { backgroundColor: colors.accent },
+              pressed && !selected && styles.pressed,
             ]}
           >
             <Text
@@ -111,7 +74,9 @@ export function SegmentedControl<T extends string | number>({
               style={[
                 Type.footnote,
                 styles.label,
-                { color: selected ? colors.text : colors.textSecondary },
+                {
+                  color: selected ? colors.accentForeground : colors.text,
+                },
                 selected && styles.labelSelected,
               ]}
             >
@@ -125,27 +90,23 @@ export function SegmentedControl<T extends string | number>({
 }
 
 const styles = StyleSheet.create({
-  host: {
-    alignSelf: "stretch",
-  },
   track: {
     flexDirection: "row",
     padding: 3,
-    borderRadius: 10,
+    borderRadius: Radius.control,
     borderCurve: "continuous",
   },
   segment: {
     flex: 1,
-    minHeight: 32,
+    minHeight: 34,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,
-    borderRadius: 8,
+    borderRadius: Radius.control - 3,
     borderCurve: "continuous",
   },
-  thumb: {
-    elevation: 2,
-    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
+  pressed: {
+    opacity: 0.6,
   },
   label: {
     fontWeight: "500",

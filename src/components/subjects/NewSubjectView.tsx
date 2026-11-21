@@ -25,11 +25,11 @@ import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
 
-import { savedFeedback, showError } from "./actions";
+import { savedFeedback, showSaveError } from "./actions";
 import { ChoiceChips, EditorScroll, FormTextInput } from "./form";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { FIELD_ORDER, TAGS_BY_FIELD, suggestFromName } from "./subjectSuggest";
-import { useEditorClose } from "./useEditorClose";
+import { useEditorClose } from "@components/common/feedback";
 
 export const levelLabel = (
   ruleset: RulesetSummary | null,
@@ -69,7 +69,9 @@ const CatalogPicker = ({
   );
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const close = useEditorClose(selected.length > 0 && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(
+    selected.length > 0 && !saving,
+  );
 
   const groups = useMemo(() => {
     const existing = new Set(subjects.map((subject) => subject.catalogKey));
@@ -99,10 +101,10 @@ const CatalogPicker = ({
         type: "success",
         text1: t("subjects.subjectEditor.added", { count: created.length }),
       });
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
@@ -128,7 +130,7 @@ const CatalogPicker = ({
       onCustom();
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
@@ -140,7 +142,7 @@ const CatalogPicker = ({
             ? t("subjects.subjectEditor.selected", { count: selected.length })
             : t("subjects.subjectEditor.titleNew")
         }
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveLabel={t("subjects.subjectEditor.add")}
         saveDisabled={selected.length === 0 || saving}
@@ -154,12 +156,7 @@ const CatalogPicker = ({
               <View
                 style={[styles.plus, { backgroundColor: colors.accentLight }]}
               >
-                <Icon
-                  sf="plus"
-                  fallback={CirclePlus}
-                  size={18}
-                  color={colors.accent}
-                />
+                <Icon icon={CirclePlus} size={20} color={colors.accent} />
               </View>
             }
             chevron
@@ -174,16 +171,11 @@ const CatalogPicker = ({
             {t("subjects.subjectEditor.allAdded", { state: stateName })}
           </Text>
         ) : (
-          groups.map((group, index) => (
+          groups.map((group) => (
             <Section
               key={group.field}
               title={t(`subjects.fields.${group.field}`)}
               separatorInset={60}
-              footer={
-                index === groups.length - 1
-                  ? t("subjects.subjectEditor.catalogFooter")
-                  : undefined
-              }
             >
               {group.entries.map((entry) => {
                 const isOn = selected.includes(entry.key);
@@ -201,10 +193,9 @@ const CatalogPicker = ({
                     trailing={
                       isOn ? (
                         <Icon
-                          sf="checkmark"
-                          fallback={Check}
-                          size={18}
-                          weight="bold"
+                          icon={Check}
+                          size={20}
+
                           color={colors.accent}
                         />
                       ) : (
@@ -236,7 +227,9 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
   const [touched, setTouched] = useState(false);
   const [suggested, setSuggested] = useState(false);
   const [saving, setSaving] = useState(false);
-  const close = useEditorClose(name.trim().length > 0 && !saving);
+  const { cancel, closeAfterSave } = useEditorClose(
+    name.trim().length > 0 && !saving,
+  );
 
   const changeName = (text: string) => {
     setName(text);
@@ -288,10 +281,10 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
         type: "success",
         text1: t("subjects.subjectEditor.added", { count: 1 }),
       });
-      close(true);
+      closeAfterSave();
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
@@ -303,7 +296,7 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
     <>
       <ModalHeader
         title={t("subjects.subjectEditor.titleCustom")}
-        onCancel={() => close()}
+        onCancel={() => cancel()}
         onSave={() => void save()}
         saveLabel={t("subjects.subjectEditor.add")}
         saveDisabled={!valid || saving}
@@ -333,10 +326,9 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
               trailing={
                 item === field ? (
                   <Icon
-                    sf="checkmark"
-                    fallback={Check}
-                    size={18}
-                    weight="bold"
+                    icon={Check}
+                    size={20}
+
                     color={colors.accent}
                   />
                 ) : (
@@ -348,32 +340,22 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
           ))}
         </Section>
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.tags")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.tags")}
+          info={t("subjects.subjectEditor.tagsFooter")}
+          variant="plain"
+        >
           <ChoiceChips
             options={tagOptions}
             selected={(value) => tags.includes(value as SubjectTag)}
             onToggle={toggleTag}
           />
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              {
-                color: tags.length === 0 ? colors.error : colors.textSecondary,
-              },
-            ]}
-          >
-            {tags.length === 0
-              ? t("subjects.subjectEditor.tagsRequired")
-              : t("subjects.subjectEditor.tagsFooter")}
-          </Text>
-        </View>
+          {tags.length === 0 ? (
+            <Text style={[Type.footnote, styles.note, { color: colors.error }]}>
+              {t("subjects.subjectEditor.tagsRequired")}
+            </Text>
+          ) : null}
+        </Section>
 
         <View style={styles.block}>
           <Text

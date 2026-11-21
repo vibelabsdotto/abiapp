@@ -2,6 +2,7 @@
 
 import type {
   CourseValue,
+  EngineCourse,
   EngineInput,
   EngineSubject,
   ExamSlot,
@@ -12,6 +13,27 @@ import { fractionToNumber, prognosisFraction } from "./prognosis";
 
 export const courseKey = (subjectId: string, halfYear: number): string =>
   `${subjectId}:${halfYear}`;
+
+/** Half-year before the one the student is in (EngineInput.currentHalfYear). */
+const isFinished = (input: EngineInput, halfYear: number): boolean =>
+  typeof input.currentHalfYear === "number" && halfYear < input.currentHalfYear;
+
+/**
+ * A taken course of a finished half-year without report-card value but with
+ * grades: its prognosis counts as the result and is no longer open.
+ */
+export function countsAsResult(
+  input: EngineInput,
+  course: EngineCourse,
+  examWeightPercent: number,
+): boolean {
+  return (
+    course.taken &&
+    (course.officialPoints === null || course.officialPoints === undefined) &&
+    isFinished(input, course.halfYear) &&
+    prognosisFraction(course.grades, examWeightPercent) !== null
+  );
+}
 
 export function computeCourseValues(
   input: EngineInput,
@@ -41,7 +63,15 @@ export function computeCourseValues(
           v = { ...v, points: p, exact: p, source: "official" };
         } else {
           const f = prognosisFraction(c.grades, s.examWeightPercent);
-          if (f)
+          if (f && isFinished(input, hy))
+            v = {
+              ...v,
+              points: round(f.num, f.den),
+              exact: fractionToNumber(f),
+              source: "official",
+              fromGrades: true,
+            };
+          else if (f)
             v = {
               ...v,
               points: round(f.num, f.den),

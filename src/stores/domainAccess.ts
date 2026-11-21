@@ -1,8 +1,5 @@
-// Safe access to the domain API from the data layer.
-//
-// The engine lane owns `@domain/index`; until it ships, its functions throw.
-// Stores and hooks go through these helpers so a missing or failing engine
-// turns into a clear error value instead of a crash.
+// Domain calls from the data layer: thrown engine errors (e.g. an unknown
+// ruleset id) become an error value instead of a crash.
 
 import { getRulesetSummary } from "@domain/index";
 import type {
@@ -38,16 +35,11 @@ export function requireRuleset(rulesetId: string): RulesetSummary {
   }
 }
 
-// Optional contract fields read defensively so the data layer also builds
-// against contract versions that do not declare them yet.
-
 /** Catalog `defaultHalfYears` (e.g. W-Seminar only in two terms). */
 export const defaultHalfYearsOf = (
   entry: CatalogSubject,
-): readonly number[] | undefined =>
-  (entry as CatalogSubject & { defaultHalfYears?: number[] }).defaultHalfYears;
+): readonly number[] | undefined => entry.defaultHalfYears;
 
 /** False for components without an exam subject (e.g. BLL). */
 export const componentNeedsSubject = (component: ExamComponentInfo): boolean =>
-  (component as ExamComponentInfo & { requiresSubject?: boolean })
-    .requiresSubject !== false;
+  component.requiresSubject !== false;

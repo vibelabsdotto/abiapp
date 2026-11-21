@@ -3,7 +3,6 @@
 
 import { useMemo } from "react";
 
-import type { RulesetSummary } from "@domain/model";
 import { useCurrentHalfYear } from "@hooks/useCurrentHalfYear";
 import { useEvaluation } from "@hooks/useEvaluation";
 import { useRuleset } from "@hooks/useRuleset";
@@ -26,7 +25,7 @@ export function useAbiturData() {
     return {
       evaluation,
       input,
-      ruleset: ruleset as RulesetSummary | null,
+      ruleset,
       subjects,
       subjectsById,
       halfYears,

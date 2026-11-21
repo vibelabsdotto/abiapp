@@ -59,6 +59,24 @@ function examSubjectsWithSlot(ctx: RuleContext): EngineSubject[] {
 /** Regular load: 3 eA + 7 gA subjects; anything beyond is a Wahlfach without inclusion duty. */
 const REGULAR_SUBJECTS = 10;
 
+/** § 76 Abs. 1 Nr. 3, 6, 8: groups of which one subject is compulsory. */
+const ONE_OF = [
+  ["bio", "ch", "ph"],
+  ["ku", "mu", "ds"],
+  ["rel_ev", "rel_kath", "eth"],
+];
+
+/**
+ * Whether the subject can be the Wahlfach (§ 76 Abs. 4): not Deutsch,
+ * Mathematik, Englisch, Geschichte or Sport (§ 76 Abs. 1 Nr. 1, 2, 4, 5,
+ * 7) and not the only subject of a compulsory group.
+ */
+function canBeWahlfach(s: EngineSubject, all: EngineSubject[]): boolean {
+  if (hasKey(s, "de", "ma", "en", "ge", "sp")) return false;
+  const group = ONE_OF.find((g) => hasKey(s, ...g));
+  return !group || all.some((x) => x !== s && hasKey(x, ...group));
+}
+
 function requirements(ctx: RuleContext): Requirement[] {
   const el = elevatedSubjects(ctx);
   const dm = byKey(ctx, "de", "ma").filter((s) => s.level === "basic");
@@ -69,17 +87,19 @@ function requirements(ctx: RuleContext): Requirement[] {
     ...each("exam", (s) => `4 Halbjahre im Prüfungsfach ${s.name}`, ex, 4),
   ];
   const four = new Set([...el, ...dm, ...ex].map((s) => s.id));
-  const others = taken(ctx, (s) => !four.has(s.id));
+  const all = taken(ctx);
+  const others = all.filter((s) => !four.has(s.id));
+  const candidates = others.filter((s) => canBeWahlfach(s, all));
   const exempt = Math.min(
-    others.length,
-    Math.max(0, taken(ctx).length - REGULAR_SUBJECTS),
+    candidates.length,
+    Math.max(0, all.length - REGULAR_SUBJECTS),
   );
   const two = (subs: EngineSubject[]) =>
     subs.map((s) => ({ subjectId: s.id, count: 2 }));
   const options: RequirementOption[] =
     exempt === 0
       ? [{ picks: two(others) }]
-      : combinations(others, exempt).map((free) => {
+      : combinations(candidates, exempt).map((free) => {
           const names = listDe(free.map((s) => s.name));
           return {
             label: `Wahlfach ${names}`,
@@ -230,34 +250,31 @@ export const TH_2027: Ruleset = {
     "astro",
     ["sp", { canBeElevated: false, canBeExam: false }],
   ]),
-  defaults: { examWeightPercent: 50 },
+  // § 74 Abs. 11: the Klausur counts one third of the Kurshalbjahresnote.
+  defaults: { examWeightPercent: 33 },
   summary: [
-    "Qualifikationsphase Q1 bis Q4 mit drei Fächern auf erhöhtem Niveau (eA), mindestens eines davon Deutsch oder Mathematik.",
+    "Qualifikationsphase Q1 bis Q4 mit drei Fächern auf erhöhtem Niveau (eA) aus mindestens zwei Aufgabenfeldern, mindestens eines davon Deutsch oder Mathematik.",
+    "Kurshalbjahresnote: Klausur ein Drittel, sonstige Leistungen zwei Drittel, einmal kaufmännisch gerundet.",
     "Block I: genau 36 Halbjahresergebnisse, alle einfach. Punkte = Summe × 40 / 36, ab 0,5 aufgerundet.",
-    "Pflicht: alle eA-Fächer, Deutsch bzw. Mathematik auf gA und die mündlichen Prüfungsfächer je 4, aus jedem weiteren Fach mindestens 2. Das Wahlfach ist frei.",
+    "Pflicht: alle eA-Fächer, Deutsch bzw. Mathematik auf gA und die mündlichen Prüfungsfächer je 4, aus jedem weiteren Pflicht- und Wahlpflichtfach (auch Sport) mindestens 2. Nur ein zusätzliches Wahlfach ist frei.",
     "Zulassung: mindestens 200 Punkte, höchstens 7 Ergebnisse unter 5 Punkten. Ein Halbjahr mit 0 Punkten gilt als nicht belegt, das Schuljahr wird wiederholt.",
-    "Seminarfach: Prozess 20 %, Arbeit 30 %, Kolloquium 50 %, kaufmännisch gerundet. Jede Teilleistung braucht mindestens 1 Punkt.",
+    "Seminarfach: Prozess 20 %, Arbeit 30 %, Kolloquium 50 %, kaufmännisch gerundet. Jede Teilleistung braucht mindestens 1 Punkt, sonst keine Zulassung.",
     "Block II: drei schriftliche Prüfungen in den eA-Fächern und zwei mündliche, alle vierfach. Die Seminarfachleistung kann eine mündliche Prüfung ersetzen.",
-    "Zusätzliche mündliche Prüfung: 4 × (2s + m)/3, abgerundet (Anlage 14 A).",
-    "Bestehen: Block II mindestens 100 Punkte und in drei Prüfungen je mindestens 5 Punkte einfach (20 vierfach).",
-    "Gesamt mindestens 300 von 900 Punkten, Note nach Anlage 15.",
+    "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) × 4/3, immer abgerundet (Anlage 14 A).",
+    "Bestehen: Block II mindestens 100 Punkte und in drei Prüfungen je mindestens 5 Punkte einfach (20 vierfach). Gesamt mindestens 300 von 900, Note nach Anlage 15.",
   ],
   sources: [
     {
-      title: "Thüringer Schulordnung (ThürSchulO), Achter Teil",
-      section: "§§ 76–78, 88–92, 95, 155 Abs. 5",
+      title:
+        "Thüringer Schulordnung (ThürSchulO), Achter Teil, Gesamtausgabe zuletzt geändert durch VO vom 06.06.2025 (GVBl. S. 179)",
+      section: "§§ 74, 76–78, 88–92, 95, 102, 155 Abs. 5",
       url: "https://landesrecht.thueringen.de/perma?j=SchulO_TH",
     },
     {
       title: "ThürSchulO Anlagen 13–15",
       section:
-        "Anlage 13 Tabelle A, Anlage 14 A (schriftlich + mündlich), Anlage 15 (Durchschnittsnote)",
+        "Anlage 13 Tabelle A, Anlage 14 A (schriftlich + mündlich), Anlage 15 (Block I, Durchschnittsnote)",
       url: "https://landesrecht.thueringen.de/perma?j=SchulO_TH",
-    },
-    {
-      title: "TMBWK: Gymnasiale Oberstufe in Thüringen (Broschüre)",
-      section: "Kap. 3.1, 3.4, 6, 7",
-      url: "https://igs.jena.de/wp-content/uploads/2025/01/Gymnasiale-Oberstufe-Thueringen-Regelungen-102024.pdf",
     },
     {
       title: "TMBWK: FAQ zu den Änderungen der Thüringer Schulordnungen",

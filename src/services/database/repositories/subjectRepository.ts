@@ -19,17 +19,6 @@ export async function listSubjects(
   return rows.map(toSubjectRecord);
 }
 
-export async function getSubject(
-  db: SQLiteDatabase,
-  id: string,
-): Promise<SubjectRecord | null> {
-  const row = await db.getFirstAsync<SubjectRow>(
-    "SELECT * FROM subjects WHERE id = ?",
-    id,
-  );
-  return row ? toSubjectRecord(row) : null;
-}
-
 async function nextSortOrder(db: SQLiteDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ next: number }>(
     "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM subjects",

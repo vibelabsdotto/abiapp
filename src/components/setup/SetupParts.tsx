@@ -2,14 +2,34 @@
 // code, exam slot) and the onboarding step scaffold with a pinned footer
 // button. Selection marks live in ListRow (`selected`).
 
-import React from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Stack } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { Button } from "@components/common/Button";
-import { FontScale, NumberType, Radius, Type } from "@constants/typography";
+import {
+  NativeMenu,
+  type NativeMenuAction,
+} from "@components/common/NativeMenu";
+import { ProgressBar } from "@components/ui/ProgressBar";
+import {
+  FontScale,
+  NumberType,
+  Radius,
+  Type,
+  readableContent,
+} from "@constants/typography";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
 
@@ -60,13 +80,25 @@ interface FooterAction {
   loading?: boolean;
 }
 
+/** Primary button that opens a native menu (e.g. "In welchem Fach?"). */
+interface FooterMenu {
+  title: string;
+  menuTitle: string;
+  actions: NativeMenuAction[];
+  onSelect: (id: string) => void;
+  loading?: boolean;
+}
+
 interface OnboardingStepProps {
   title: string;
   /** 1-based step number; omitted on welcome and done. */
   step?: number;
   totalSteps?: number;
   intro?: string;
-  primary: FooterAction;
+  /** Omitted on one-tap steps: choosing a row advances. */
+  primary?: FooterAction;
+  /** Replaces `primary` with a button that opens a native menu. */
+  primaryMenu?: FooterMenu;
   secondary?: FooterAction;
   /** Extra line above the buttons (e.g. "Wähle mindestens 5 Fächer."). */
   footerNote?: string;
@@ -76,12 +108,30 @@ interface OnboardingStepProps {
    * title when the screen is pushed.
    */
   keyboardAware?: boolean;
+  /**
+   * Story pages that change in place (question, then its scene): the bar
+   * slides to the new step and a footer button that appears fades in.
+   */
+  inPlace?: boolean;
+  /**
+   * The content fills the screen between header and footer (story scenes:
+   * the stage takes the room between heading and text).
+   */
+  fill?: boolean;
+  /**
+   * With `fill`: reports the height the content has on screen, between the
+   * progress head and the footer. Story scenes fit their stage into it.
+   */
+  onRoom?: (height: number) => void;
+  /** Quiet "Überspringen" top right in the header (story pages). */
+  onSkip?: () => void;
   children: React.ReactNode;
 }
 
 /**
- * One onboarding step: native large-title header, scrolling content and a
- * pinned footer. Selecting never advances; only the footer button does.
+ * One onboarding step: native large-title header, progress, scrolling
+ * content and a pinned footer. Single-choice steps without `primary`
+ * advance on the tap itself; all others advance with the footer button.
  */
 export const OnboardingStep = ({
   title,
@@ -89,38 +139,111 @@ export const OnboardingStep = ({
   totalSteps,
   intro,
   primary,
+  primaryMenu,
   secondary,
   footerNote,
   keyboardAware = false,
+  inPlace = false,
+  fill = false,
+  onRoom,
+  onSkip,
   children,
 }: OnboardingStepProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const [viewport, setViewport] = useState(0);
+  const [headHeight, setHeadHeight] = useState(0);
+  // iOS insets the content by the header (contentInsetAdjustment): the
+  // room to fill is the scroll view minus the header.
+  const fillHeight = viewport - (Platform.OS === "ios" ? headerHeight : 0);
+  const room =
+    fill && fillHeight > 0 && headHeight > 0
+      ? fillHeight -
+        CONTENT_PADDING_TOP -
+        CONTENT_PADDING_BOTTOM -
+        headHeight -
+        CONTENT_GAP
+      : 0;
+  useEffect(() => {
+    if (room > 0) onRoom?.(room);
+  }, [room, onRoom]);
+  const hasFooter = Boolean(primary || primaryMenu || secondary || footerNote);
 
   // ScrollView and footer are direct children of the screen (fragment):
   // the native large title only collapses when the scroll view is the
   // screen's first subview.
   return (
     <>
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen
+        options={{
+          title,
+          // Android drops text-only toolbar items: a header view there.
+          headerRight:
+            onSkip && Platform.OS === "android"
+              ? () => <AndroidSkip onPress={onSkip} />
+              : undefined,
+        }}
+      />
+      {onSkip && Platform.OS === "ios" ? (
+        <Stack.Toolbar placement="right" tintColor={colors.textSecondary}>
+          <Stack.Toolbar.Button
+            variant="plain"
+            hidesSharedBackground
+            tintColor={colors.textSecondary}
+            style={{ color: colors.textSecondary, fontWeight: "400" }}
+            onPress={onSkip}
+          >
+            {t("onboarding.skip")}
+          </Stack.Toolbar.Button>
+        </Stack.Toolbar>
+      ) : null}
       <AndroidKeyboardAvoider enabled={keyboardAware}>
         <ScrollView
           style={[styles.flex, { backgroundColor: colors.background }]}
+          onLayout={
+            fill
+              ? (event) => setViewport(event.nativeEvent.layout.height)
+              : undefined
+          }
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           automaticallyAdjustKeyboardInsets={keyboardAware}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            readableContent,
+            fill && fillHeight > 0 ? { minHeight: fillHeight } : null,
+            // Without a footer the list runs to the bottom edge (Android
+            // draws edge-to-edge; iOS adds the inset automatically).
+            !hasFooter && Platform.OS === "android"
+              ? { paddingBottom: insets.bottom + 24 }
+              : null,
+          ]}
         >
           {step !== undefined || intro ? (
-            <View style={styles.head}>
+            <View
+              style={styles.head}
+              onLayout={
+                fill
+                  ? (event) => setHeadHeight(event.nativeEvent.layout.height)
+                  : undefined
+              }
+            >
               {step !== undefined && totalSteps ? (
-                <Text
-                  style={[Type.footnote, styles.step, { color: colors.accent }]}
-                >
-                  {t("onboarding.step", { step, total: totalSteps })}
-                </Text>
+                <View style={styles.progress}>
+                  <ProgressBar
+                    value={step}
+                    max={totalSteps}
+                    height={4}
+                    animated={inPlace}
+                    accessibilityLabel={t("onboarding.step", {
+                      step,
+                      total: totalSteps,
+                    })}
+                  />
+                </View>
               ) : null}
               {intro ? <IntroText text={intro} /> : null}
             </View>
@@ -128,71 +251,132 @@ export const OnboardingStep = ({
           {children}
         </ScrollView>
       </AndroidKeyboardAvoider>
-      <View
-        style={[
-          styles.footer,
-          {
-            // Android's navigation bar is a hard inset (3-button bar): keep
-            // space above it instead of sitting flush on it.
-            paddingBottom:
-              Platform.OS === "android"
-                ? insets.bottom + 12
-                : Math.max(insets.bottom, 16),
-            backgroundColor: colors.background,
-            borderTopColor: colors.separator,
-          },
-        ]}
-      >
-        {footerNote ? (
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {footerNote}
-          </Text>
-        ) : null}
-        <Button
-          title={primary.title}
-          onPress={primary.onPress}
-          disabled={primary.disabled}
-          loading={primary.loading}
-          size="large"
-          fullWidth
-        />
-        {secondary ? (
-          <Button
-            title={secondary.title}
-            onPress={secondary.onPress}
-            disabled={secondary.disabled}
-            loading={secondary.loading}
-            variant="ghost"
-            fullWidth
-          />
-        ) : null}
-      </View>
+      {hasFooter ? (
+        <View
+          style={[
+            styles.footer,
+            {
+              // Android's navigation bar is a hard inset (3-button bar): keep
+              // space above it instead of sitting flush on it.
+              paddingBottom:
+                Platform.OS === "android"
+                  ? insets.bottom + 12
+                  : Math.max(insets.bottom, 16),
+              backgroundColor: colors.background,
+              borderTopColor: colors.separator,
+            },
+          ]}
+        >
+          {footerNote ? (
+            <Text
+              style={[
+                Type.footnote,
+                styles.note,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {footerNote}
+            </Text>
+          ) : null}
+          {primaryMenu ? (
+            <NativeMenu
+              title={primaryMenu.menuTitle}
+              actions={primaryMenu.actions}
+              onSelect={primaryMenu.onSelect}
+              fullWidth
+              trigger={
+                // The native menu takes the tap; the button only draws.
+                <View
+                  accessible
+                  accessibilityRole="button"
+                  accessibilityLabel={primaryMenu.title}
+                  pointerEvents="none"
+                >
+                  <Button
+                    title={primaryMenu.title}
+                    onPress={noop}
+                    loading={primaryMenu.loading}
+                    size="large"
+                    fullWidth
+                  />
+                </View>
+              }
+            />
+          ) : primary ? (
+            <Animated.View
+              entering={inPlace ? FadeIn.duration(280) : undefined}
+            >
+              <Button
+                title={primary.title}
+                onPress={primary.onPress}
+                disabled={primary.disabled}
+                loading={primary.loading}
+                size="large"
+                fullWidth
+              />
+            </Animated.View>
+          ) : null}
+          {secondary ? (
+            <Button
+              title={secondary.title}
+              onPress={secondary.onPress}
+              disabled={secondary.disabled}
+              loading={secondary.loading}
+              variant="ghost"
+              fullWidth
+            />
+          ) : null}
+        </View>
+      ) : null}
     </>
   );
 };
+
+const noop = () => undefined;
+
+const AndroidSkip = ({ onPress }: { onPress: () => void }) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      hitSlop={8}
+      android_ripple={{ color: colors.ripple, borderless: false }}
+      style={styles.skip}
+    >
+      <Text style={[Type.body, { color: colors.textSecondary }]}>
+        {t("onboarding.skip")}
+      </Text>
+    </Pressable>
+  );
+};
+
+const CONTENT_PADDING_TOP = 8;
+const CONTENT_PADDING_BOTTOM = 24;
+const CONTENT_GAP = 24;
 
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  skip: {
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
-    gap: 24,
+    paddingTop: CONTENT_PADDING_TOP,
+    paddingBottom: CONTENT_PADDING_BOTTOM,
+    gap: CONTENT_GAP,
   },
   head: {
     gap: 6,
     paddingHorizontal: 4,
   },
-  step: {
-    fontWeight: "600",
+  progress: {
+    gap: 8,
+    marginBottom: 4,
   },
   intro: {},
   footer: {

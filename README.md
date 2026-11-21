@@ -17,7 +17,7 @@ AbiApp replaces the earlier AbiSax app and ships under the same store listing.
 
 ## Supported states
 
-Rules cover the Abitur years 2027 to 2030. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
+Rules cover the Abitur years from 2027; later years use the newest version of each state. Each version cites its legal sources in the app. Versions marked as draft are based on regulations that were not yet in force when they were written.
 
 | State                  | Rule versions                      | Confidence                  |
 | ---------------------- | ---------------------------------- | --------------------------- |
@@ -55,22 +55,31 @@ npm run android              # same for Android
 npm start                    # Metro only (dev client), port 8090
 ```
 
+OTA updates (expo-updates, code-signed) are only active in store builds, which set `ABIAPP_STORE_BUILD=1`. Development builds need no signing key.
+
 Checks:
 
 ```bash
 npm run type-check
 npm run lint
+npm test                     # Vitest, pure logic (src/domain, src/utils, src/services)
 npm run format:check
 npx expo-doctor
 ```
 
 `ios/` and `android/` are generated (Continuous Native Generation). Make native changes through `app.config.ts` and the config plugins in `plugins/`.
 
-Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist in the repo root at prebuild time. Without them the app builds normally and analytics calls are no-ops.
+Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist at prebuild time (repo root, or the absolute paths in `GOOGLE_SERVICE_INFO_PLIST` / `GOOGLE_SERVICES_JSON`). Without them the app builds normally and analytics calls are no-ops.
 
 ## Privacy
 
-All grades and settings are stored locally in SQLite on the device. The app sends no grades or personal data anywhere. Optional services in the official builds: anonymous usage statistics (Firebase Analytics), update notes (VibeUpdate) and feature requests that you submit yourself (Featurama). Privacy policy: https://vibelabs.to/de/privacy
+All grades and settings are stored locally on the device (SQLite and AsyncStorage). The app sends no grades, subject names or other personal data anywhere. The official builds use three services:
+
+- Firebase Analytics: anonymous usage events and screen views with state, ruleset id, Abitur year, counts and enum values only (`src/services/analytics/appEvents.ts`), plus the device data Firebase collects itself.
+- VibeUpdate: on start and on return to the app, asks whether a newer version or release notes exist (platform, app id, version, build number, device language).
+- Featurama: only when you open "Feature requests"; loads the list and sends requests, votes and comments you write yourself, with a random voter id and device info (model, OS, screen, language, app version).
+
+Privacy policy: https://vibelabs.to/de/privacy
 
 ## License
 

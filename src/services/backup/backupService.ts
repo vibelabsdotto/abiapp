@@ -9,7 +9,7 @@
 
 import Constants from "expo-constants";
 import * as DocumentPicker from "expo-document-picker";
-import { File, Paths } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 import { getRulesetSummary } from "@domain/index";
@@ -57,7 +57,7 @@ export type BackupParseResult =
       ok: true;
       backup: BackupFile;
       summary: BackupSummary;
-      /** Non-blocking hints, e.g. unknown ruleset version. */
+      /** Non-blocking hints, e.g. a backup without profile. */
       warnings: BackupIssue[];
     }
   | { ok: false; errors: BackupIssue[] };
@@ -93,12 +93,25 @@ export function backupFileName(date = new Date()): string {
   )}-${pad(date.getHours())}${pad(date.getMinutes())}.json`;
 }
 
-/** Writes the backup JSON into the cache directory. */
+/** Earlier exports in the cache (they hold all grades). */
+function deleteCachedBackups(): void {
+  for (const entry of new Directory(Paths.cache).list()) {
+    if (entry instanceof File && /^abiapp-backup-.*\.json$/.test(entry.name)) {
+      entry.delete();
+    }
+  }
+}
+
+/**
+ * Writes the backup JSON into the cache directory; earlier exports there
+ * are removed, so only the file being shared stays.
+ */
 export async function writeBackupFile(
   backup?: BackupFile,
 ): Promise<{ uri: string; fileName: string; backup: BackupFile }> {
   const content = backup ?? (await createBackup());
   const fileName = backupFileName(new Date(content.exportedAt));
+  deleteCachedBackups();
   const file = new File(Paths.cache, fileName);
   file.create({ overwrite: true, intermediates: true });
   file.write(JSON.stringify(content, null, 2));
@@ -128,7 +141,7 @@ export async function exportBackup(): Promise<{
 // Import
 // ---------------------------------------------------------------------------
 
-const summarize = (backup: BackupFile): BackupSummary => {
+export const summarizeBackup = (backup: BackupFile): BackupSummary => {
   const profile = backup.data.profile[0];
   return {
     exportedAt: backup.exportedAt,
@@ -149,13 +162,16 @@ export function checkBackup(value: unknown): BackupParseResult {
   const { errors, warnings } = validateBackup(value, {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
-    halfYearCount: (rulesetId) =>
-      tryDomain(() => getRulesetSummary(rulesetId)).value?.halfYears.length ??
-      null,
+    ruleset: (rulesetId) => {
+      const summary = tryDomain(() => getRulesetSummary(rulesetId)).value;
+      return summary
+        ? { state: summary.state, halfYearCount: summary.halfYears.length }
+        : null;
+    },
   });
   if (errors.length > 0) return { ok: false, errors };
   const backup = value as BackupFile;
-  return { ok: true, backup, summary: summarize(backup), warnings };
+  return { ok: true, backup, summary: summarizeBackup(backup), warnings };
 }
 
 /** Parses and validates backup file content. */
@@ -189,15 +205,22 @@ export async function pickBackupFile(): Promise<
   });
   if (picked.canceled || !picked.assets[0]) return { canceled: true };
   const asset = picked.assets[0];
-  const text = await new File(asset.uri).text();
+  // The picker copied the file into the cache; read it and drop the copy.
+  const copy = new File(asset.uri);
+  const text = await copy.text();
+  copy.delete();
   return { canceled: false, fileName: asset.name, result: parseBackup(text) };
 }
 
 /**
  * Replaces all data with the backup in one transaction (old data stays if
  * anything fails) and reloads the stores. Validates again before writing.
+ * `track: false` for take-overs from the cloud backup (own events).
  */
-export async function restoreBackup(backup: BackupFile): Promise<void> {
+export async function restoreBackup(
+  backup: BackupFile,
+  options: { track?: boolean } = {},
+): Promise<void> {
   const check = checkBackup(backup);
   if (!check.ok) {
     throw new Error(
@@ -209,7 +232,7 @@ export async function restoreBackup(backup: BackupFile): Promise<void> {
     await insertAllTables(db, backup.data);
   });
   await loadAllStores();
-  track(ANALYTICS_EVENTS.backupRestored);
+  if (options.track !== false) track(ANALYTICS_EVENTS.backupRestored);
 }
 
 // ---------------------------------------------------------------------------

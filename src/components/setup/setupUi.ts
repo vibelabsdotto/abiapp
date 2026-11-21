@@ -11,7 +11,7 @@ import type { SubjectsSaveResult } from "@hooks/useSetupFlows";
 import { t, type LanguageCode } from "@locales/index";
 import { getRulesetSummary } from "@domain/index";
 import { useCourseStore } from "@stores/courseStore";
-import { errorMessage, tryDomain } from "@stores/domainAccess";
+import { tryDomain } from "@stores/domainAccess";
 import {
   changeRules,
   startSetup,
@@ -65,9 +65,7 @@ export const issueLines = (issues: Issue[], limit = 4): string => {
   return lines.join("\n");
 };
 
-export const showError = (title: string, error: unknown) => {
-  Toast.show({ type: "error", text1: title, text2: errorMessage(error) });
-};
+export { showError } from "@components/common/feedback";
 
 export const showSuccess = (title: string, text?: string) => {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

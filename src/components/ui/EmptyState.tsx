@@ -1,10 +1,9 @@
 // EmptyState - what a screen shows before there is data: a mark, one line
 // that says what is missing, one sentence on the next step, one action.
-// Default mark: the empty AbiApp arch.
+// Default mark: the empty GradeHero arch (hollow, dashed).
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { SFSymbol } from "sf-symbols-typescript";
 import type { LucideIcon } from "lucide-react-native";
 
 import { Button } from "@components/common/Button";
@@ -17,8 +16,8 @@ import { Icon } from "./Icon";
 export interface EmptyStateProps {
   title: string;
   message?: string;
-  /** Symbol in a tinted circle instead of the arch mark. */
-  icon?: { sf: SFSymbol; fallback: LucideIcon };
+  /** Plain Lucide icon instead of the arch mark (no circle). */
+  icon?: LucideIcon;
   /** Custom illustration; overrides `icon`. */
   illustration?: React.ReactNode;
   action?: { title: string; onPress: () => void; icon?: React.ReactNode };
@@ -39,24 +38,20 @@ export const EmptyState = ({
   const mark =
     illustration ??
     (icon ? (
-      <View
-        style={[styles.iconCircle, { backgroundColor: colors.accentLight }]}
-      >
-        <Icon
-          sf={icon.sf}
-          fallback={icon.fallback}
-          size={30}
-          color={colors.accent}
-        />
-      </View>
+      <Icon icon={icon} size={24} color={colors.textSecondary} />
     ) : (
+      // The empty GradeHero arch, small: a hollow band with a dashed
+      // contour (the shape of "noch offen"), nothing filled yet.
       <ArchGauge
-        width={64}
-        progress={0}
-        strokeRatio={0.5}
-        legRatio={0.85}
-        color={colors.accent}
-        trackColor={colors.accentLight}
+        width={72}
+        progress={1}
+        strokeRatio={0.14}
+        legRatio={0.42}
+        fill="dashed"
+        contourWidth={1.5}
+        color={colors.textTertiary}
+        trackColor="transparent"
+        surfaceColor="transparent"
         animated={false}
       />
     ));
@@ -106,13 +101,6 @@ const styles = StyleSheet.create({
   },
   fill: {
     flex: 1,
-    justifyContent: "center",
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
     justifyContent: "center",
   },
   text: {

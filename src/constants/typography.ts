@@ -1,20 +1,14 @@
-// AbiApp typography. One family: the system font. Text uses SF Pro (iOS) /
-// Roboto (Android) on the iOS Dynamic Type scale; numbers (points, grades,
-// totals) use SF Pro Rounded with tabular figures so columns line up and the
-// grade reads like a scoreboard. Android has no rounded system face and falls
-// back to the default sans with tabular figures.
+// AbiApp typography. One family: the system font, SF Pro (iOS) / Roboto
+// (Android), on the iOS Dynamic Type scale. Hierarchy comes from size and
+// weight, never from colour. Numbers (points, grades, totals) use the same
+// face with tabular figures, heavy weights and tight tracking at large
+// sizes, so columns line up and the grade reads like print.
 //
 // All sizes are base sizes at the default content size category. Text scales
 // with the user's Dynamic Type setting; cap the multiplier only where a
 // layout cannot grow (see `FontScale`).
 
-import { Platform, type TextStyle } from "react-native";
-
-/** SF Pro Rounded on iOS (system font, no bundled asset). */
-const ROUNDED = Platform.select<string | undefined>({
-  ios: "ui-rounded",
-  default: undefined,
-});
+import type { TextStyle } from "react-native";
 
 const tabular: TextStyle["fontVariant"] = ["tabular-nums"];
 
@@ -32,50 +26,45 @@ export const Type = {
   caption2: { fontSize: 11, lineHeight: 13, fontWeight: "500" },
 } as const satisfies Record<string, TextStyle>;
 
-/** Numeric styles: rounded, heavy, tabular. */
+/** Numeric styles: system face, heavy, tabular, tight at large sizes. */
 export const NumberType = {
   /** The Abitur grade in the hero ("1,8"). */
   hero: {
-    fontFamily: ROUNDED,
-    fontSize: 76,
-    lineHeight: 84,
+    fontSize: 80,
+    lineHeight: 88,
     fontWeight: "800",
-    letterSpacing: -1.5,
+    letterSpacing: -3,
     fontVariant: tabular,
   },
   /** Large stat values (Block I points, half-year result). */
   display: {
-    fontFamily: ROUNDED,
     fontSize: 34,
     lineHeight: 40,
-    fontWeight: "800",
-    letterSpacing: -0.5,
+    fontWeight: "700",
+    letterSpacing: -1,
     fontVariant: tabular,
   },
   title: {
-    fontFamily: ROUNDED,
     fontSize: 22,
     lineHeight: 28,
     fontWeight: "700",
+    letterSpacing: -0.4,
     fontVariant: tabular,
   },
   /** Row values and picker cells. */
   value: {
-    fontFamily: ROUNDED,
     fontSize: 17,
     lineHeight: 22,
     fontWeight: "700",
     fontVariant: tabular,
   },
   badge: {
-    fontFamily: ROUNDED,
     fontSize: 15,
     lineHeight: 18,
     fontWeight: "700",
     fontVariant: tabular,
   },
   small: {
-    fontFamily: ROUNDED,
     fontSize: 12,
     lineHeight: 15,
     fontWeight: "700",
@@ -101,15 +90,38 @@ export const FontScale = {
   grid: 1.25,
 } as const;
 
+/**
+ * One radius system, always with `borderCurve: "continuous"`: cards 16,
+ * controls 12, badges and chips 8.
+ */
 export const Radius = {
-  /** Small chips and badges. */
-  chip: 7,
-  badge: 9,
+  chip: 8,
+  badge: 8,
   control: 12,
   card: 16,
-  hero: 24,
+  /** The overview hero is a card like every other. */
+  hero: 16,
+  /** Top corners of a native sheet on Android (iOS rounds its own). */
+  sheet: 28,
 } as const;
 
+/**
+ * Layout: content never stretches across a tablet. Scroll containers
+ * (ScreenLayout, EditorScroll, setup, exam editor) cap their content at the
+ * readable width and centre it.
+ */
+export const Layout = {
+  readableWidth: 680,
+} as const;
+
+/** Spread into a scroll view's contentContainerStyle. */
+export const readableContent = {
+  width: "100%",
+  maxWidth: Layout.readableWidth,
+  alignSelf: "center",
+} as const;
+
+/** 4-pt grid. */
 export const Spacing = {
   xxs: 2,
   xs: 4,

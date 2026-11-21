@@ -26,7 +26,12 @@ import {
 import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
-import { FontScale, Radius, Type } from "@constants/typography";
+import {
+  FontScale,
+  Radius,
+  Type,
+  readableContent,
+} from "@constants/typography";
 
 export const FormRow = ({
   label,
@@ -149,7 +154,7 @@ export const EditorScroll = ({ children }: { children: React.ReactNode }) => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         automaticallyAdjustKeyboardInsets
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, readableContent]}
       >
         {children}
       </ScrollView>

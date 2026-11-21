@@ -48,7 +48,3 @@ export function roundedAverage(values: number[]): number | null {
   for (const v of values) sum += v;
   return roundHalfUpFrac(sum, values.length);
 }
-
-export function clampPoints(v: number): number {
-  return Math.min(15, Math.max(0, Math.round(v)));
-}

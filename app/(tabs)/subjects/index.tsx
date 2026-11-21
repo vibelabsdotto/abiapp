@@ -10,15 +10,19 @@ import { BookOpen } from "lucide-react-native";
 import { ScreenLayout } from "@components/common/ScreenLayout";
 import {
   EmptyState,
+  InfoNote,
   IssueBanner,
   PointsBadge,
   Section,
   formatDecimal,
   type ListRowMenu,
 } from "@components/ui";
-import { confirmRemoveSubject, showError } from "@components/subjects/actions";
+import {
+  confirmRemoveSubject,
+  showSaveError,
+} from "@components/subjects/actions";
 import { levelSectionTitle } from "@components/subjects/format";
-import { HalfYearPicker, toolbarIcon } from "@components/subjects/headers";
+import { HalfYearPicker } from "@components/subjects/headers";
 import { SubjectRow } from "@components/subjects/SubjectRow";
 import {
   useCourseOverview,
@@ -30,7 +34,7 @@ import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
-import { useToolbarTint } from "@constants/toolbarIcons";
+import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { Type } from "@constants/typography";
 
 interface RowModel {
@@ -141,7 +145,7 @@ export default function SubjectsScreen() {
             title: t("subjects.menu.markTaken"),
             image: "checkmark.circle",
             onSelect: () => {
-              setCourseTaken(subject.id, selected, true).catch(showError);
+              setCourseTaken(subject.id, selected, true).catch(showSaveError);
             },
           },
         ];
@@ -204,7 +208,7 @@ export default function SubjectsScreen() {
         <ScreenLayout>
           <EmptyState
             fill
-            icon={{ sf: "books.vertical", fallback: BookOpen }}
+            icon={BookOpen}
             title={t("subjects.list.emptyTitle")}
             message={t("subjects.list.emptyMessage")}
             action={{ title: t("subjects.list.add"), onPress: addSubject }}
@@ -290,15 +294,7 @@ export default function SubjectsScreen() {
           </Section>
         ) : null}
 
-        <Text
-          style={[
-            Type.footnote,
-            styles.legend,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("subjects.list.legend")}
-        </Text>
+        <InfoNote text={t("subjects.list.legend")} style={styles.legend} />
       </ScreenLayout>
     </>
   );
@@ -315,7 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   legend: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 8,
   },
 });

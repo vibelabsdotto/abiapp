@@ -245,7 +245,17 @@ function validate(ctx: RuleContext, v2030: boolean): Issue[] {
         ),
       );
     }
-    out.push(...requireFieldsCovered(ctx));
+    // § 24 Abs. 3 Satz 4: the school may assign a BLL to an Aufgabenfeld.
+    const fieldIssues = requireFieldsCovered(ctx);
+    out.push(
+      ...(ctx.variant.id === "bll" && fieldIssues.length === 1
+        ? fieldIssues.map((i) => ({
+            ...i,
+            severity: "info" as const,
+            message: `${i.message} Das geht nur, wenn die Schule deine Besondere Lernleistung diesem Feld zuordnet.`,
+          }))
+        : fieldIssues),
+    );
     const written = ex.filter(
       (s) => s.examSlot === "P1" || s.examSlot === "P2" || s.examSlot === "P3",
     );
@@ -361,19 +371,21 @@ export const HE_2027: Ruleset = {
   catalog: CATALOG,
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase Q1 bis Q4 mit zwei Leistungskursen. Einer ist fortgeführte Fremdsprache, Mathematik oder Naturwissenschaft.",
-    "Block I: genau 8 LK doppelt und 24 GK einfach, E_I = 2 × Summe LK + Summe GK, ohne Rundung.",
-    "Pflicht: alle Prüfungsfächer (bei BLL ohne P5), je 4 Kurse Deutsch, Mathematik, fortgeführte Fremdsprache und Naturwissenschaft, 2 Kurse Kunst, Musik oder DS, 2 Kurse weitere Fremdsprache oder Naturwissenschaft/Informatik, 6 Kurse Gesellschaftswissenschaften (darin 2 Geschichte, 2 PoWi, Wirtschaftswissenschaften oder Geographie).",
-    "Sport höchstens 3 Kurse. Religion und Ethik zählen zum gesellschaftswissenschaftlichen Feld.",
-    "Zulassung: höchstens 6 Kurse unter 5 Punkten, davon höchstens 2 LK. LK zusammen mindestens 80, GK zusammen mindestens 120. Kein eingebrachter Kurs mit 0 Punkten.",
-    "Block II: P1 bis P3 schriftlich, P4 mündlich, P5 Präsentation, mündliche Prüfung oder Besondere Lernleistung, alle vierfach.",
-    "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) × 4/3, abgerundet (Anlage 10a).",
-    "Bestehen: Block II mindestens 100, drei Fächer mit mindestens 5 Punkten einfach (darunter ein LK), kein Fach mit 0 Punkten.",
+    "Qualifikationsphase Q1 bis Q4 mit zwei Leistungskursen (LK). Einer davon ist eine fortgeführte Fremdsprache, Mathematik oder eine Naturwissenschaft.",
+    "Block I: genau 32 Kurse, die 8 LK-Kurse zählen doppelt, dazu 24 Grundkurse einfach. Punkte = 2 × Summe LK + Summe GK (höchstens 600), ohne Rundung.",
+    "Pflicht: alle Kurse der Prüfungsfächer (mit Besonderer Lernleistung ohne P5), je 4 Kurse Deutsch, Mathematik, fortgeführte Fremdsprache und Naturwissenschaft, 2 Kurse Kunst, Musik oder Darstellendes Spiel, 2 Kurse einer weiteren Fremdsprache oder Naturwissenschaft/Informatik.",
+    "Gesellschaftswissenschaften mindestens 6 Kurse, darunter 2 Geschichte und 2 Politik und Wirtschaft, Wirtschaftswissenschaften oder Geographie. Religion, Ethik und Philosophie zählen zu diesem Feld.",
+    "Sport höchstens 3 Kurse, außer Sport ist Prüfungsfach.",
+    "Zulassung: höchstens 6 Kurse unter 5 Punkten, davon höchstens 2 LK-Kurse. LK-Bereich (doppelt) mindestens 80, Grundkursbereich mindestens 120 Punkte. Kein eingebrachter Kurs mit 0 Punkten; ein Pflichtkurs mit 0 Punkten gilt als nicht belegt.",
+    "Block II: P1 und P2 (LK) und P3 schriftlich, P4 mündlich, P5 Präsentation, mündliche Prüfung oder Besondere Lernleistung, alle vierfach.",
+    "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) × 4/3, immer abgerundet (Anlage 10a).",
+    "Bestehen: Block II mindestens 100, in drei Prüfungen mindestens 5 Punkte einfach (20 vierfach), darunter ein LK, keine Prüfung mit 0 Punkten. Gesamt mindestens 300, Note nach Anlage 10b.",
   ],
   sources: [
     {
-      title: "Oberstufen- und Abiturverordnung (OAVO)",
-      section: "§§ 13, 23, 24, 34, 36, 37",
+      title:
+        "Oberstufen- und Abiturverordnung (OAVO), Gesamtausgabe Stand 22.06.2026",
+      section: "§§ 7, 13, 14, 17, 23, 24, 34, 36, 37, 52; Anlage 7",
       url: "https://www.rv.hessenrecht.hessen.de/perma?a=OSt%2FAbiV_HE",
     },
     {
@@ -414,11 +426,13 @@ export const HE_2027: Ruleset = {
         isElevatedItem,
       ),
     ],
-    // § 13 Abs. 9: 0-point courses count as not attended; checked for subjects with Belegpflicht.
+    // § 13 Abs. 9: 0-point courses count as not attended; checked for subjects
+    // with Belegpflicht (Anlage 7) and a newly begun FS (§ 14 Abs. 2, 3).
     zero: {
       includable: false,
       failIfTaken: (s) =>
         hasKey(s, "de", "ma", "ge", "pol", "sp", ...REL) ||
+        hasTag(s, "new_foreign_language") ||
         s.level === "elevated" ||
         s.examSlot !== null,
     },

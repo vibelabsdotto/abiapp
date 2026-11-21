@@ -55,7 +55,7 @@ export const RulesetCard = ({ ruleset, title, footer }: RulesetCardProps) => {
 
   return (
     <View style={styles.stack}>
-      <Section title={title} footer={footer}>
+      <Section title={title} info={footer}>
         <View style={styles.card}>
           <View style={styles.titleRow}>
             <Text style={[Type.headline, styles.flex, { color: colors.text }]}>
@@ -71,7 +71,7 @@ export const RulesetCard = ({ ruleset, title, footer }: RulesetCardProps) => {
             </Text>
             <View style={styles.chips}>
               {ruleset.halfYears.map((label) => (
-                <Chip key={label} label={label} tone="accent" size="medium" />
+                <Chip key={label} label={label} tone="neutral" size="medium" />
               ))}
             </View>
           </View>

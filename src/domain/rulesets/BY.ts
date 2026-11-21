@@ -238,20 +238,21 @@ export const BY_G9_2027: Ruleset = {
   ]),
   defaults: { examWeightPercent: 50 },
   summary: [
-    "Qualifikationsphase 12/1 bis 13/2. Deutsch, Mathematik und ein Leistungsfach auf erhöhtem Niveau (eA).",
-    "Block I: genau 40 Halbjahresleistungen, alle einfach, reine Punktsumme (max. 600).",
-    "Das W-Seminar zählt mit 12/1 und 12/2 sowie der Seminararbeit: (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet, zählt wie zwei Halbjahresleistungen.",
-    "Pflicht: Deutsch, Mathematik und alle Prüfungsfächer je 4. Fremdsprache, Religionslehre/Ethik, Geschichte, Kunst oder Musik, Naturwissenschaft, zweite Naturwissenschaft/Informatik/Fremdsprache je 3. Politik und Gesellschaft, Geographie bzw. Wirtschaft und Recht zusammen 4.",
-    "Sport höchstens 3 Halbjahresleistungen, wenn kein Prüfungsfach. Optionsregel: eine Pflicht-Halbjahresleistung darf einmal ersetzt werden.",
-    "Zulassung: mindestens 200 Punkte, höchstens 8 Halbjahresleistungen unter 5, Deutsch + Mathematik + Leistungsfach mindestens 48, Prüfungsfächer mindestens 100 Punkte.",
-    "Block II: drei schriftliche Prüfungen und zwei Kolloquien, alle vierfach. Zusatzprüfung (2s + m)/3 × 4, gerundet.",
-    "Bestehen: keine Prüfung unter 4, mindestens 100 Punkte, drei Prüfungen mit je 20 (darunter D, M oder Leistungsfach), Kernfächer mindestens 40, je Aufgabenfeld höchstens einmal unter 16.",
-    "Eine 0-Punkte-Halbjahresleistung lässt das Fach im Schuljahr als nicht belegt gelten.",
+    "Qualifikationsphase 12/1 bis 13/2. Deutsch, Mathematik und dein Leistungsfach hast du auf erhöhtem Niveau (eA), alle drei sind Prüfungsfächer.",
+    "Block I: genau 40 Halbjahresleistungen, alle einfach gezählt. Die Punkte werden einfach addiert (höchstens 600).",
+    "W-Seminar: 12/1 und 12/2 zählen, dazu die Seminararbeit. Sie wird (2 × Arbeit + Prüfungsgespräch) × 2/3 gerechnet, gerundet, und zählt wie zwei Halbjahresleistungen (höchstens 30 Punkte).",
+    "Pflicht: Deutsch, Mathematik und alle Prüfungsfächer je 4. Je 3 aus Fremdsprache, Naturwissenschaft, zweiter Naturwissenschaft/Informatik/Fremdsprache, Religionslehre/Ethik, Geschichte und Kunst oder Musik. Hast du nur eine Fremdsprache oder nur eine Naturwissenschaft, zählen dort alle 4. Politik und Gesellschaft und Geographie bzw. Wirtschaft und Recht je 1 aus der 12, das Fach, das in 13 weiterläuft, insgesamt 3.",
+    "Vertiefungskurs Deutsch bzw. Mathematik in der 12: zusammen mit der zweiten Fremdsprache bzw. Naturwissenschaft/Informatik aus der 12 werden 3 Halbjahre eingebracht, mindestens 1 aus dem Vertiefungskurs.",
+    "Sport höchstens 3 Halbjahresleistungen, wenn es kein Prüfungsfach ist. Optionsregel: Eine Pflicht-Halbjahresleistung darfst du einmal ersetzen, aber nicht in Deutsch, Mathematik, Prüfungsfächern und deiner einzigen Fremdsprache oder Naturwissenschaft.",
+    "Zulassung: mindestens 200 Punkte, höchstens 8 Halbjahresleistungen unter 5 Punkten (Seminararbeit unter 9 zählt doppelt), Deutsch + Mathematik + Leistungsfach mindestens 48, Prüfungsfächer mindestens 100 Punkte.",
+    "Block II: drei schriftliche Prüfungen und zwei Kolloquien, alle vierfach. Mit mündlicher Zusatzprüfung: (2 × schriftlich + mündlich) / 3 × 4, gerundet.",
+    "Bestehen: keine Prüfung unter 4 Punkten (vierfach), mindestens 100 Punkte, drei Prüfungen mit je 20 (darunter Deutsch, Mathematik oder Leistungsfach), Deutsch, Mathematik und eine Fremdsprache oder Naturwissenschaft zusammen mindestens 40, je Aufgabenfeld höchstens einmal unter 16.",
+    "Eine Halbjahresleistung mit 0 Punkten lässt das Fach im ganzen Schuljahr als nicht belegt gelten: Beide Halbjahre zählen dann nicht, bei Pflichtkursen fehlt die Zulassung.",
   ],
   sources: [
     {
-      title: "Gymnasialschulordnung (GSO)",
-      section: "§§ 12, 17–20, 24, 29, 44, 48, 50, 52–54",
+      title: "Gymnasialschulordnung (GSO), Text gilt ab 01.08.2026",
+      section: "§§ 19, 20, 24, 29, 44, 48, 50, 52–54; Anlage 5",
       url: "https://www.gesetze-bayern.de/Content/Document/BayGSO/true",
     },
     {
@@ -270,14 +271,20 @@ export const BY_G9_2027: Ruleset = {
       url: "https://www.gesetze-bayern.de/Content/Document/BayGSO-ANL_23",
     },
     {
-      title: "Änderungsverordnung vom 01.07.2026 (Seminararbeit 2:1)",
-      section: "§ 11, § 19",
+      title:
+        "Verordnung vom 01.07.2026 (GVBl. 2026 S. 425), in Kraft ab 01.08.2026: Seminararbeit 2:1",
+      section: "§ 11 Nr. 10, 18, 21; § 19",
       url: "https://www.verkuendung-bayern.de/gvbl/2026-425",
     },
     {
-      title: "StMUK: Besonderheiten bei der Einbringung",
-      section: "Informationsportal Oberstufe",
+      title: "StMUK: Besonderheiten bei der Einbringung, Einbringungsbeispiele",
+      section: "Informationsportal Oberstufe, Stand 17.11.2025",
       url: "https://www.gymnasiale-oberstufe.bayern.de/qualifikationssystem/besonderheiten-bei-der-einbringung",
+    },
+    {
+      title: "StMUK: Einbringungsverpflichtung (Vertiefungskurse)",
+      section: "Informationsportal Oberstufe, Stand 17.11.2025",
+      url: "https://www.gymnasiale-oberstufe.bayern.de/qualifikationssystem/einbringungsverpflichtung",
     },
   ],
   totalMinPoints: 300,
@@ -295,6 +302,8 @@ export const BY_G9_2027: Ruleset = {
       const fsList = continuedLanguages(ctx);
       const nws = byKey(ctx, "bio", "ch", "ph");
       const inf = byKey(ctx, "inf");
+      const [vkDe] = byKey(ctx, "vk_de");
+      const [vkMa] = byKey(ctx, "vk_ma");
       const options: RequirementOption[] = [];
       for (const f of fsList) {
         for (const n of nws) {
@@ -325,13 +334,63 @@ export const BY_G9_2027: Ruleset = {
                 { subjectId: w.id, count: 3, label: secondLabel(w) },
               ],
             });
+            // Anlage 10 Fn. 6: with a Vertiefungskurs as Wahlpflichtfach the
+            // second continued FS (VK Deutsch) or second NW/Informatik (VK
+            // Mathematik) ends after 12: 3 HJL from VK and that subject in 12,
+            // at least 1 from the VK.
+            const vk = hasTag(w, "foreign_language")
+              ? hasTag(w, "new_foreign_language")
+                ? undefined
+                : vkDe
+              : vkMa;
+            if (!vk) continue;
+            // Group minimums, not picks: the Optionsregel must not reach them.
+            const in12 = (
+              id: string,
+              label: string,
+              subjectIds: string[],
+              count: number,
+              short: string,
+            ) => ({ id, label, subjectIds, count, halfYears: [0, 1], short });
+            options.push({
+              label: `${f.name}, ${n.name}, ${vk.name}, ${w.name}`,
+              picks: base,
+              groupMins: [
+                in12(
+                  "vk1",
+                  `1 Halbjahr ${vk.name}`,
+                  [vk.id],
+                  1,
+                  "Vertiefungskurs",
+                ),
+                in12(
+                  "vkW1",
+                  `1 Halbjahr ${w.name} in 12`,
+                  [w.id],
+                  1,
+                  secondLabel(w),
+                ),
+                in12(
+                  "vk3",
+                  `3 Halbjahre aus ${vk.name} und ${w.name} in 12`,
+                  [vk.id, w.id],
+                  3,
+                  "Vertiefungskurs",
+                ),
+              ],
+              assumption:
+                ctx.takenHalfYears(w.id).length > 2
+                  ? `Annahme: ${vk.name} ist Wahlpflichtfach, ${w.name} in 13 freiwillig belegt.`
+                  : undefined,
+            });
           }
         }
       }
       reqs.push({
         id: "fsnw",
+        short: "Fremdsprache, Naturwissenschaft und weiteres Wahlpflichtfach",
         label:
-          "Fremdsprache, Naturwissenschaft und weiteres Wahlpflichtfach (je 3)",
+          "Je 3 Halbjahre einer Fremdsprache, einer Naturwissenschaft und eines weiteren Wahlpflichtfachs",
         options,
       });
       reqs.push({
@@ -367,33 +426,33 @@ export const BY_G9_2027: Ruleset = {
         ),
       );
       reqs.push(oneOf("ge", "3 Halbjahre Geschichte", byKey(ctx, "ge"), 3));
-      const pol = byKey(ctx, "pol");
-      const gw = byKey(ctx, "geo", "wr");
-      const gsw: RequirementOption[] = [];
-      for (const x of gw) {
-        for (const p of pol) {
-          gsw.push({
-            label: `${p.name} 1, ${x.name} 3`,
-            picks: [
-              { subjectId: p.id, count: 1, halfYears: [0, 1] },
-              { subjectId: x.id, count: 3 },
-            ],
-          });
-          gsw.push({
-            label: `${p.name} 3, ${x.name} 1`,
-            picks: [
-              { subjectId: p.id, count: 3 },
-              { subjectId: x.id, count: 1 },
-            ],
-          });
-        }
-      }
-      reqs.push({
-        id: "gsw",
+      // Anlage 10 Fn. 3: PuG and Geographie or WR at least 1 each (from 12),
+      // the subject continued in 13 two more. Separate requirements so the
+      // Optionsregel only reaches the 3 HJL of the continued subject.
+      const in12 = (id: string, label: string, keys: string[]) => ({
+        id,
+        label,
         short: "Gesellschaftswissenschaften",
-        label:
-          "4 Halbjahre aus Politik und Gesellschaft, Geographie bzw. Wirtschaft und Recht",
-        options: gsw,
+        options: byKey(ctx, ...keys).map((s) => ({
+          label: s.name,
+          picks: [{ subjectId: s.id, count: 1, halfYears: [0, 1] }],
+        })),
+      });
+      reqs.push(in12("gswPol", "1 Halbjahr Politik und Gesellschaft", ["pol"]));
+      reqs.push(
+        in12("gswGw", "1 Halbjahr Geographie oder Wirtschaft und Recht", [
+          "geo",
+          "wr",
+        ]),
+      );
+      reqs.push({
+        ...oneOf(
+          "gsw3",
+          "3 Halbjahre im gesellschaftswissenschaftlichen Fach, das in 13 weiterläuft",
+          byKey(ctx, "pol", "geo", "wr"),
+          3,
+        ),
+        short: "Gesellschaftswissenschaften",
       });
       reqs.push(
         oneOf(
@@ -431,7 +490,7 @@ export const BY_G9_2027: Ruleset = {
           id: `option.${s.id}`,
           label: `Optionsregel: eine Pflicht-Halbjahresleistung in ${s.name} durch ein anderes Fach ersetzt.`,
           subjectId: s.id,
-          requirementIds: ["fsnw", "relEth", "ge", "gsw", "kumu"],
+          requirementIds: ["fsnw", "relEth", "ge", "gsw3", "kumu"],
         });
       }
       return out;
@@ -458,7 +517,10 @@ export const BY_G9_2027: Ruleset = {
     deficitLimits: () => [
       limit("total", 8, "Höchstens 8 Halbjahresleistungen unter 5 Punkten"),
     ],
-    zero: { includable: false, failIfTaken: true },
+    // § 19 Abs. 9, § 44 Abs. 2 Nr. 5: 0 points make the subject count as not
+    // taken for the school year, which only blocks admission for compulsory
+    // courses. Custom subjects stand for the Zusatzangebot (not compulsory).
+    zero: { includable: false, failIfTaken: (s) => s.catalogKey !== null },
     isIncludable: (s, hy, ctx) => {
       const partner = hy % 2 === 0 ? hy + 1 : hy - 1;
       return ctx.points(s.id, hy) !== 0 && ctx.points(s.id, partner) !== 0;
@@ -607,6 +669,17 @@ export const BY_G9_2027: Ruleset = {
             "exam.arts.written",
             "error",
             `${s.name} kann schriftlich nur als Leistungsfach geprüft werden.`,
+            { subjectId: s.id },
+          ),
+        );
+      }
+      // § 48 Abs. 1 Satz 9 Nr. 1: Kunst/Musik as Leistungsfach only written.
+      if (hasKey(s, "ku", "mu") && !written && s.level === "elevated") {
+        out.push(
+          issue(
+            "exam.arts.oral",
+            "error",
+            `${s.name} als Leistungsfach kann nicht im Kolloquium geprüft werden.`,
             { subjectId: s.id },
           ),
         );

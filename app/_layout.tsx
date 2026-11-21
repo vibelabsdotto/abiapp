@@ -16,7 +16,6 @@ import {
   DefaultTheme,
   Stack,
   ThemeProvider,
-  usePathname,
   useSegments,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -37,14 +36,16 @@ import {
   ACTION_TOAST_TYPE,
   type ActionToastProps,
 } from "@components/common/actionToast";
+import { CloudBackupHost } from "@components/backup/CloudBackupHost";
 import { ErrorBoundary } from "@components/common/ErrorBoundary";
 import { VIBEUPDATE_APP_ID } from "@constants/config";
 import { Radius } from "@constants/typography";
+import { useEngagementPrompts } from "@hooks/useEngagementPrompts";
 import { AppProvider } from "@providers/AppProvider";
 import {
   initializeAnalytics,
-  trackScreenView,
-} from "@services/analytics/analyticsService";
+  trackScreen,
+} from "@services/analytics/appEvents";
 import { useLanguageStore } from "@stores/languageStore";
 import { selectIsOnboarded, useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
@@ -113,11 +114,13 @@ function useToastConfig(): ToastConfig {
   const colors = useThemeStore((state) => state.colors);
   return useMemo(
     () => ({
+      // Toasts are inverted ink (black pill, white text; flipped in dark);
+      // errors keep the signal red on its light fill.
       success: ({ text1, text2 }) => (
         <ToastBody
-          icon={<CircleCheck size={20} color={colors.success} />}
-          color={colors.text}
-          background={colors.card}
+          icon={<CircleCheck size={20} color={colors.background} />}
+          color={colors.background}
+          background={colors.text}
           text1={text1}
           text2={text2}
         />
@@ -126,25 +129,25 @@ function useToastConfig(): ToastConfig {
         <ToastBody
           icon={<CircleX size={20} color={colors.error} />}
           color={colors.text}
-          background={colors.card}
+          background={colors.errorFill}
           text1={text1}
           text2={text2}
         />
       ),
       info: ({ text1, text2 }) => (
         <ToastBody
-          icon={<Info size={20} color={colors.accent} />}
-          color={colors.text}
-          background={colors.card}
+          icon={<Info size={20} color={colors.background} />}
+          color={colors.background}
+          background={colors.text}
           text1={text1}
           text2={text2}
         />
       ),
       warning: ({ text1, text2 }) => (
         <ToastBody
-          icon={<TriangleAlert size={20} color={colors.warning} />}
-          color={colors.text}
-          background={colors.card}
+          icon={<TriangleAlert size={20} color={colors.background} />}
+          color={colors.background}
+          background={colors.text}
           text1={text1}
           text2={text2}
         />
@@ -154,22 +157,22 @@ function useToastConfig(): ToastConfig {
         const { actionLabel, onAction, icon } = props as ActionToastProps;
         const iconNode =
           icon === "trash" ? (
-            <Trash2 size={20} color={colors.textSecondary} />
+            <Trash2 size={20} color={colors.background} />
           ) : icon === "success" ? (
-            <CircleCheck size={20} color={colors.success} />
+            <CircleCheck size={20} color={colors.background} />
           ) : (
-            <Info size={20} color={colors.accent} />
+            <Info size={20} color={colors.background} />
           );
         return (
           <ToastBody
             icon={iconNode}
-            color={colors.text}
-            background={colors.card}
+            color={colors.background}
+            background={colors.text}
             text1={text1}
             text2={text2}
             action={{
               label: actionLabel,
-              color: colors.accent,
+              color: colors.background,
               onPress: () => {
                 hide();
                 onAction();
@@ -184,28 +187,33 @@ function useToastConfig(): ToastConfig {
 }
 
 function AnalyticsAutoCapture() {
-  const pathname = usePathname();
-  const segments = useSegments();
+  const route = useSegments().join("/");
 
   useEffect(() => {
     void initializeAnalytics();
   }, []);
 
   useEffect(() => {
-    if (!pathname) return;
-    const screenName =
-      segments
-        .filter((segment) => !segment.startsWith("("))
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(" - ") || "Home";
-    void trackScreenView(screenName, pathname);
-  }, [pathname, segments]);
+    if (route) trackScreen(route);
+  }, [route]);
 
   return null;
 }
 
+/** Rating, recommendation and clipping prompts after a new entry. */
+function EngagementPrompts() {
+  useEngagementPrompts();
+  return null;
+}
+
 /** Root routes that lay out their own bottom inset on Android. */
-const FULL_SCREEN_ROUTES = new Set(["(tabs)", "(onboarding)", "+not-found"]);
+const FULL_SCREEN_ROUTES = new Set([
+  "(tabs)",
+  "(onboarding)",
+  "+not-found",
+  "review-request",
+  "clipping-offer",
+]);
 
 function RootLayoutNav() {
   const isDark = useThemeStore((state) => state.isDark);
@@ -247,9 +255,20 @@ function RootLayoutNav() {
     };
   }, [colors, isDark]);
 
+  const promptSheetOptions = {
+    headerShown: false,
+    presentation: "formSheet",
+    sheetAllowedDetents: "fitToContents",
+    sheetGrabberVisible: true,
+    // iOS rounds sheets itself; Android would leave the corners square.
+    ...(Platform.OS === "android" ? { sheetCornerRadius: Radius.sheet } : null),
+    contentStyle: { backgroundColor: colors.sheet },
+  } as const;
+
   return (
     <ThemeProvider value={routerTheme}>
       <AnalyticsAutoCapture />
+      <EngagementPrompts />
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={({ route }) => ({
@@ -268,12 +287,12 @@ function RootLayoutNav() {
       >
         <Stack.Protected guard={isOnboarded}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          {/* Setup flows reused from settings: subjects, levels, exams (lane: setup). */}
+          {/* Setup flows reused from settings: subjects, levels, exams. */}
           <Stack.Screen
             name="setup"
             options={{ presentation: "modal", headerShown: false }}
           />
-          {/* Editors (lane: subjects). Screens set their own header buttons. */}
+          {/* Editors. Screens set their own header buttons. */}
           <Stack.Screen
             name="grade-editor"
             options={{ presentation: "modal" }}
@@ -286,7 +305,7 @@ function RootLayoutNav() {
             name="subject-editor"
             options={{ presentation: "modal" }}
           />
-          {/* Editors and info (lane: overview). */}
+          {/* Editors and info. */}
           <Stack.Screen
             name="exam-editor"
             options={{ presentation: "modal" }}
@@ -300,8 +319,11 @@ function RootLayoutNav() {
             name="feature-requests"
             options={{ presentation: "modal", headerShown: true }}
           />
+          {/* Prompts after a new entry: native sheets sized to their content. */}
+          <Stack.Screen name="review-request" options={promptSheetOptions} />
+          <Stack.Screen name="clipping-offer" options={promptSheetOptions} />
         </Stack.Protected>
-        {/* First-run flow (lane: setup), only without a finished onboarding. */}
+        {/* First-run flow, only without a finished onboarding. */}
         <Stack.Protected guard={!isOnboarded}>
           <Stack.Screen
             name="(onboarding)"
@@ -356,6 +378,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <ErrorBoundary>
         <AppProvider>
+          <CloudBackupHost />
           <RootLayoutNav />
         </AppProvider>
       </ErrorBoundary>
@@ -381,7 +404,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: Radius.card,
     borderCurve: "continuous",
-    boxShadow: "0 6px 20px rgba(18, 19, 43, 0.18)",
+    boxShadow: "0 6px 20px rgba(0, 0, 0, 0.16)",
   },
   toastText: {
     flex: 1,

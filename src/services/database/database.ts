@@ -16,7 +16,7 @@ export interface Migration {
   up: (db: SQLite.SQLiteDatabase) => Promise<void>;
 }
 
-// Schema per plan §4.1. CHECKs only guard enums and value ranges; business
+// CHECKs only guard enums and value ranges; business
 // rules live in the engine and the stores. `half_year` is the 0-based index
 // into the ruleset's half-year labels.
 const MIGRATION_1_SQL = `

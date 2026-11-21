@@ -2,7 +2,7 @@
 // (Stand 31.01.2024) und GymOStV (Stand 11.03.2026). RP-2027 (Abitur
 // 2027–2029) und RP-2030 (gleiche Regeln, KMK-Umsetzung noch offen).
 
-import type { EngineSubject, Issue } from "../model";
+import type { EngineSubject, Issue, RuleCheck } from "../model";
 import type {
   BlockIExtraDef,
   Requirement,
@@ -69,6 +69,44 @@ const facharbeit: BlockIExtraDef = {
         ],
 };
 
+const isNewFs = (s: EngineSubject): boolean =>
+  hasTag(s, "new_foreign_language");
+
+/**
+ * § 10 Abs. 7 AbiPrO: a second compulsory language started in the
+ * Einführungsphase. With two continued languages a new one is voluntary; with
+ * at most one the app assumes it is the compulsory one.
+ */
+function compulsoryNewFs(ctx: RuleContext): EngineSubject[] {
+  return continuedLanguages(ctx).length <= 1 ? taken(ctx, isNewFs) : [];
+}
+
+/** § 10 Abs. 7: 0 points in a course of the compulsory new language block the admission. */
+function newFsZeroCheck(ctx: RuleContext): RuleCheck[] {
+  const subs = compulsoryNewFs(ctx);
+  if (subs.length === 0) return [];
+  const zeros: string[] = [];
+  let predicted = false;
+  for (const s of subs) {
+    for (const hy of ctx.takenHalfYears(s.id)) {
+      const v = ctx.values.get(`${s.id}:${hy}`);
+      if (v?.points === 0) {
+        zeros.push(`${s.name} ${ctx.ruleset.halfYears[hy]}`);
+        if (v.source !== "official") predicted = true;
+      }
+    }
+  }
+  return [
+    {
+      id: "block1.newFsZero",
+      label: "Kein Kurs der neu begonnenen Pflichtfremdsprache mit 0 Punkten",
+      passed: zeros.length === 0,
+      detail: zeros.length ? zeros.join(", ") : null,
+      predicted,
+    },
+  ];
+}
+
 function requirements(ctx: RuleContext): Requirement[] {
   const kind = new Map(ctx.variant.components.map((c) => [c.slot, c.kind]));
   const lk = elevatedSubjects(ctx);
@@ -85,7 +123,12 @@ function requirements(ctx: RuleContext): Requirement[] {
   reqs.push(oneOf("de", "4 Kurse Deutsch", byKey(ctx, "de"), 4));
   reqs.push(oneOf("ma", "4 Kurse Mathematik", byKey(ctx, "ma"), 4));
   // Fremdsprache (4), Naturwissenschaft (4) und ein Kurs einer zweiten FS, NW oder Informatik.
-  let fs = continuedLanguages(ctx);
+  // § 10 Abs. 7: the compulsory new language may fulfil the duty with 4 courses.
+  const newFs = compulsoryNewFs(ctx);
+  let fs = [
+    ...continuedLanguages(ctx),
+    ...newFs.filter((s) => ctx.takenHalfYears(s.id).length === 4),
+  ];
   if (fs.length === 0)
     fs = taken(
       ctx,
@@ -114,6 +157,21 @@ function requirements(ctx: RuleContext): Requirement[] {
         });
       }
     }
+  }
+  // § 10 Abs. 7: two courses of the compulsory new language, among them 13
+  // (the Prüfungshalbjahr implication adds the course of 13).
+  for (const s of newFs) {
+    reqs.push({
+      id: `newFs.${s.id}`,
+      label: `2 Kurse ${s.name}, darunter der Kurs aus 13`,
+      short: "neu begonnene Pflichtfremdsprache",
+      options: [
+        {
+          picks: [{ subjectId: s.id, count: 2 }],
+          assumption: `Annahme: ${s.name} ist deine in der Einführungsphase neu begonnene Pflichtfremdsprache.`,
+        },
+      ],
+    });
   }
   reqs.push({
     id: "fsnw",
@@ -317,45 +375,47 @@ function rp(
     ]),
     defaults: { examWeightPercent: 50 },
     summary: [
-      "Mainzer Studienstufe (G9): Kurse 11/2, 12/1, 12/2 und 13 mit drei Leistungsfächern.",
-      "Block I: genau 36 Ergebnisse. Die Kurse von zwei LK zählen doppelt (der LK mit der niedrigsten Summe einfach), E_I = Summe × 40 / 44, gerundet.",
-      "Pflicht: alle 12 LK-Kurse, mündliche Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, fortgeführte Fremdsprache, Naturwissenschaft und Gesellschaftswissenschaft, 1 Kurs zweite Fremdsprache, Naturwissenschaft oder Informatik, 2 Kurse eines künstlerischen Fachs.",
-      "Wer einen Kurs eines Grundfachs einbringt, muss auch den Kurs aus 13 (Prüfungshalbjahr) einbringen.",
-      "Eine Facharbeit kann einen oder zwei freie Kurse ersetzen. Die App rechnet beide Varianten.",
-      "Zulassung: höchstens 7 Kurse unter 5 Punkten, kein Kurs mit 0 Punkten, mindestens 200 Punkte.",
-      "Block II: drei LK schriftlich, ein Grundfach mündlich, je fünffach. Mit 5. Prüfungsfach oder BLL alle vierfach.",
-      "Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) / 3 × Faktor, ab 0,5 aufgerundet.",
-      "Bestehen: Block II mindestens 100. Bei 4 Fächern zwei mit 25 Punkten, bei 5 Fächern drei mit 20 Punkten.",
+      "Mainzer Studienstufe (G9): Kurse 11/2, 12/1, 12/2 und 13 mit drei Leistungsfächern. Die 13 ist nur ein Halbjahr, das Abitur liegt im Frühjahr.",
+      "Block I: genau 36 Kurse. Die Kurse von zwei Leistungsfächern zählen doppelt, der LK mit der niedrigsten Summe einfach. E_I = Summe × 40 ÷ 44, kaufmännisch gerundet.",
+      "Pflicht: alle 12 LK-Kurse und die Kurse der mündlichen Prüfungsfächer, je 4 Kurse Deutsch, Mathematik, einer fortgeführten Fremdsprache, einer Naturwissenschaft und eines gesellschaftswissenschaftlichen Fachs, 1 Kurs einer zweiten Fremdsprache, Naturwissenschaft oder Informatik, 2 Kurse eines künstlerischen Fachs.",
+      "Bringst du einen Kurs eines Grundfachs ein, muss auch dessen Kurs aus 13 (Prüfungshalbjahr) dabei sein.",
+      "Hast du die zweite Pflichtfremdsprache erst in der Einführungsphase begonnen, zählen 2 Kurse davon (darunter 13). Ein Kurs mit 0 Punkten darin verhindert die Zulassung.",
+      "Eine Facharbeit kann einen oder doppelt gewertet zwei freie Kurse ersetzen. Die App rechnet beide Varianten.",
+      "Zulassung: mindestens 200 Punkte, höchstens 7 eingebrachte Kurse unter 5 Punkten, kein eingebrachter Kurs mit 0 Punkten.",
+      "Block II: drei LK schriftlich, ein Grundfach mündlich, je fünffach. Mit 5. Prüfungsfach oder Besonderer Lernleistung zählen alle vierfach. Zusätzliche mündliche Prüfung: (2 × schriftlich + mündlich) ÷ 3 × Faktor, ab ,5 aufgerundet.",
+      "Bestehen: Block II mindestens 100 Punkte. Bei 4 Prüfungsfächern zwei mit je mindestens 25 Punkten, bei 5 drei mit je mindestens 20 Punkten.",
       ...note,
     ],
     sources: [
       {
-        title: "Abiturprüfungsordnung (AbiPrO)",
-        section: "§§ 9, 10, 12, 13, 24",
+        title:
+          "Ministerium für Bildung RP: Mainzer Studienstufe (Inhalt von mss.rlp.de, Stand 04.02.2025)",
+        section:
+          "S. 30–35: Block I ab Abitur 2027 mit Rechenbeispiel, Block II mit Beispielen",
+        url: "https://bildung.rlp.de/fileadmin/user_upload/gymnasium.bildung.rlp.de/Downloads/MSS_Webseite_Stand_Februar_2025.pdf",
+      },
+      {
+        title: "Abiturprüfungsordnung (AbiPrO) vom 21.07.2010, Landesrecht RLP",
+        section: "§§ 10, 12, 13 (§ 10 geändert durch VO vom 31.01.2024)",
         url: "https://landesrecht.rlp.de/bsrp/document/jlr-NNLRP00005C81",
       },
       {
-        title: "AbiPrO § 10 Qualifikation in Block I",
-        section: "§ 10 (Fassung vom 31.01.2024)",
-        url: "https://landesrecht.rlp.de/bsrp/document/jlr-NNLRP00005C81NN00000000021",
+        title: "AbiPrO, Ursprungsfassung vom 21.07.2010 (PDF)",
+        section: "§ 10 Abs. 3, 7, 10; § 12; § 13 Abs. 1, 3, 4",
+        url: "https://bildung.rlp.de/fileadmin/user_upload/rfb.bildung.rlp.de/Sprachen/Latein/AbiPrO_i.d.F._21.07.2010.pdf",
       },
       {
-        title: "AbiPrO § 12 Qualifikation in Block II",
-        section: "§ 12",
-        url: "https://landesrecht.rlp.de/bsrp/document/jlr-NNLRP00005C81NN00000000025",
-      },
-      {
-        title: "Landesverordnung über die gymnasiale Oberstufe (GymOStV)",
-        section: "§§ 3–7",
-        url: "https://landesrecht.rlp.de/bsrp/document/jlr-NNLRP00005A69",
+        title: "Mainzer Studienstufe: Prüfungsbereich",
+        url: "https://mss.rlp.de/abitur-und-fh-reife/pruefungsbereich",
       },
       {
         title: "Mainzer Studienstufe: Qualifikationsbereich (ab Abitur 2027)",
         url: "https://mss.rlp.de/abitur-und-fh-reife/qualifikationsbereich-1",
       },
       {
-        title: "Mainzer Studienstufe: Prüfungsbereich",
-        url: "https://mss.rlp.de/abitur-und-fh-reife/pruefungsbereich",
+        title: "Landesverordnung über die gymnasiale Oberstufe (GymOStV)",
+        section: "§§ 3–7 (Stand 11.03.2026)",
+        url: "https://landesrecht.rlp.de/bsrp/document/jlr-NNLRP00005A69",
       },
     ],
     totalMinPoints: 300,
@@ -379,6 +439,7 @@ function rp(
           halfYear: EXAM_HY,
         })),
       extras: [facharbeit],
+      checks: (ctx) => newFsZeroCheck(ctx),
       deficitLimits: () => [
         limit("total", 7, "Höchstens 7 Kurse unter 5 Punkten"),
       ],
@@ -435,5 +496,5 @@ function rp(
 
 export const RP_2027 = rp("RP-2027", 2027, 2029, "high", []);
 export const RP_2030 = rp("RP-2030", 2030, null, "medium", [
-  "Für Abitur 2030 gelten nach aktuellem Stand dieselben Regeln. Eine Anpassung an die KMK-Vereinbarung ist noch offen.",
+  "Für Abitur 2030 hat Rheinland-Pfalz noch keine Änderung der Abiturprüfungsordnung verkündet (Stand November 2026). Die App rechnet mit den Regeln ab 2027.",
 ]);
