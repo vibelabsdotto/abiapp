@@ -17,6 +17,10 @@ import {
   validateWithRuleset,
   type TargetAnalysis,
 } from "./engine/evaluate";
+import {
+  currentHalfYear as halfYearOn,
+  type HalfYearCourse,
+} from "./engine/calendar";
 import { gradeTenthsFromPoints, minPointsForTenths } from "./engine/math";
 import {
   halfYearPrognosis as prognosis,
@@ -33,7 +37,7 @@ import {
 } from "./rulesets/registry";
 
 export type * from "./model";
-export type { RequiredGradeStatus, TargetAnalysis };
+export type { HalfYearCourse, RequiredGradeStatus, TargetAnalysis };
 
 /** Full evaluation (Block I optimization, Block II, total, checks, issues). */
 export function evaluate(input: EngineInput): AbiturEvaluation {
@@ -106,6 +110,26 @@ export function targetAnalysis(
     getRuleset(input.rulesetId),
     targetTenths,
   );
+}
+
+/**
+ * Half-year index the student is in on `date`: from Abitur year and school
+ * calendar, later when the data already has official results for it.
+ */
+export function currentHalfYear(input: {
+  rulesetId: string;
+  abiturYear: number;
+  courses: readonly HalfYearCourse[];
+  date: Date;
+}): number {
+  const ruleset = getRuleset(input.rulesetId);
+  return halfYearOn({
+    state: ruleset.state,
+    abiturYear: input.abiturYear,
+    halfYearCount: ruleset.halfYears.length,
+    courses: input.courses,
+    date: input.date,
+  });
 }
 
 export function listStates(): { code: StateCode; name: string }[] {

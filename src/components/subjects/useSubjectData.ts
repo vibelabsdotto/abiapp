@@ -26,9 +26,6 @@ import { useProfileStore } from "@stores/profileStore";
 
 const key = (subjectId: string, halfYear: number) => `${subjectId}:${halfYear}`;
 
-/** Shared rule for overview and subjects tab (hooks/useCurrentHalfYear). */
-export { useCurrentHalfYear };
-
 /** Half-year shown in the subjects tab (persisted choice or current one). */
 export function useSelectedHalfYear(): [number, (halfYear: number) => void] {
   const labels = useHalfYearLabels();
