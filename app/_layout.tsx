@@ -260,6 +260,8 @@ function RootLayoutNav() {
     presentation: "formSheet",
     sheetAllowedDetents: "fitToContents",
     sheetGrabberVisible: true,
+    // iOS rounds sheets itself; Android would leave the corners square.
+    ...(Platform.OS === "android" ? { sheetCornerRadius: Radius.sheet } : null),
     contentStyle: { backgroundColor: colors.sheet },
   } as const;
 

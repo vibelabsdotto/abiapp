@@ -101,6 +101,8 @@ export const Radius = {
   card: 16,
   /** The overview hero is a card like every other. */
   hero: 16,
+  /** Top corners of a native sheet on Android (iOS rounds its own). */
+  sheet: 28,
 } as const;
 
 /**
