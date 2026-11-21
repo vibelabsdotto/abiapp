@@ -277,7 +277,7 @@ export const SN_2027: Ruleset = {
           issue(
             "setup.elevated.combo",
             "error",
-            "Deutsch und Mathematik können nicht beide Leistungskurs sein.",
+            "Deutsch und Mathematik können nicht beide Leistungskurse sein.",
           ),
         );
       } else {

@@ -121,8 +121,9 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
   }
   reqs.push({
     id: "fsnw",
+    short: "Fremdsprache, Naturwissenschaft und neuntes Pflichtfach",
     label:
-      "Fremdsprache (4), Naturwissenschaft (4) und neuntes Pflichtfach (Q2)",
+      "Je 4 Kurse einer Fremdsprache und einer Naturwissenschaft, dazu die Q2-Kurse eines neunten Pflichtfachs",
     options,
   });
 
@@ -173,7 +174,7 @@ function requirements(ctx: RuleContext, v2030: boolean): Requirement[] {
     id: "gw",
     short: "Gesellschaftswissenschaften",
     label:
-      "Fortgeführtes gesellschaftswissenschaftliches Fach (4) und Zusatzkurse Geschichte/Sozialwissenschaften (2)",
+      "4 Kurse des fortgeführten gesellschaftswissenschaftlichen Fachs und 2 Zusatzkurse Geschichte oder Sozialwissenschaften",
     options: gw,
   });
   reqs.push(
@@ -251,7 +252,7 @@ function validate(ctx: RuleContext, v2030: boolean) {
         issue(
           "exam.relSport",
           "error",
-          "Religionslehre und Sport können nicht beide Prüfungsfach sein.",
+          "Religionslehre und Sport können nicht beide Prüfungsfächer sein.",
         ),
       );
     }
@@ -360,9 +361,9 @@ export const NW_2027: Ruleset = {
     "Qualifikationsphase Q1.1 bis Q2.2 mit zwei Leistungskursen (1. und 2. Abiturfach). Gilt für alle, die vor 2027/28 in die Einführungsphase eingetreten sind, nach einer Wiederholung also auch für ein späteres Abitur.",
     "Block I: 35 bis 40 Kurse nach eigener Wahl. LK zählen doppelt, Punkte = Summe / gewichtete Anzahl × 40, ab 0,5 aufgerundet. Die App wählt die beste Anzahl.",
     "Pflicht: die vier Abiturfächer, Deutsch, Mathematik, Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), je 2 aufeinanderfolgende Zusatzkurse Geschichte bzw. Sozialwissenschaften, 2 aufeinanderfolgende Kurse Kunst oder Musik (oder Literatur), 2 Kurse Religionslehre oder Philosophie, die Q2-Kurse des neunten Pflichtfachs.",
-    "Defizite (Kurse mit 4 oder weniger Punkten): bei 35–37 Kursen höchstens 7, bei 38–40 höchstens 8, davon höchstens 3 in Leistungskursen.",
+    "Unterkurse (Defizite, Kurse mit 4 oder weniger Punkten): bei 35–37 Kursen höchstens 7, bei 38–40 höchstens 8, davon höchstens 3 in Leistungskursen.",
     "Ein Kurs mit 0 Punkten gilt als nicht belegt und kann nicht eingebracht werden. Ist es ein Pflichtkurs, wirst du nicht zugelassen.",
-    "Ein Projektkurs zählt wie zwei Grundkurse mit seiner Note (bei 4 oder weniger Punkten zwei Defizite).",
+    "Ein Projektkurs zählt wie zwei Grundkurse mit seiner Note (bei 4 oder weniger Punkten zwei Unterkurse).",
     "Block II: vier Prüfungen fünffach (LK1, LK2, 3. Fach schriftlich, 4. Fach mündlich). Mit Besonderer Lernleistung zählen alle fünf vierfach.",
     "Zusätzliche mündliche Prüfung im 1. bis 3. Fach: (2 × schriftlich + mündlich) / 3 × 5 (mit BLL × 4), ab 0,5 aufgerundet.",
     "Bestehen: Block II mindestens 100 Punkte und zwei Prüfungsfächer mit je 25 Punkten (mit BLL 20), darunter ein LK. Die BLL zählt dabei nicht als Prüfungsfach. Block I mindestens 200.",
@@ -403,8 +404,8 @@ export const NW_2027: Ruleset = {
         "total",
         n <= 37 ? 7 : 8,
         n <= 37
-          ? "Höchstens 7 Defizite (bei 35–37 Kursen)"
-          : "Höchstens 8 Defizite (bei 38–40 Kursen)",
+          ? "Höchstens 7 Unterkurse (bei 35–37 Kursen)"
+          : "Höchstens 8 Unterkurse (bei 38–40 Kursen)",
       ),
       limit(
         "elevated",
@@ -481,7 +482,7 @@ export const NW_2030: Ruleset = {
     "Block I: genau 36 Kurse (8 LK doppelt, 28 weitere), Punkte = Summe × 40 / 44, ab 0,5 aufgerundet.",
     "Pflicht: alle fünf Abiturfächer, Deutsch, Mathematik, Fremdsprache, Naturwissenschaft und das fortgeführte gesellschaftswissenschaftliche Fach (je 4), je 2 aufeinanderfolgende Zusatzkurse Geschichte bzw. Sozialwissenschaften, 2 aufeinanderfolgende Kurse Kunst oder Musik (oder Literatur), 2 Kurse Religionslehre oder Philosophie, beide Projektkurs-Halbjahre, die Q2-Kurse des neunten Pflichtfachs.",
     "Ist das Referenzfach des Projektkurses dein 5. Abiturfach, zählen davon nur die zwei Kurse aus Q1 als Pflicht.",
-    "Höchstens 7 Defizite (Kurse mit 4 oder weniger Punkten), davon höchstens 3 in Leistungskursen. Höchstens 4 Grundkurse je Fach.",
+    "Höchstens 7 Unterkurse (Defizite, Kurse mit 4 oder weniger Punkten), davon höchstens 3 in Leistungskursen. Höchstens 4 Grundkurse je Fach.",
     "Ein Kurs mit 0 Punkten gilt als nicht belegt und kann nicht eingebracht werden. Ist es ein Pflichtkurs, wirst du nicht zugelassen.",
     "Block II: fünf Prüfungen vierfach: drei schriftlich, eine mündlich, eine Präsentationsprüfung oder Besondere Lernleistung.",
     "Zusätzliche mündliche Prüfung im 1. bis 3. Fach: (2 × schriftlich + mündlich) / 3 × 4, ab 0,5 aufgerundet.",
@@ -513,7 +514,7 @@ export const NW_2030: Ruleset = {
     maxPerSubject: (s) =>
       hasKey(s, "lit") ? 2 : s.level === "basic" ? 4 : null,
     deficitLimits: () => [
-      limit("total", 7, "Höchstens 7 Defizite (Kurse unter 5 Punkten)"),
+      limit("total", 7, "Höchstens 7 Unterkurse (Kurse unter 5 Punkten)"),
       limit(
         "elevated",
         3,

@@ -388,8 +388,9 @@ export const BY_G9_2027: Ruleset = {
       }
       reqs.push({
         id: "fsnw",
+        short: "Fremdsprache, Naturwissenschaft und weiteres Wahlpflichtfach",
         label:
-          "Fremdsprache, Naturwissenschaft und weiteres Wahlpflichtfach (je 3)",
+          "Je 3 Halbjahre einer Fremdsprache, einer Naturwissenschaft und eines weiteren Wahlpflichtfachs",
         options,
       });
       reqs.push({

@@ -369,7 +369,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
       issues.push({
         code: `block1.requirement.missingSubject`,
         severity: "warning",
-        message: `Für diese Pflichteinbringung fehlt noch ein Fach: ${req.label}.`,
+        message: `Es fehlt noch ein Fach: ${inlineRuleLabel(req.label)}.`,
       });
     } else if (req.options.some((o) => optionFeasible(req, o, true, true))) {
       open.push(req.label);
@@ -455,7 +455,7 @@ export function evaluateBlockI(ctx: RuleContext): BlockIOutcome {
     issues.push({
       code: "block1.setup.incomplete",
       severity: "warning",
-      message: `Lege noch alle deine Fächer an: Es ${one ? "fehlt" : "fehlen"} mindestens ${missingPlaces} ${one ? "Kurs" : "Kurse"} für Block I.`,
+      message: `Es ${one ? "fehlt" : "fehlen"} noch mindestens ${missingPlaces} ${one ? "Kurs" : "Kurse"} für Block I. Lege alle deine Fächer an.`,
     });
   }
 
