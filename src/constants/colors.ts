@@ -22,7 +22,7 @@ export const Brand = {
   inkTop: "#0A0A0A",
   inkBottom: "#0A0A0A",
   inkLight: "#F5F5F5",
-  night: "#000000",
+  night: "#0A0A0A",
   paper: "#FFFFFF",
 } as const;
 

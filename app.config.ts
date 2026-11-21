@@ -14,10 +14,10 @@ const hasIosFirebase = fileExists(IOS_GOOGLE_SERVICES_FILE);
 const hasAndroidFirebase = fileExists(ANDROID_GOOGLE_SERVICES_FILE);
 const hasFirebase = hasIosFirebase || hasAndroidFirebase;
 
-// Monochrome brand (src/constants/colors.ts Brand): ink black, night black,
-// paper white. Splash: black glyph on white (light), white on black (dark).
+// Monochrome brand (src/constants/colors.ts Brand) and icon N1 ("1,0"
+// white on ink): ink #0A0A0A for the icon tile, adaptive background and
+// dark splash; paper white for the light splash with the black mark.
 const BRAND_INK = "#0A0A0A";
-const BRAND_NIGHT = "#000000";
 const BRAND_PAPER = "#FFFFFF";
 
 type PluginList = NonNullable<ExpoConfig["plugins"]>;
@@ -45,9 +45,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.max.mannstein.abisax",
-    // iOS 18+/26 home-screen appearances: white glyph on black (light and
-    // dark) and grayscale on black (tinted, the system applies the tint).
-    // Interim monochrome glyph until the new icon lands.
+    // iOS 18+/26 home-screen appearances: the same ink tile in light and
+    // dark, grayscale on black for tinted (the system applies the tint).
     icon: {
       light: "./assets/images/icon.png",
       dark: "./assets/images/icon-dark.png",
@@ -90,7 +89,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         backgroundColor: BRAND_PAPER,
         dark: {
           image: "./assets/images/splash-icon-dark.png",
-          backgroundColor: BRAND_NIGHT,
+          backgroundColor: BRAND_INK,
         },
       },
     ],

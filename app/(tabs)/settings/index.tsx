@@ -334,7 +334,7 @@ export default function SettingsScreen() {
   return (
     <ScreenLayout contentContainerStyle={styles.content}>
       {profile ? (
-        <Section title={t("settings.profile")} separatorInset={58}>
+        <Section title={t("settings.profile")} separatorInset={48}>
           <ListRow
             title={t("settings.state")}
             value={stateName}
@@ -420,7 +420,7 @@ export default function SettingsScreen() {
         <Section
           title={t("settings.goal")}
           footer={t("settings.goalFooter")}
-          separatorInset={58}
+          separatorInset={48}
         >
           <ListRow
             title={t("settings.goalRow")}
@@ -436,7 +436,7 @@ export default function SettingsScreen() {
         </Section>
       ) : null}
 
-      <Section title={t("settings.appearance")} separatorInset={58}>
+      <Section title={t("settings.appearance")} separatorInset={48}>
         <NativeMenu
           title={t("settings.chooseTheme")}
           actions={themeActions}
@@ -474,7 +474,7 @@ export default function SettingsScreen() {
       <Section
         title={t("settings.data")}
         footer={t("settings.dataFooter")}
-        separatorInset={58}
+        separatorInset={48}
       >
         <ListRow
           title={t("settings.exportBackup")}
@@ -494,7 +494,7 @@ export default function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t("settings.feedback")} separatorInset={58}>
+      <Section title={t("settings.feedback")} separatorInset={48}>
         {isFeaturamaConfigured ? (
           <ListRow
             title={t("settings.featureRequests")}
@@ -510,7 +510,7 @@ export default function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t("settings.about")} separatorInset={58}>
+      <Section title={t("settings.about")} separatorInset={48}>
         <ListRow
           title={t("settings.openSource")}
           leading={<SettingsIcon icon={CodeXml} />}
@@ -540,7 +540,7 @@ export default function SettingsScreen() {
         <Section
           title={t("settings.developer")}
           footer={t("settings.developerFooter")}
-          separatorInset={58}
+          separatorInset={48}
         >
           <NativeMenu
             title={t("settings.seedDemoFor")}
