@@ -50,12 +50,12 @@ Expo SDK 58, React Native 0.88, Expo Router (native tabs), Zustand, expo-sqlite,
 npm install
 cp .env.example .env.local   # optional: VibeUpdate app ID, Featurama key
 npx expo prebuild --clean    # generates ios/ and android/ (not committed)
-npm start                    # Metro (dev client), port 8090; keep it running
-npm run ios                  # build + launch the dev client on the iOS simulator
+npm run ios                  # dev client on the iOS simulator, Metro on port 8090
 npm run android              # same for Android
+npm start                    # Metro only (dev client), port 8090
 ```
 
-OTA updates are code-signed (`certs/certificate.pem`), so Metro signs the development manifest with the matching private key (`ABIAPP_OTA_PRIVATE_KEY`, default `~/.config/vibeupdate/keys/abiapp/private-key.pem`). Without that key, generate your own pair locally and do not commit the new certificate: `npx expo-updates codesigning:generate --key-output-directory ~/.config/vibeupdate/keys/abiapp --certificate-output-directory certs --certificate-validity-duration-years 10 --certificate-common-name dev`.
+OTA updates (expo-updates, code-signed) are only active in store builds, which set `ABIAPP_STORE_BUILD=1`. Development builds need no signing key.
 
 Checks:
 

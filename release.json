@@ -2,6 +2,7 @@
   "name": "abiapp",
   "ios": { "ascAppId": "6450996587" },
   "android": { "track": "internal" },
+  "env": { "ABIAPP_STORE_BUILD": "1" },
   "requiredEnv": [
     "EXPO_PUBLIC_VIBEUPDATE_APP_ID",
     "EXPO_PUBLIC_FEATURAMA_API_KEY",

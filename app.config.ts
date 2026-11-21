@@ -29,6 +29,25 @@ const hasFirebase =
 // Hosts the self-hosted OTA manifest that expo-updates polls.
 const VIBEUPDATE_APP_ID = "app_UOuDoRKed8PQL3h5f4CiLu3Q";
 
+// OTA only in store builds: vibe-release sets ABIAPP_STORE_BUILD=1
+// (release.json env), and so must every `ota publish`. Every other build
+// (dev client, local release) has updates off and no code-signing
+// certificate, so Metro needs no private key and nothing accepts an
+// unsigned update. The flag changes the fingerprint (runtime version).
+const STORE_BUILD = process.env.ABIAPP_STORE_BUILD === "1";
+
+const updates: ExpoConfig["updates"] = STORE_BUILD
+  ? {
+      url: `https://api.vibeupdate.app/api/v1/ota/apps/${VIBEUPDATE_APP_ID}/manifest`,
+      enabled: true,
+      checkAutomatically: "ON_LOAD",
+      fallbackToCacheTimeout: 0,
+      requestHeaders: { "expo-channel-name": "production" },
+      codeSigningCertificate: "./certs/certificate.pem",
+      codeSigningMetadata: { keyid: "main", alg: "rsa-v1_5-sha256" },
+    }
+  : { enabled: false };
+
 // Monochrome brand (src/constants/colors.ts Brand) and icon N1 ("1,0"
 // white on ink): ink #0A0A0A for the icon tile, adaptive background and
 // dark splash; paper white for the light splash with the black mark.
@@ -56,19 +75,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   userInterfaceStyle: "automatic",
-  // OTA: self-hosted expo-updates against VibeUpdate. The fingerprint keeps JS
-  // updates away from binaries with a different native base; manifests are
-  // signed with the key in ~/.config/vibeupdate/keys/abiapp.
+  // OTA: self-hosted expo-updates against VibeUpdate (store builds only, see
+  // STORE_BUILD). The fingerprint keeps JS updates away from binaries with a
+  // different native base; manifests are signed with the key in
+  // ~/.config/vibeupdate/keys/abiapp.
   runtimeVersion: { policy: "fingerprint" },
-  updates: {
-    url: `https://api.vibeupdate.app/api/v1/ota/apps/${VIBEUPDATE_APP_ID}/manifest`,
-    enabled: true,
-    checkAutomatically: "ON_LOAD",
-    fallbackToCacheTimeout: 0,
-    requestHeaders: { "expo-channel-name": "production" },
-    codeSigningCertificate: "./certs/certificate.pem",
-    codeSigningMetadata: { keyid: "main", alg: "rsa-v1_5-sha256" },
-  },
+  updates,
 
   ios: {
     supportsTablet: true,

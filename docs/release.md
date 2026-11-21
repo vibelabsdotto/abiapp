@@ -42,19 +42,21 @@ Der Upload-Key der alten MAUI-App ist nicht auffindbar. Am 21.11.2026 gegen 01:0
 
 ## OTA
 
+Update-Verhalten und Code-Signing sind an `ABIAPP_STORE_BUILD=1` gebunden (`app.config.ts`, gesetzt über `release.json` `env`). Ohne das Flag: `updates.enabled: false`, kein Zertifikat, Metro braucht keinen Schlüssel. Das Flag gehört zur aufgelösten Config, also zum Fingerprint: Dev- und Store-Build haben verschiedene Runtime-Versionen, und **jeder `ota publish` und jedes `runtimeversion:resolve` läuft mit `ABIAPP_STORE_BUILD=1`**.
+
 Nur JS und Assets. Native Änderungen (Dependencies, `app.config.ts`, `plugins/`) brauchen einen Store-Build; die Runtime-Version ist der Fingerprint, ein OTA mit anderem Fingerprint kommt still nie an. Erstes OTA erst, wenn ein Store-Build mit `expo-updates` live ist. Onboarding-Änderungen erreichen neue Nutzer nur per Store-Build (Update greift ab dem zweiten Kaltstart).
 
 ```sh
 python3 <skill>/scripts/release_guard.py <Commit des Store-Builds>
 VU="node ~/Coding/vibeupdate/apps/cli/bin/vibeupdate.js"
-$VU ota publish appdb_6f419bde82dd42e789358eb6ce0a2b8a ios --yes --project . \
+ABIAPP_STORE_BUILD=1 $VU ota publish appdb_6f419bde82dd42e789358eb6ce0a2b8a ios --yes --project . \
   --private-key ~/.config/vibeupdate/keys/abiapp/private-key.pem --key-id main \
   --certificate certs/certificate.pem --message "2.0.0 OTA: <Inhalt>" --format json
 # dasselbe mit android
 python3 <skill>/scripts/ota_manifest_check.py app_UOuDoRKed8PQL3h5f4CiLu3Q ios <runtime> --expect-id <update-id>
 ```
 
-Runtime je Plattform: `npx expo-updates runtimeversion:resolve --platform ios` (nur `runtimeVersion` lesen). Rollback: `$VU ota rollback … --yes` (signiertes Zurück auf das eingebettete Bundle) oder ein älteres Bundle neu veröffentlichen.
+Runtime je Plattform: `ABIAPP_STORE_BUILD=1 npx expo-updates runtimeversion:resolve --platform ios` (nur `runtimeVersion` lesen). Rollback: `ABIAPP_STORE_BUILD=1 $VU ota rollback … --yes` (signiertes Zurück auf das eingebettete Bundle) oder ein älteres Bundle neu veröffentlichen.
 
 ## VibeUpdate-Release (Update-Hinweis)
 
