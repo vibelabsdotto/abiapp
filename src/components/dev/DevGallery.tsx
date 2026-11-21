@@ -34,6 +34,8 @@ import { useThemeStore } from "@stores/themeStore";
 import { useTranslation } from "@locales/index";
 import { Type } from "@constants/typography";
 import { ThemeMode } from "@apptypes/enums";
+import { MENU_ICONS, type MenuSymbol } from "@constants/menuIcons";
+import { Button } from "@components/common/Button";
 import type { ValueSource } from "@domain/model";
 
 const HALF_YEARS = ["11/1", "11/2", "12/1", "12/2"] as const;
@@ -125,6 +127,31 @@ export default function DevGallery() {
         }}
       />
       <ScreenLayout contentContainerStyle={styles.content}>
+        <Section
+          title="Menü-Icons"
+          footer="Öffnet ein natives Menü mit allen Symbolen aus MENU_ICONS. Auf Android lädt das jedes Drawable einmal (Absturz, wenn eins kaputt ist)."
+          variant="plain"
+        >
+          <NativeMenu
+            title="Alle Menü-Icons"
+            actions={(Object.keys(MENU_ICONS) as MenuSymbol[]).map(
+              (symbol) => ({
+                id: symbol,
+                title: symbol,
+                image: symbol,
+              }),
+            )}
+            onSelect={noop}
+            trigger={
+              <Button
+                title={`Alle ${Object.keys(MENU_ICONS).length} Menü-Icons öffnen`}
+                variant="secondary"
+                onPress={noop}
+              />
+            }
+          />
+        </Section>
+
         <Section title="Bogen: amtlich, Prognose, Schätzung" variant="plain">
           {(["official", "prognosis", "estimate"] as const).map((basis) => (
             <GradeHero
