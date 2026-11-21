@@ -25,6 +25,8 @@ vibe-release android --ref origin/release/2.0
 
 Der Runner baut genau diesen Commit in einem eigenen Worktree, nimmt Build-Nummer = Store-Maximum + 1, prüft Signatur, Version und Bundle, lädt nach TestFlight bzw. Play Internal hoch und wartet auf `VALID`. Vorher `--plan` zeigt die Nummern. Logs: `~/Library/Logs/vibe-release/abiapp-<zeit>/`. Danach die Nummern in `app.config.ts` (`ios.buildNumber`, `android.versionCode`) auf `release/2.0` committen, falls der Runner es nicht selbst konnte.
 
+Store-AABs nur über `vibe-release` bauen: frischer Git-Worktree, `npm ci`, `expo prebuild --clean`, kein Gradle-Build-Cache, `:app:createBundleReleaseJsAndAssets` läuft also immer neu. Ein inkrementeller Gradle-Build im eigenen Checkout überspringt diesen Task als `UP-TO-DATE`, wenn sich nur Bild-Assets geändert haben (z. B. `assets/icons/toolbar/*.xml`), und liefert dann alte Assets aus. Lokal deshalb `./gradlew :app:bundleRelease --rerun-tasks` oder vorher `npx expo prebuild --clean`. Beleg am Artefakt: `aapt2 dump xmltree <universal.apk> --file res/drawable-mdpi-v4/assets_icons_toolbar_pencil.xml` zeigt nur `fillColor`, kein `strokeWidth`.
+
 Zurücklesen (Skill `mobile-release`):
 
 ```sh
