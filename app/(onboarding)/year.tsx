@@ -1,5 +1,6 @@
-// Onboarding step 2: Abiturjahrgang. One tap chooses, creates the profile
-// (or switches its rules) via setupActions and advances.
+// Onboarding: Abiturjahrgang. One tap chooses, creates the profile (or
+// switches its rules) via setupActions, saves the story's goal into it and
+// advances.
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
@@ -14,6 +15,7 @@ import {
 } from "@components/setup";
 import { resolveDraftRuleset, useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
+import { useOnboardingStory } from "@stores/onboardingStory";
 
 export default function OnboardingYearScreen() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function OnboardingYearScreen() {
   const abiturYear = useProfileDraft((draft) => draft.abiturYear);
   const rulesetId = useProfileDraft((draft) => draft.rulesetId);
   const setAbiturYear = useProfileDraft((draft) => draft.setAbiturYear);
+  const commitTarget = useOnboardingStory((story) => story.commitTarget);
   const [saving, setSaving] = useState(false);
   const [missingRules, setMissingRules] = useState(false);
 
@@ -39,7 +42,10 @@ export default function OnboardingYearScreen() {
         abiturYear: year,
         rulesetId: ruleset.id,
       });
-      if (result) router.push("/(onboarding)/rules");
+      if (!result) return;
+      // The goal of the story's first page, now that the profile exists.
+      await commitTarget();
+      router.push("/(onboarding)/rules");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {

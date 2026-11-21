@@ -1,4 +1,4 @@
-// Onboarding step 7: "Woher kennst du AbiApp?". One tap answers and
+// Onboarding: "Woher kennst du AbiApp?". One tap answers and
 // advances; the answer is only sent as an analytics enum, never stored.
 
 import React, { useState } from "react";

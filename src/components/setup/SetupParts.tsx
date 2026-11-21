@@ -2,10 +2,19 @@
 // code, exam slot) and the onboarding step scaffold with a pinned footer
 // button. Selection marks live in ListRow (`selected`).
 
-import React from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Stack } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { Button } from "@components/common/Button";
@@ -99,6 +108,23 @@ interface OnboardingStepProps {
    * title when the screen is pushed.
    */
   keyboardAware?: boolean;
+  /**
+   * Story pages that change in place (question, then its scene): the bar
+   * slides to the new step and a footer button that appears fades in.
+   */
+  inPlace?: boolean;
+  /**
+   * The content fills the screen between header and footer (story scenes:
+   * the stage takes the room between heading and text).
+   */
+  fill?: boolean;
+  /**
+   * With `fill`: reports the height the content has on screen, between the
+   * progress head and the footer. Story scenes fit their stage into it.
+   */
+  onRoom?: (height: number) => void;
+  /** Quiet "Überspringen" top right in the header (story pages). */
+  onSkip?: () => void;
   children: React.ReactNode;
 }
 
@@ -117,11 +143,32 @@ export const OnboardingStep = ({
   secondary,
   footerNote,
   keyboardAware = false,
+  inPlace = false,
+  fill = false,
+  onRoom,
+  onSkip,
   children,
 }: OnboardingStepProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const [viewport, setViewport] = useState(0);
+  const [headHeight, setHeadHeight] = useState(0);
+  // iOS insets the content by the header (contentInsetAdjustment): the
+  // room to fill is the scroll view minus the header.
+  const fillHeight = viewport - (Platform.OS === "ios" ? headerHeight : 0);
+  const room =
+    fill && fillHeight > 0 && headHeight > 0
+      ? fillHeight -
+        CONTENT_PADDING_TOP -
+        CONTENT_PADDING_BOTTOM -
+        headHeight -
+        CONTENT_GAP
+      : 0;
+  useEffect(() => {
+    if (room > 0) onRoom?.(room);
+  }, [room, onRoom]);
   const hasFooter = Boolean(primary || primaryMenu || secondary || footerNote);
 
   // ScrollView and footer are direct children of the screen (fragment):
@@ -129,10 +176,37 @@ export const OnboardingStep = ({
   // screen's first subview.
   return (
     <>
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen
+        options={{
+          title,
+          // Android drops text-only toolbar items: a header view there.
+          headerRight:
+            onSkip && Platform.OS === "android"
+              ? () => <AndroidSkip onPress={onSkip} />
+              : undefined,
+        }}
+      />
+      {onSkip && Platform.OS === "ios" ? (
+        <Stack.Toolbar placement="right" tintColor={colors.textSecondary}>
+          <Stack.Toolbar.Button
+            variant="plain"
+            hidesSharedBackground
+            tintColor={colors.textSecondary}
+            style={{ color: colors.textSecondary, fontWeight: "400" }}
+            onPress={onSkip}
+          >
+            {t("onboarding.skip")}
+          </Stack.Toolbar.Button>
+        </Stack.Toolbar>
+      ) : null}
       <AndroidKeyboardAvoider enabled={keyboardAware}>
         <ScrollView
           style={[styles.flex, { backgroundColor: colors.background }]}
+          onLayout={
+            fill
+              ? (event) => setViewport(event.nativeEvent.layout.height)
+              : undefined
+          }
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -140,6 +214,7 @@ export const OnboardingStep = ({
           contentContainerStyle={[
             styles.content,
             readableContent,
+            fill && fillHeight > 0 ? { minHeight: fillHeight } : null,
             // Without a footer the list runs to the bottom edge (Android
             // draws edge-to-edge; iOS adds the inset automatically).
             !hasFooter && Platform.OS === "android"
@@ -148,13 +223,21 @@ export const OnboardingStep = ({
           ]}
         >
           {step !== undefined || intro ? (
-            <View style={styles.head}>
+            <View
+              style={styles.head}
+              onLayout={
+                fill
+                  ? (event) => setHeadHeight(event.nativeEvent.layout.height)
+                  : undefined
+              }
+            >
               {step !== undefined && totalSteps ? (
                 <View style={styles.progress}>
                   <ProgressBar
                     value={step}
                     max={totalSteps}
                     height={4}
+                    animated={inPlace}
                     accessibilityLabel={t("onboarding.step", {
                       step,
                       total: totalSteps,
@@ -220,14 +303,18 @@ export const OnboardingStep = ({
               }
             />
           ) : primary ? (
-            <Button
-              title={primary.title}
-              onPress={primary.onPress}
-              disabled={primary.disabled}
-              loading={primary.loading}
-              size="large"
-              fullWidth
-            />
+            <Animated.View
+              entering={inPlace ? FadeIn.duration(280) : undefined}
+            >
+              <Button
+                title={primary.title}
+                onPress={primary.onPress}
+                disabled={primary.disabled}
+                loading={primary.loading}
+                size="large"
+                fullWidth
+              />
+            </Animated.View>
           ) : null}
           {secondary ? (
             <Button
@@ -247,15 +334,41 @@ export const OnboardingStep = ({
 
 const noop = () => undefined;
 
+const AndroidSkip = ({ onPress }: { onPress: () => void }) => {
+  const colors = useThemeStore((state) => state.colors);
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      hitSlop={8}
+      android_ripple={{ color: colors.ripple, borderless: false }}
+      style={styles.skip}
+    >
+      <Text style={[Type.body, { color: colors.textSecondary }]}>
+        {t("onboarding.skip")}
+      </Text>
+    </Pressable>
+  );
+};
+
+const CONTENT_PADDING_TOP = 8;
+const CONTENT_PADDING_BOTTOM = 24;
+const CONTENT_GAP = 24;
+
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  skip: {
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
-    gap: 24,
+    paddingTop: CONTENT_PADDING_TOP,
+    paddingBottom: CONTENT_PADDING_BOTTOM,
+    gap: CONTENT_GAP,
   },
   head: {
     gap: 6,

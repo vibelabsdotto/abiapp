@@ -30,7 +30,7 @@ export default function OnboardingRulesScreen() {
       intro={t("onboarding.rules.intro")}
       primary={{
         title: t("onboarding.next"),
-        onPress: () => router.push("/(onboarding)/goal"),
+        onPress: () => router.push("/(onboarding)/subjects"),
       }}
     >
       {ruleset ? (

@@ -45,7 +45,8 @@ const ANALYTICS_SERVICE_IMPORT = {
 
 /**
  * Unsaved-changes guards go through useEditorClose
- * (src/components/common/feedback.ts). A hand-rolled usePreventRemove that
+ * (src/components/common/feedback.ts), a page that steps back inside
+ * itself through useInPlaceBack (same file). A hand-rolled usePreventRemove that
  * re-dispatches the blocked action while still active asks again forever.
  */
 const PREVENT_REMOVE_IMPORTS = [
@@ -55,7 +56,7 @@ const PREVENT_REMOVE_IMPORTS = [
   name,
   importNames: ["usePreventRemove"],
   message:
-    "Use useEditorClose(dirty) from @components/common/feedback (cancel, closeAfterSave, allowClose): the one discard guard for every editor.",
+    "Use useEditorClose(dirty) from @components/common/feedback (cancel, closeAfterSave, allowClose): the one discard guard for every editor. A page that goes back inside itself uses useInPlaceBack from the same file.",
 }));
 
 module.exports = defineConfig([

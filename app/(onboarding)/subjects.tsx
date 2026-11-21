@@ -1,4 +1,4 @@
-// Onboarding step 4: subjects from the state's catalog plus own subjects.
+// Onboarding: subjects from the state's catalog plus own subjects.
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";

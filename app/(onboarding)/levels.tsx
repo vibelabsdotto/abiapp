@@ -1,4 +1,4 @@
-// Onboarding step 5: subjects on the elevated level (LK/eA/Leistungsfach),
+// Onboarding: subjects on the elevated level (LK/eA/Leistungsfach),
 // validated live against the ruleset.
 
 import React, { useState } from "react";

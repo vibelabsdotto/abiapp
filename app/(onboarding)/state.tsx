@@ -1,4 +1,4 @@
-// Onboarding step 1: Bundesland. One tap chooses and advances.
+// Onboarding: Bundesland. One tap chooses and advances.
 
 import React from "react";
 import { useRouter } from "expo-router";

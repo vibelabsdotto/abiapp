@@ -10,14 +10,14 @@ export const onboardingEN = {
     step: "Step {{step}} of {{total}}",
     fixIssue: "You can continue once the note in the list is resolved.",
     welcome: {
-      claim: "Get the Abitur grade\nyou want.",
+      claim: "Get the average\nyou want.",
       beats: {
         standing: "See where you stand.",
-        counts: "See what counts.",
+        counts: "See what really counts.",
         needs: "See what you still need.",
-        states: "By the rules of your state.",
+        states: "Calculated by the rules of your state.",
       },
-      promise: "Free · No account · Your grades are yours",
+      promise: "Free · No account · Your grades stay with you",
       a11y: "Preview of the app: your average as an arch, the courses that count, what your goal takes, and the rules of all 16 states.",
       start: "Get started",
       restore: "Restore backup",
@@ -28,6 +28,7 @@ export const onboardingEN = {
       english: "English",
       biology: "Biology",
       history: "History",
+      physics: "Physics",
       halfYear: "Term {{index}}",
       counted: "counts",
       notCounted: "doesn't count",
@@ -41,56 +42,100 @@ export const onboardingEN = {
         english: "Eng",
         biology: "Bio",
         history: "His",
+        physics: "Phy",
       },
       states: "16 states",
     },
-    worries: {
-      title: "What stresses you?",
-      intro: "Pick everything that applies to your Abitur.",
-      options: {
-        rules: "I don't get the rules",
-        inclusion: "I don't know which courses count in the end",
-        focus: "I don't know where studying really pays off",
-        exams: "I don't understand how the exams count",
-        standing: "I don't know where I stand right now",
-        trust: "I don't trust calculators to be right for my state",
-      },
+    goal: {
+      title: "What average do you want to get?",
+      intro: "You can change it any time.",
+      need: "For {{grade}} you need {{points}} of 900 points.",
+      a11y: "Goal {{grade}}. That takes {{points}} of 900 points.",
     },
-    mirror: {
-      you: "You said",
-      quote: "“{{text}}”",
-      rules: {
-        text: "You don't have to. AbiApp knows the rules of your state and calculates exactly by them.",
-        blockI: "Block I",
-        blockIText: "your courses",
-        blockII: "Block II",
-        blockIIText: "your exams",
-        upTo: "up to {{points}}",
-        total: "Total",
-      },
-      inclusion: {
-        text: "Not every course has to count. AbiApp finds the best valid selection and shows you which terms are in.",
-      },
-      focus: {
-        text: "You see in which courses every point counts and where you can ease off.",
-        full: "every point counts",
-        relaxed: "ease off",
-      },
-      exams: {
-        text: "Your exams bring a third of your points. AbiApp shows which subjects can be exam subjects and what each exam does for your average.",
+    story: {
+      you: "You: {{answer}}",
+      replay: "Tap to watch again",
+      example: "Example",
+      explain: {
+        question:
+          "Be honest: could you explain how your grades turn into your Abitur average?",
+        answers: {
+          yes: "Sure, I could",
+          roughly: "Roughly",
+          no: "No idea",
+        },
+        headline: {
+          yes: "Then you know: it's a lot of maths.",
+          roughly: "From now on, roughly is enough.",
+          no: "You don't have to.",
+        },
+        text: "Courses bring up to 600 points, exams up to 300. AbiApp adds it up by the rules of your state.",
         courses: "Courses",
         exams: "Exams",
-        share: "{{points}} of 900",
+        upTo: "of {{points}}",
+        a11y: "Animation: grades drop into two areas, courses up to 600 and exams up to 300 points. Together they make {{points}} of 900 points, your goal of {{grade}}.",
       },
-      standing: {
-        text: "Enter your grades and you see your average right away, with a forecast for everything still to come.",
+      focus: {
+        question: "Two tests in one week. Which one do you study more for?",
+        answers: {
+          harder: "The harder one",
+          counts: "The one that counts more",
+          both: "Both the same",
+          first: "The one that comes first",
+        },
+        headline: {
+          counts: "Exactly. But which one is it?",
+          other: "Depends on which one counts.",
+        },
+        text: "Not every course has to count. AbiApp shows you where every point counts and where you can ease off.",
+        counted: "counts",
+        notCounted: "doesn't count",
+        inclusion: "{{count}} of {{total}} courses count",
+        total: "Abitur points",
+        plus: "+1",
+        a11y: "Animation, example: in a grid of subjects and terms, {{count}} of {{total}} courses count. One more point in a course that doesn't count leaves the Abitur points at {{before}}. One more point in a course that counts raises them to {{after}}.",
       },
-      trust: {
-        text: "AbiApp calculates each of the 16 states by the regulation for your year. Sources and assumptions are open in the app, and the code is open source.",
-        states: "All 16 states",
-        sources: "Regulation and sections as the source",
-        tests: "Worked examples for every state",
-        openSource: "Open source",
+      examShare: {
+        question:
+          "Take a guess: how much of your Abitur is decided in the exams?",
+        answers: {
+          tenth: "A tenth",
+          quarter: "A quarter",
+          third: "A third",
+          half: "Half",
+        },
+        headline: {
+          right: "Right, a third.",
+          other: "It's a third.",
+        },
+        text: "300 of 900 points come from a few exams. Each one counts at least twice as much as a course term.",
+        courses: "Courses",
+        exams: "Exams",
+        course: "2 course terms",
+        courseMax: "up to 30 each",
+        exam: "1 exam",
+        examMax: "up to 60 or 75",
+        examSubject: "can be an exam subject",
+        a11y: "Animation: a bar of 900 points, a third of it, 300 points, from the exams. Two course terms of 30 points each stack as high as a single exam of 60. Below, subjects get a check for “can be an exam subject”.",
+      },
+      calculatedBefore: {
+        question: "Have you ever worked out your average?",
+        answers: {
+          app: "Yes, with an app",
+          web: "Yes, with a calculator online",
+          self: "Yes, myself or in Excel",
+          never: "Never",
+        },
+        headline: {
+          tool: "And was it right for your state?",
+          self: "Respect. From now on, AbiApp does the maths.",
+          never: "Then let's get it right from the start.",
+        },
+        text: "16 states, 16 regulations. AbiApp calculates by yours, names the sections behind it, and the code is open for anyone to read.",
+        rule: "Block I",
+        source: "Source: {{source}}",
+        choose: "Choose my state",
+        a11y: "Animation: the 16 states get a check one after another. A rule opens and shows its source, {{source}}. Then the states line up into a list.",
       },
     },
     state: {
@@ -119,12 +164,6 @@ export const onboardingEN = {
       basisFooter:
         "Tap a source to open it. You'll find the assumptions behind it later under “Show rules”.",
     },
-    goal: {
-      title: "Your goal",
-      intro: "Which average do you want to reach?",
-      need: "You need {{points}} of 900 points for it.",
-      a11y: "Goal {{grade}}. You need {{points}} of 900 points for it.",
-    },
     subjects: {
       title: "Your subjects",
       intro:
@@ -143,10 +182,8 @@ export const onboardingEN = {
       },
     },
     accent: {
-      title: "Your colour",
-      intro:
-        "Which colour do you want to see your Abitur in? You can change it any time in Settings.",
-      preview: "Preview",
+      title: "Which colour do you want to see your Abitur in?",
+      intro: "You can change it any time in Settings.",
     },
     source: {
       title: "Last question",

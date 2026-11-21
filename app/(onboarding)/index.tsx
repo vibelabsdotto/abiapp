@@ -1,4 +1,4 @@
-// Onboarding step 0: welcome. "Backup wiederherstellen" replaces the data
+// Onboarding: welcome. "Backup wiederherstellen" replaces the data
 // and finishes the onboarding, so the app opens with the restored profile.
 
 import React, { useCallback, useState } from "react";
@@ -21,7 +21,7 @@ export default function OnboardingWelcomeScreen() {
     if (draft.state === null) {
       draft.initFrom(useProfileStore.getState().profile);
     }
-    router.push("/(onboarding)/worries");
+    router.push("/(onboarding)/goal");
   }, [router]);
 
   const restore = useCallback(async () => {

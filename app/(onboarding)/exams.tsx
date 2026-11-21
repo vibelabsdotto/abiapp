@@ -1,4 +1,4 @@
-// Onboarding step 6: exam variant and exam subjects; may be skipped.
+// Onboarding: exam variant and exam subjects; may be skipped.
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
@@ -34,7 +34,7 @@ export default function OnboardingExamsScreen() {
     try {
       // "Später" keeps whatever is valid so far.
       if (draft.canSave) await draft.save();
-      router.push("/(onboarding)/accent");
+      router.push("/(onboarding)/source");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
