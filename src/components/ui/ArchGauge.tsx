@@ -271,14 +271,17 @@ export const ArchGauge = ({
             );
           }
           if (marker.kind === "tick") {
-            const from = stroke / 2 + 2;
+            // Crosses the track: from the band's inner edge to just outside
+            // it, so the mark sits on the arch on legs and arc alike.
+            const from = -stroke / 2;
+            const to = stroke / 2 + TICK - 2;
             return (
               <Line
                 key={`tick-${marker.at}`}
                 x1={p.x + n.x * from}
                 y1={p.y + n.y * from}
-                x2={p.x + n.x * (from + TICK)}
-                y2={p.y + n.y * (from + TICK)}
+                x2={p.x + n.x * to}
+                y2={p.y + n.y * to}
                 stroke={marker.color}
                 strokeWidth={1.5}
               />
