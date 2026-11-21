@@ -1,9 +1,12 @@
 // AbiApp color system: black on white. The app lives on typography, white
-// space and the arch; colour is reserved for two things only:
+// space and the arch; colour is reserved for three things:
 // - red, the single signal colour: deficit (Unterkurs), "nicht bestanden",
 //   errors and destructive actions;
-// - the subject accent a student picks in the subject editor
-//   (src/components/ui/subjects.ts), shown only on that subject.
+// - the subject colour (src/components/ui/subjects.ts), shown only on that
+//   subject;
+// - the accent a student may pick in the settings (src/constants/accents.ts).
+//   It replaces `accent`/`accentForeground` in the theme store; the values
+//   below are the default without a choice.
 //
 // Rules:
 // - Components use only semantic tokens; never hard-code hex values (lint

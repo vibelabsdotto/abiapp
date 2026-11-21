@@ -4,9 +4,10 @@
 // does not know (state-specific catalog entries, custom subjects) fall back
 // to the catalog's SF Symbol (menus), then a symbol by tag.
 //
-// Colour: there is no automatic colour any more. A subject is neutral
-// (graphite) unless the student picked an accent in the subject editor; the
-// stored value is a palette key (`SubjectPalette`) or `null`.
+// Colour: a new subject gets a default colour (utils/subjectColor.ts, set
+// once when it is created). The student can change it in the subject editor
+// or remove it; the stored value is a palette key (`SubjectPalette`) or
+// `null` for a neutral (graphite) subject.
 
 import type { SubjectTag } from "@domain/model";
 import { isMenuSymbol, type MenuSymbol } from "@constants/menuIcons";

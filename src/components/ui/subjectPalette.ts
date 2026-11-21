@@ -1,5 +1,5 @@
-// Subject accents: the only colour a student brings into the app. Optional;
-// a subject without a colour (stored `null`) is neutral graphite.
+// Subject colours. Every new subject gets one (utils/subjectColor.ts); a
+// subject without a colour (stored `null`) is neutral graphite.
 //
 // Curated in OKLCH: every tone shares lightness and chroma (light L 0.53,
 // dark L 0.77, C 0.105; slate and brown are the muted pair at half chroma),
