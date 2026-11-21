@@ -43,7 +43,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 
 - **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“.
 - **SN:** Informatik ersetzt eine Naturwissenschaft nur bei einer NW oder bei zwei NW mit nur einer Fremdsprache.
-- **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt.
+- **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt. Vertiefungskurs Deutsch/Mathematik gilt als Wahlpflichtfach, sobald die Option günstiger ist (bei in 13 freiwillig fortgeführtem Fach als Annahme angezeigt). Ein 0-Punkte-Kurs in einem eigenen Fach (Zusatzangebot) blockiert die Zulassung nicht.
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
 - **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation (amtlich nicht geregelt).
