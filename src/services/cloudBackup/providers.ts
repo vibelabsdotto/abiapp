@@ -71,7 +71,13 @@ const icloud: CloudProvider | null = native
       availability: () => (native.isSignedIn() ? "available" : "noAccount"),
       read: async () => {
         native.synchronize();
-        return native.getSnapshot(SNAPSHOT_KEY);
+        try {
+          return native.getSnapshot(SNAPSHOT_KEY);
+        } catch {
+          // Undecodable value: report it as unreadable so local data
+          // repairs it instead of blocking every check.
+          return "";
+        }
       },
       write: async (json) => {
         const result = native.setSnapshot(
