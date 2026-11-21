@@ -31,6 +31,18 @@ const noHexColors = {
   },
 };
 
+const EXPO_SYMBOLS_IMPORT = {
+  name: "expo-symbols",
+  message:
+    "SF Symbols only live in native chrome (menu `image`, Stack.Toolbar, tabs) as names. Draw icons in content with <Icon icon={LucideIcon} /> from @components/ui.",
+};
+
+const ANALYTICS_SERVICE_IMPORT = {
+  name: "@services/analytics/analyticsService",
+  message:
+    "Analytics goes through @services/analytics/appEvents (typed events, allowed parameters, route patterns instead of paths).",
+};
+
 module.exports = defineConfig([
   globalIgnores([
     ".agents/**",
@@ -74,15 +86,16 @@ module.exports = defineConfig([
       "no-restricted-imports": [
         "error",
         {
-          paths: [
-            {
-              name: "expo-symbols",
-              message:
-                "SF Symbols only live in native chrome (menu `image`, Stack.Toolbar, tabs) as names. Draw icons in content with <Icon icon={LucideIcon} /> from @components/ui.",
-            },
-          ],
+          paths: [EXPO_SYMBOLS_IMPORT, ANALYTICS_SERVICE_IMPORT],
         },
       ],
+    },
+  },
+  {
+    // The analytics module itself and its event layer may use the service.
+    files: ["src/services/analytics/**/*.ts"],
+    rules: {
+      "no-restricted-imports": ["error", { paths: [EXPO_SYMBOLS_IMPORT] }],
     },
   },
 ]);

@@ -5,7 +5,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { ExamSlot, GradeKind, StateCode } from "@domain/model";
 
-import { setUserProperty, trackEvent } from "./analyticsService";
+import {
+  initializeAnalytics,
+  setUserProperty,
+  trackEvent,
+  trackScreenView,
+} from "./analyticsService";
+
+export { initializeAnalytics };
 
 export const ANALYTICS_EVENTS = {
   onboardingCompleted: "onboarding_completed",
@@ -85,4 +92,19 @@ export function trackGradeAdded(kind: GradeKind): void {
     await AsyncStorage.setItem(FIRST_GRADE_KEY, "1");
     track(ANALYTICS_EVENTS.firstGradeAdded, { kind });
   })().catch(() => undefined);
+}
+
+/**
+ * screen_view for an Expo Router route pattern (the segments joined with
+ * "/", e.g. "(tabs)/subjects/[id]"). The concrete path is never sent: it
+ * holds record ids.
+ */
+export function trackScreen(route: string): void {
+  const screenName =
+    route
+      .split("/")
+      .filter((segment) => segment && !segment.startsWith("("))
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" - ") || "Home";
+  void trackScreenView(screenName, `/${route}`).catch(() => undefined);
 }

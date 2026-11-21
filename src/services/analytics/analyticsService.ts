@@ -3,7 +3,6 @@
 // prebuild time; the Firebase module is then never loaded.
 
 import { isFirebaseConfigured } from "@constants/config";
-import { redactIds } from "@utils/id";
 
 type AnalyticsValue = string | number | boolean | null | undefined;
 type AnalyticsParams = Record<string, AnalyticsValue>;
@@ -66,7 +65,7 @@ export async function setUserProperty(
   );
 }
 
-/** Record ids in the path (e.g. /subjects/<uuid>) are sent as "[id]". */
+/** screen_view; app code goes through appEvents.trackScreen. */
 export async function trackScreenView(
   screenName: string,
   path: string,
@@ -75,7 +74,7 @@ export async function trackScreenView(
   await runSafely(({ mod, instance }) =>
     mod.logEvent(instance, "screen_view", {
       screen_name: screenName,
-      screen_class: redactIds(path),
+      screen_class: path,
     }),
   );
 }

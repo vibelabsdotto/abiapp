@@ -16,7 +16,6 @@ import {
   DefaultTheme,
   Stack,
   ThemeProvider,
-  usePathname,
   useSegments,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -43,8 +42,8 @@ import { Radius } from "@constants/typography";
 import { AppProvider } from "@providers/AppProvider";
 import {
   initializeAnalytics,
-  trackScreenView,
-} from "@services/analytics/analyticsService";
+  trackScreen,
+} from "@services/analytics/appEvents";
 import { useLanguageStore } from "@stores/languageStore";
 import { selectIsOnboarded, useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
@@ -186,22 +185,15 @@ function useToastConfig(): ToastConfig {
 }
 
 function AnalyticsAutoCapture() {
-  const pathname = usePathname();
-  const segments = useSegments();
+  const route = useSegments().join("/");
 
   useEffect(() => {
     void initializeAnalytics();
   }, []);
 
   useEffect(() => {
-    if (!pathname) return;
-    const screenName =
-      segments
-        .filter((segment) => !segment.startsWith("("))
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(" - ") || "Home";
-    void trackScreenView(screenName, pathname);
-  }, [pathname, segments]);
+    if (route) trackScreen(route);
+  }, [route]);
 
   return null;
 }
