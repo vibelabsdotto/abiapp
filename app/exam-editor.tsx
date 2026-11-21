@@ -38,6 +38,7 @@ import {
 } from "@components/overview/feedback";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import type { ExamSlot } from "@domain/model";
+import { examVariantOf } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useExamStore } from "@stores/examStore";
@@ -63,10 +64,7 @@ export default function ExamEditorScreen() {
     params.slot && SLOTS.includes(params.slot)
       ? (params.slot as ExamSlot)
       : null;
-  const variantId = input?.examVariantId ?? ruleset?.examVariants[0]?.id;
-  const variant =
-    ruleset?.examVariants.find((option) => option.id === variantId) ??
-    ruleset?.examVariants[0];
+  const variant = examVariantOf(ruleset, input?.examVariantId);
   const info = slot
     ? variant?.components.find((component) => component.slot === slot)
     : undefined;

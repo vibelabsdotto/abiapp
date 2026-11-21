@@ -60,7 +60,7 @@ import { isFeaturamaConfigured } from "@constants/config";
 import { listStates } from "@domain/index";
 import type { StateCode } from "@domain/model";
 import { useSetupIssues } from "@hooks/useEvaluation";
-import { useRuleset } from "@hooks/useRuleset";
+import { examVariantOf, useRuleset } from "@hooks/useRuleset";
 import { useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
 import {
@@ -135,9 +135,10 @@ export default function SettingsScreen() {
   const variant =
     ruleset?.examVariants.find((item) => item.id === profile?.examVariantId) ??
     null;
-  const required = (variant ?? ruleset?.examVariants[0])?.components.filter(
-    componentNeedsSubject,
-  );
+  const required = examVariantOf(
+    ruleset,
+    profile?.examVariantId,
+  )?.components.filter(componentNeedsSubject);
   const examCount = subjects.filter((subject) => subject.examSlot).length;
   const elevated = subjects.filter((subject) => subject.level === "elevated");
 
@@ -148,30 +149,23 @@ export default function SettingsScreen() {
       (issue.code.startsWith("setup.") || issue.code.startsWith("exam.")),
   );
 
-  const themeActions = useMemo<NativeMenuAction[]>(
-    () =>
-      Object.values(ThemeMode).map((mode) => ({
-        id: mode,
-        title: t(THEME_LABEL_KEYS[mode]),
-        image: THEME_ICONS[mode],
-        state: mode === themeMode ? "on" : "off",
-      })),
-    // `t` is stable; the language is part of the key via `locale`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [themeMode, locale],
+  const themeActions: NativeMenuAction[] = Object.values(ThemeMode).map(
+    (mode) => ({
+      id: mode,
+      title: t(THEME_LABEL_KEYS[mode]),
+      image: THEME_ICONS[mode],
+      state: mode === themeMode ? "on" : "off",
+    }),
   );
 
-  const languageActions = useMemo<NativeMenuAction[]>(
-    () =>
-      (["system", "de", "en"] as const).map((mode) => ({
-        id: mode,
-        title: t(LANGUAGE_LABEL_KEYS[mode]),
-        image: LANGUAGE_ICONS[mode],
-        state: mode === languageMode ? "on" : "off",
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languageMode, locale],
-  );
+  const languageActions: NativeMenuAction[] = (
+    ["system", "de", "en"] as const
+  ).map((mode) => ({
+    id: mode,
+    title: t(LANGUAGE_LABEL_KEYS[mode]),
+    image: LANGUAGE_ICONS[mode],
+    state: mode === languageMode ? "on" : "off",
+  }));
 
   const demoActions = useMemo<NativeMenuAction[]>(
     () =>

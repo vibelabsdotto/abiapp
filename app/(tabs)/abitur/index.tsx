@@ -26,6 +26,7 @@ import {
 import { RulesetBanner } from "@components/overview/RulesetBanner";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
+import { examVariantOf } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 
 export default function AbiturScreen() {
@@ -91,11 +92,7 @@ export default function AbiturScreen() {
     );
   }
 
-  const variantId = input.examVariantId ?? ruleset.examVariants[0]?.id;
-  const variant =
-    ruleset.examVariants.find((option) => option.id === variantId) ??
-    ruleset.examVariants[0] ??
-    null;
+  const variant = examVariantOf(ruleset, input.examVariantId);
   const issues = visibleIssues(evaluation);
 
   return (
