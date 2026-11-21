@@ -34,7 +34,7 @@ import { DestructiveAction } from "@components/overview/DestructiveAction";
 import {
   hapticSuccess,
   showError,
-  useDiscardGuard,
+  useEditorClose,
 } from "@components/overview/feedback";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import type { ExamSlot } from "@domain/model";
@@ -103,7 +103,7 @@ export default function ExamEditorScreen() {
   const supplementary = !extraId && !twoPart && info?.supplementaryOral;
   const oralValue = twoPart || oralOn ? oral : null;
   const dirty = main !== initialMain || oralValue !== initialOral;
-  const allowClose = useDiscardGuard(dirty && !busy);
+  const { cancel, closeAfterSave } = useEditorClose(dirty && !busy);
 
   const subject =
     slot && evaluation
@@ -130,10 +130,7 @@ export default function ExamEditorScreen() {
       ? `${slot} · ${subject.name}`
       : (component?.label ?? slot ?? t("examEditor.title"));
 
-  const close = () => {
-    allowClose();
-    router.back();
-  };
+  const close = closeAfterSave;
 
   const save = async () => {
     if (!target) return;
@@ -194,7 +191,7 @@ export default function ExamEditorScreen() {
   const header = (
     <ModalHeader
       title={title}
-      onCancel={() => router.back()}
+      onCancel={cancel}
       onSave={() => void save()}
       saveDisabled={!dirty || busy || !target}
     />

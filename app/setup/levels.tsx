@@ -13,14 +13,14 @@ import {
 } from "@components/setup";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { useLevelsDraft } from "@hooks/useSetupFlows";
-import { useSetupModal } from "@hooks/useSetupModal";
+import { useEditorClose } from "@components/common/feedback";
 import { useTranslation } from "@locales/index";
 
 export default function SetupLevelsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
   const draft = useLevelsDraft();
-  const { cancel, closeAfterSave, closing } = useSetupModal(draft.dirty);
+  const { cancel, closeAfterSave, closing } = useEditorClose(draft.dirty);
   const [saving, setSaving] = useState(false);
   const title = elevatedPlural(draft.ruleset, locale);
   const need =

@@ -43,6 +43,21 @@ const ANALYTICS_SERVICE_IMPORT = {
     "Analytics goes through @services/analytics/appEvents (typed events, allowed parameters, route patterns instead of paths).",
 };
 
+/**
+ * Unsaved-changes guards go through useEditorClose
+ * (src/components/common/feedback.ts). A hand-rolled usePreventRemove that
+ * re-dispatches the blocked action while still active asks again forever.
+ */
+const PREVENT_REMOVE_IMPORTS = [
+  "expo-router",
+  "expo-router/react-navigation",
+].map((name) => ({
+  name,
+  importNames: ["usePreventRemove"],
+  message:
+    "Use useEditorClose(dirty) from @components/common/feedback (cancel, closeAfterSave, allowClose): the one discard guard for every editor.",
+}));
+
 module.exports = defineConfig([
   globalIgnores([
     ".agents/**",
@@ -86,7 +101,11 @@ module.exports = defineConfig([
       "no-restricted-imports": [
         "error",
         {
-          paths: [EXPO_SYMBOLS_IMPORT, ANALYTICS_SERVICE_IMPORT],
+          paths: [
+            EXPO_SYMBOLS_IMPORT,
+            ANALYTICS_SERVICE_IMPORT,
+            ...PREVENT_REMOVE_IMPORTS,
+          ],
         },
       ],
     },
@@ -95,7 +114,20 @@ module.exports = defineConfig([
     // The analytics module itself and its event layer may use the service.
     files: ["src/services/analytics/**/*.ts"],
     rules: {
-      "no-restricted-imports": ["error", { paths: [EXPO_SYMBOLS_IMPORT] }],
+      "no-restricted-imports": [
+        "error",
+        { paths: [EXPO_SYMBOLS_IMPORT, ...PREVENT_REMOVE_IMPORTS] },
+      ],
+    },
+  },
+  {
+    // The one editor close guard (useEditorClose) lives here.
+    files: ["src/components/common/feedback.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { paths: [EXPO_SYMBOLS_IMPORT, ANALYTICS_SERVICE_IMPORT] },
+      ],
     },
   },
 ]);
