@@ -84,7 +84,7 @@ export const setupDE = {
     skip: "Überspringen",
     finish: "Übersicht öffnen",
     step: "Schritt {{step}} von {{total}}",
-    fixIssue: "Weiter geht es, sobald der Hinweis oben erledigt ist.",
+    fixIssue: "Weiter geht es, sobald der Hinweis in der Liste erledigt ist.",
     welcome: {
       claim: "Dein Abi. Ausgerechnet.",
       text: "AbiApp rechnet deinen Schnitt nach den Regeln deines Bundeslandes.",

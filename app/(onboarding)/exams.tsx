@@ -1,8 +1,9 @@
 // Onboarding step 6: exam variant and exam subjects; may be skipped.
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 
+import { elevatedSlotDefaults } from "@components/onboarding/examDefaults";
 import {
   ONBOARDING_STEPS,
   ONBOARDING_TOTAL_STEPS,
@@ -16,6 +17,19 @@ export default function OnboardingExamsScreen() {
   const { t } = useTranslation();
   const draft = useExamsDraft();
   const [saving, setSaving] = useState<"next" | "later" | null>(null);
+
+  // Nothing assigned yet: put the elevated subjects into the slots that
+  // need them (once; the user can still change every slot).
+  const prefilled = useRef(false);
+  const { assignedCount, components, subjects, assign } = draft;
+  useEffect(() => {
+    if (prefilled.current || assignedCount > 0) return;
+    prefilled.current = true;
+    const defaults = elevatedSlotDefaults(components, subjects);
+    for (const [slot, subjectId] of Object.entries(defaults)) {
+      assign(slot as keyof typeof defaults, subjectId);
+    }
+  }, [assignedCount, components, subjects, assign]);
 
   const go = async (mode: "next" | "later") => {
     setSaving(mode);
@@ -35,7 +49,8 @@ export default function OnboardingExamsScreen() {
     ? undefined
     : draft.canSave
       ? t("onboarding.exams.open", { count: open })
-      : t("onboarding.fixIssue");
+      : (draft.issues.find((issue) => issue.severity === "error")?.message ??
+        t("onboarding.fixIssue"));
 
   return (
     <OnboardingStep

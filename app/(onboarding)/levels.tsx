@@ -23,19 +23,24 @@ export default function OnboardingLevelsScreen() {
   const draft = useLevelsDraft();
   const [saving, setSaving] = useState(false);
   const title = elevatedPlural(draft.ruleset, locale);
+  // "als Leistungskurs", not "als Leistungskurse".
+  const singular =
+    draft.ruleset?.levelNames.elevated.name.split(" (")[0] ?? title;
   const need =
     draft.min === draft.max
       ? t("setup.levels.need", { count: draft.min })
       : t("setup.levels.needRange", { min: draft.min, max: draft.max });
 
-  // Say why "Weiter" is grey instead of leaving it unexplained.
+  // Say why "Weiter" is grey: the blocking rule itself, pinned above the
+  // button (the issue list may be scrolled out of view).
   const blocked = draft.canSave
     ? undefined
     : draft.count < draft.min
       ? t("setup.levels.missing", { count: draft.min - draft.count })
       : draft.count > draft.max
         ? t("setup.levels.tooMany", { count: draft.count - draft.max })
-        : t("onboarding.fixIssue");
+        : (draft.issues.find((issue) => issue.severity === "error")?.message ??
+          t("onboarding.fixIssue"));
 
   const next = async () => {
     setSaving(true);
@@ -56,7 +61,7 @@ export default function OnboardingLevelsScreen() {
         title={title}
         step={ONBOARDING_STEPS.levels}
         totalSteps={ONBOARDING_TOTAL_STEPS}
-        intro={t("onboarding.levels.intro", { name: title, need })}
+        intro={t("onboarding.levels.intro", { name: singular, need })}
         footerNote={blocked}
         primary={{
           title: t("onboarding.next"),

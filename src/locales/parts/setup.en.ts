@@ -84,7 +84,7 @@ export const setupEN = {
     skip: "Skip",
     finish: "Open overview",
     step: "Step {{step}} of {{total}}",
-    fixIssue: "You can continue once the note above is resolved.",
+    fixIssue: "You can continue once the note in the list is resolved.",
     welcome: {
       claim: "Your Abitur. Calculated.",
       text: "AbiApp calculates your average with the rules of your state.",
