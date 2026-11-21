@@ -425,3 +425,72 @@ describe("NI-2027", () => {
     expect(codes).toContain("exam.dsArts");
   });
 });
+
+// NI-2030: Entwurf VO-SEK II-Abitur (Anhörungsfassung 20.08.2026), §§ 24,
+// 58, 59, 63, Anlagen 3, 7, 8b:
+// https://www.mk.niedersachsen.de/download/231195/Entwurf_EB-VO_SEK_II_Abitur.pdf
+// Exactly 32 results, two Leistungsfächer chosen by the student doubled
+// (S = 40, so E_I = P), at most 6 deficits, 3 of them in the LF.
+const LF2030: Row[] = [
+  ["en", [12, 12, 12, 12], { ea: true, slot: "P1" }], // 48 → doubled
+  ["bio", [9, 9, 9, 9], { ea: true, slot: "P2" }], // 36, single
+  ["ge", [11, 11, 11, 11], { ea: true, slot: "P3" }], // 44 → doubled
+  ["de", [10, 10, 10, 10], { slot: "P4" }], // 40
+  ["ma", [8, 8, 8, 8], { slot: "P5" }], // 32
+  ["ku", [10, 10, null, null]], // 20
+  ["pol", [9, 9, null, null]], // 18, further social subject
+  ["rel_ev", [10, 10, 11, 11]], // 22
+  ["sp", [13, 13, 14, 14]],
+  ["ch", [7, 7, 7, 7]],
+];
+const LF2030_EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+  P1: [12],
+  P2: [9],
+  P3: [11],
+  P4: [10],
+  P5: [8],
+};
+
+describe("NI-2030 (draft)", () => {
+  it("doubles the two best Leistungsfächer, 32 results, E_I = P", () => {
+    // § 59 Abs. 2, Anlage 8b Nr. 1: LF En and Ge doubled (better than
+    // En + Bio): 96 + 88 + 36 + De 40 + Ma 32 = 292; Ku 20, Rel 22, PoWi 18
+    // (Anlage 3) → 26 results, 352. Six free: Sport 14 + 14 + 13, Rel 10 +
+    // 10, Ch 7 → P = 420 = E_I. E_II = 4 · 50 = 200, total 620 → 2,2.
+    const e = evaluate(build("NI-2030", LF2030, LF2030_EXAMS));
+    expect(result(e)).toEqual({
+      blockI: 420,
+      blockII: 200,
+      total: 620,
+      grade: 22,
+      admitted: true,
+      passed: true,
+    });
+    expect(e.blockI.countIncluded).toBe(32);
+
+    // Anlage 7 Nr. 1: P1 s 6, m 10 → round(88 / 3) = 29; E_II = 181,
+    // total 601 → 2,3.
+    const f = evaluate(
+      build("NI-2030", LF2030, { ...LF2030_EXAMS, P1: [6, 10] }),
+    );
+    expect(f.blockII.points).toBe(181);
+    expect(f.total.gradeTenths).toBe(23);
+  });
+
+  it("6 deficits are allowed, 7 are not (§ 59 Abs. 3)", () => {
+    // Bio (LF) 4, 4, 4, 9 and Ma 4, 4, 4, 8: 6 deficits, 3 in the LF.
+    // P = 420 − 15 − 12 = 393.
+    const rows = replace(
+      replace(LF2030, "bio", [4, 4, 4, 9]),
+      "ma",
+      [4, 4, 4, 8],
+    );
+    const e = evaluate(build("NI-2030", rows, LF2030_EXAMS));
+    expect(e.blockI.points).toBe(393);
+    expect(e.blockI.admitted).toBe(true);
+    const f = evaluate(
+      build("NI-2030", replace(rows, "ma", [4, 4, 4, 4]), LF2030_EXAMS),
+    );
+    expect(f.blockI.admitted).toBe(false);
+  });
+});

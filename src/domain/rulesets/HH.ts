@@ -143,7 +143,8 @@ function newFsZeroCheck(ctx: RuleContext): RuleCheck[] {
   ];
 }
 
-function requirements(ctx: RuleContext): Requirement[] {
+/** `artsCount`: 4 semesters (§ 32 Abs. 2 Nr. 4), 2 in the 2030 draft (KMK Ziff. 7.1). */
+function requirements(ctx: RuleContext, artsCount = 4): Requirement[] {
   const reqs: Requirement[] = [...examSubjectRequirements(ctx)];
   reqs.push(oneOf("de", "4 Ergebnisse Deutsch", byKey(ctx, "de"), 4));
   reqs.push(oneOf("ma", "4 Ergebnisse Mathematik", byKey(ctx, "ma"), 4));
@@ -166,9 +167,9 @@ function requirements(ctx: RuleContext): Requirement[] {
   reqs.push({
     ...oneOf(
       "arts",
-      "4 Ergebnisse im belegten künstlerischen Fach",
+      `${artsCount} Ergebnisse im belegten künstlerischen Fach`,
       byKey(ctx, ...ARTS),
-      4,
+      artsCount,
     ),
     short: "künstlerisches Fach",
   });
@@ -551,7 +552,7 @@ export const HH_2030: Ruleset = {
     "Vorläufig: Die Dritte Änderungsverordnung zur APO-AH ist noch nicht verkündet. Grundlage sind der Entwurf und die KMK-Vereinbarung 2024.",
     "Studienstufe S1 bis S4 mit zwei Fächern auf erhöhtem Niveau, die Profiloberstufe bleibt.",
     "Block 1: genau 36 Semesterergebnisse, beide eA-Prüfungsfächer zählen doppelt. Punkte = 40 × Summe / 44, ab 0,5 aufgerundet.",
-    "Pflichteinbringungen wie bisher angenommen: Kernfächer, Prüfungsfächer, künstlerisches Fach, Geschichte, PGW oder Geografie und eine Naturwissenschaft, je 4 Semester.",
+    "Pflichteinbringungen angenommen: Kernfächer, Prüfungsfächer, Geschichte, PGW oder Geografie und eine Naturwissenschaft je 4 Semester, das künstlerische Fach nur noch 2 (Entwurf und KMK-Vereinbarung).",
     "Zulassung: mindestens 200 Punkte, höchstens 7 Ergebnisse unter 5 Punkten, kein eingebrachtes Ergebnis mit 0 Punkten.",
     "Block 2: vier Prüfungen fünffach, drei schriftlich und eine mündlich. Die Präsentationsprüfung entfällt.",
     "Zusätzliche mündliche Prüfung wie bisher angenommen: (2 × schriftlich + mündlich) / 3 × 5, gerundet. Regeln zur Besonderen Lernleistung sind noch offen.",
@@ -583,7 +584,7 @@ export const HH_2030: Ruleset = {
         "eA",
         (names) => `Annahme: ${names} zählen als eA-Prüfungsfächer doppelt.`,
       ),
-    requirements,
+    requirements: (ctx) => requirements(ctx, 2),
     deficitLimits: () => [
       limit("total", 7, "Höchstens 7 Ergebnisse unter 5 Punkten"),
     ],

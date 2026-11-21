@@ -341,3 +341,40 @@ describe("HH-2027", () => {
     expect(ok).not.toContain("exam.profile");
   });
 });
+
+// HH-2030: draft of the Dritte Änderungsverordnung (not announced) and the
+// KMK-Vereinbarung i. d. F. 06.06.2024, Ziff. 7.1, 9.5.3–9.5.8: two eA
+// subjects doubled, exactly 36 results, at most 7 under 5 points; the arts
+// duty drops to 2 semesters (draft per Elternkammer-Stellungnahme 07.07.2026).
+describe("HH-2030 (draft)", () => {
+  it("36 results, both eA doubled, 2 results of the arts subject", () => {
+    // Mandatory: De 80 + Bio 80 + Ma 40 + Ge 40 + En 40 + Ku 12 + 12 = 304
+    // (22 results). 14 free: Ch 9 × 4, PGW 9 × 4, six 8s → P = 424,
+    // S = 44 → round(16960 / 44) = round(385.45) = 385.
+    // E_II = 5 · 40 = 200, total 585 → 2,4.
+    const rows: Row[] = [
+      ["de", [10, 10, 10, 10], { ea: true, slot: "P1" }],
+      ["bio", [10, 10, 10, 10], { ea: true, slot: "P2" }],
+      ["ma", [10, 10, 10, 10], { slot: "P3" }],
+      ["ge", [10, 10, 10, 10], { slot: "P4" }],
+      ["en", [10, 10, 10, 10]],
+      ["ku", [12, 12, null, null]],
+      ["ch", [9, 9, 9, 9]],
+      ["pol", [9, 9, 9, 9]],
+      ["rel_ev", [8, 8, 8, 8]],
+      ["sp", [8, 8, 8, 8]],
+    ];
+    const e = evaluate(
+      build("HH-2030", rows, { P1: [10], P2: [10], P3: [10], P4: [10] }),
+    );
+    expect(result(e)).toEqual({
+      blockI: 385,
+      blockII: 200,
+      total: 585,
+      grade: 24,
+      admitted: true,
+      passed: true,
+    });
+    expect(includedOf(e, "ku")).toEqual([0, 1]);
+  });
+});
