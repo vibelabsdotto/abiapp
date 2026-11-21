@@ -11,9 +11,9 @@ AbiApp ist ein kostenloser Abiturrechner für alle 16 Bundesländer (Expo SDK 58
 ```bash
 npm install                 # führt patch-package aus
 npx expo prebuild --clean   # erzeugt ios/ und android/ (nicht eingecheckt)
-npm start                   # Metro (Dev-Client), Port 8090, signiert das Dev-Manifest
-npm run ios                 # Dev-Client bauen + starten (ohne eigenen Bundler)
+npm run ios                 # Dev-Client bauen + starten, Metro auf Port 8090
 npm run android
+npm start                   # nur Metro (Dev-Client), Port 8090
 npm run type-check
 npm test                    # Vitest, reine Logik (src/domain, src/utils, src/services)
 npm run lint                # ESLint + Kontrast- und Menü-Icon-Check
@@ -26,6 +26,7 @@ Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufze
 
 - Store-Builds: `vibe-release both` im App-Root (liest `release.json`, baut einen Commit in eigenem Worktree, lädt nach TestFlight und Play Internal). Ablauf und Belege: [docs/release.md](docs/release.md).
 - OTA: `expo-updates` gegen VibeUpdate (App „AbiApp“), `runtimeVersion` per Fingerprint, Manifeste signiert (`certs/certificate.pem`, Schlüssel `~/.config/vibeupdate/keys/abiapp/private-key.pem`, Key-ID `main`). Nur JS/Assets per OTA, alles Native per Store-Build. Onboarding-Änderungen erreichen neue Nutzer erst mit dem nächsten Store-Build.
+- Update-Verhalten und Code-Signing gibt es nur im Store-Build: `ABIAPP_STORE_BUILD=1` (setzt `release.json` `env`). Ohne das Flag ist `updates.enabled` aus und kein Zertifikat gesetzt; Dev-Clients und lokale Builds brauchen keinen Schlüssel. Jeder `ota publish` läuft mit `ABIAPP_STORE_BUILD=1`, sonst stimmt der Fingerprint nicht und das Update kommt still nie an.
 - `.env.local` braucht für Release-Builds zusätzlich `GOOGLE_SERVICE_INFO_PLIST` und `GOOGLE_SERVICES_JSON` (absolute Pfade, Vault `secrets/abiapp/`); `release.json` `requiredEnv` bricht sonst ab. Der Fingerprint hasht die aufgelöste Config inkl. `extra.firebaseConfigured`: OTA mit demselben `.env.local` veröffentlichen wie den Store-Build.
 
 ## Harte Regeln
