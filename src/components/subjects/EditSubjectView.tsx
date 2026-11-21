@@ -27,7 +27,7 @@ import { tryDomain } from "@stores/domainAccess";
 import { useThemeStore } from "@stores/themeStore";
 import { Radius, Type } from "@constants/typography";
 
-import { confirmRemoveSubject, savedFeedback, showError } from "./actions";
+import { confirmRemoveSubject, savedFeedback, showSaveError } from "./actions";
 import { EditorScroll, FormRow, FormSwitchRow, FormTextInput } from "./form";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { levelLabel } from "./NewSubjectView";
@@ -152,7 +152,7 @@ export const EditSubjectView = ({
       close(true);
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 

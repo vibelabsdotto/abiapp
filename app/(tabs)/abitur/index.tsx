@@ -7,6 +7,7 @@ import { router, Stack, type Href } from "expo-router";
 import { CircleAlert } from "lucide-react-native";
 
 import { ScreenLayout } from "@components/common";
+import { RulesetUnavailable } from "@components/overview/RulesetUnavailable";
 import { EmptyState, IssueBanner } from "@components/ui";
 import { BlockIISection } from "@components/abitur/BlockIISection";
 import { BlockISection } from "@components/abitur/BlockISection";
@@ -25,6 +26,7 @@ import {
 import { RulesetBanner } from "@components/overview/RulesetBanner";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
+import { examVariantOf } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 
 export default function AbiturScreen() {
@@ -70,7 +72,7 @@ export default function AbiturScreen() {
     return (
       <>
         {toolbar}
-        <ScreenLayout>{null}</ScreenLayout>
+        <ScreenLayout>{input ? <RulesetUnavailable /> : null}</ScreenLayout>
       </>
     );
   }
@@ -83,18 +85,14 @@ export default function AbiturScreen() {
           <EmptyState
             icon={CircleAlert}
             title={t("home.error.title")}
-            message={data.error ?? t("home.error.message")}
+            message={t("home.error.message")}
           />
         </ScreenLayout>
       </>
     );
   }
 
-  const variantId = input.examVariantId ?? ruleset.examVariants[0]?.id;
-  const variant =
-    ruleset.examVariants.find((option) => option.id === variantId) ??
-    ruleset.examVariants[0] ??
-    null;
+  const variant = examVariantOf(ruleset, input.examVariantId);
   const issues = visibleIssues(evaluation);
 
   return (

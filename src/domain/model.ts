@@ -156,6 +156,8 @@ export interface RulesetSummary {
     basic: { name: string; short: string };
   };
   elevatedSubjects: { min: number; max: number };
+  /** Number of Block I places (courses), e.g. 35..40 in NW. */
+  blockICourses?: { min: number; max: number };
   examVariants: ExamVariantInfo[];
   extraInputs: ExtraInputInfo[];
   catalog: CatalogSubject[];

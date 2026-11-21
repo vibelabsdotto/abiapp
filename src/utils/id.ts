@@ -34,10 +34,3 @@ export function createId(): string {
     hex.slice(10, 16).join(""),
   ].join("-");
 }
-
-const UUID_PATTERN =
-  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-
-/** Replaces every id from createId in `text` with "[id]". */
-export const redactIds = (text: string): string =>
-  text.replace(UUID_PATTERN, "[id]");

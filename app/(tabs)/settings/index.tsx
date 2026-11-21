@@ -63,7 +63,11 @@ import { isFeaturamaConfigured } from "@constants/config";
 import { listStates } from "@domain/index";
 import type { StateCode } from "@domain/model";
 import { useSetupIssues } from "@hooks/useEvaluation";
-import { useRuleset } from "@hooks/useRuleset";
+import {
+  examVariantOf,
+  rulesetVersionLabel,
+  useRuleset,
+} from "@hooks/useRuleset";
 import { useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
 import { deleteAllData, exportBackup } from "@services/backup/backupService";
@@ -73,7 +77,6 @@ import {
   trackClippingShown,
 } from "@services/analytics/appEvents";
 import { clippingUrl } from "@services/clipping/clipping";
-import { seedDemoData } from "@services/demo/demoData";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
 import { useLanguageStore } from "@stores/languageStore";
@@ -139,9 +142,10 @@ export default function SettingsScreen() {
   const variant =
     ruleset?.examVariants.find((item) => item.id === profile?.examVariantId) ??
     null;
-  const required = (variant ?? ruleset?.examVariants[0])?.components.filter(
-    componentNeedsSubject,
-  );
+  const required = examVariantOf(
+    ruleset,
+    profile?.examVariantId,
+  )?.components.filter(componentNeedsSubject);
   const examCount = subjects.filter((subject) => subject.examSlot).length;
   const elevated = subjects.filter((subject) => subject.level === "elevated");
 
@@ -152,30 +156,23 @@ export default function SettingsScreen() {
       (issue.code.startsWith("setup.") || issue.code.startsWith("exam.")),
   );
 
-  const themeActions = useMemo<NativeMenuAction[]>(
-    () =>
-      Object.values(ThemeMode).map((mode) => ({
-        id: mode,
-        title: t(THEME_LABEL_KEYS[mode]),
-        image: THEME_ICONS[mode],
-        state: mode === themeMode ? "on" : "off",
-      })),
-    // `t` is stable; the language is part of the key via `locale`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [themeMode, locale],
+  const themeActions: NativeMenuAction[] = Object.values(ThemeMode).map(
+    (mode) => ({
+      id: mode,
+      title: t(THEME_LABEL_KEYS[mode]),
+      image: THEME_ICONS[mode],
+      state: mode === themeMode ? "on" : "off",
+    }),
   );
 
-  const languageActions = useMemo<NativeMenuAction[]>(
-    () =>
-      (["system", "de", "en"] as const).map((mode) => ({
-        id: mode,
-        title: t(LANGUAGE_LABEL_KEYS[mode]),
-        image: LANGUAGE_ICONS[mode],
-        state: mode === languageMode ? "on" : "off",
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languageMode, locale],
-  );
+  const languageActions: NativeMenuAction[] = (
+    ["system", "de", "en"] as const
+  ).map((mode) => ({
+    id: mode,
+    title: t(LANGUAGE_LABEL_KEYS[mode]),
+    image: LANGUAGE_ICONS[mode],
+    state: mode === languageMode ? "on" : "off",
+  }));
 
   const demoActions = useMemo<NativeMenuAction[]>(
     () =>
@@ -263,19 +260,23 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleSeed = async (code: string) => {
-    const state = states.find((item) => item.code === code);
-    if (!state) return;
-    try {
-      await seedDemoData({
-        state: state.code as StateCode,
-        abiturYear: profile?.abiturYear ?? 2027,
-      });
-      showSuccess(t("settings.seedDemoDone", { state: state.name }));
-    } catch (error) {
-      showError(t("settings.seedDemoFailed"), error);
-    }
-  };
+  // Development builds only; release bundles drop the demo module.
+  const handleSeed = __DEV__
+    ? async (code: string) => {
+        const state = states.find((item) => item.code === code);
+        if (!state) return;
+        try {
+          const { seedDemoData } = await import("@services/demo/demoData");
+          await seedDemoData({
+            state: state.code as StateCode,
+            abiturYear: profile?.abiturYear ?? 2027,
+          });
+          showSuccess(t("settings.seedDemoDone", { state: state.name }));
+        } catch (error) {
+          showError(t("settings.seedDemoFailed"), error);
+        }
+      }
+    : undefined;
 
   const handleResetOnboarding = async () => {
     try {
@@ -324,7 +325,9 @@ export default function SettingsScreen() {
           />
           <ListRow
             title={t("settings.ruleset")}
-            subtitle={ruleset?.label ?? profile.rulesetId}
+            subtitle={
+              ruleset ? rulesetVersionLabel(ruleset) : profile.rulesetId
+            }
             badges={
               ruleset && isProvisional(ruleset) ? (
                 <Chip label={t("settings.draft")} tone="warning" />
@@ -527,7 +530,7 @@ export default function SettingsScreen() {
           <NativeMenu
             title={t("settings.seedDemoFor")}
             actions={demoActions}
-            onSelect={(id) => void handleSeed(id)}
+            onSelect={(id) => void handleSeed?.(id)}
             fullWidth
             trigger={
               <ListRow

@@ -110,6 +110,10 @@ interface CourseState {
     halfYear: number,
     inclusion: CourseInclusion,
   ) => Promise<void>;
+  /** Sets the given courses back to "auto" in one transaction. */
+  resetInclusions: (
+    courses: readonly { subjectId: string; halfYear: number }[],
+  ) => Promise<void>;
   /** Half-year goal 0..15, null removes it. */
   setTargetPoints: (
     subjectId: string,
@@ -371,6 +375,20 @@ export const useCourseStore = create<CourseState>()((set, get) => {
     setInclusion: (subjectId, halfYear, inclusion) => {
       assertInclusion(inclusion);
       return writeCourse(subjectId, halfYear, { inclusion });
+    },
+
+    resetInclusions: async (courses) => {
+      const count = halfYearCount();
+      for (const { subjectId, halfYear } of courses) {
+        assertSubject(subjectId);
+        assertHalfYear(halfYear, count);
+      }
+      await writeTransaction(async (db) => {
+        for (const { subjectId, halfYear } of courses) {
+          await upsertCourse(db, subjectId, halfYear, { inclusion: "auto" });
+        }
+      });
+      await refresh(["courses"]);
     },
 
     setTargetPoints: (subjectId, halfYear, points) => {

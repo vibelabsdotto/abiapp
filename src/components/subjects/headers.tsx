@@ -1,7 +1,5 @@
-// Native header controls of the subjects lane.
-// - ModalHeader: title plus native bar buttons "Abbrechen" (left) and the
-//   prominent "Sichern" (right) via Stack.Toolbar (UIBarButtonItem on iOS).
-// - HalfYearPicker: segmented half-year switcher with the ruleset labels.
+// Header pieces of the subject screens: half-year switcher with the ruleset
+// labels, subject context line of the editors and the subject detail header.
 
 import React from "react";
 import {
@@ -140,6 +138,3 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 });
-
-/** SF Symbol on iOS, Lucide drawable on Android (see constants). */
-export { toolbarIcon } from "@constants/toolbarIcons";

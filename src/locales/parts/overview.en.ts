@@ -77,6 +77,12 @@ export const overviewEN = {
       action: "How it works",
       dismiss: "Dismiss",
     },
+    rulesetUnavailable: {
+      title: "Rule version not available",
+      message:
+        "This app version does not know your rule version {{id}}. Update AbiApp or choose another rule version.",
+      action: "Choose rule version",
+    },
   },
   abitur: {
     title: "Abitur",

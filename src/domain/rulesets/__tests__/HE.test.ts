@@ -14,120 +14,46 @@
 import { describe, expect, it } from "vitest";
 
 import { evaluate, getRulesetSummary } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  CourseLevel,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
+import {
+  build,
+  withPoints,
+  check,
+  count,
+  weighted,
+  errors,
+  summary,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 const RS = "HE-2027";
-
-interface Sub {
-  key: string;
-  /** Official points per half-year Q1 … Q4, null = not taken. */
-  pts: (number | null)[];
-  level?: CourseLevel;
-  slot?: ExamSlot;
-}
-
-function build(
-  subs: Sub[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  examVariantId: string | null = null,
-): EngineInput {
-  const cat = new Map(getRulesetSummary(RS).catalog.map((c) => [c.key, c]));
-  const subjects: EngineSubject[] = subs.map((s) => {
-    const c = cat.get(s.key);
-    if (!c) throw new Error(`unknown subject ${s.key}`);
-    return {
-      id: s.key,
-      catalogKey: s.key,
-      name: c.name,
-      field: c.field,
-      tags: c.tags,
-      level: s.level ?? "basic",
-      examSlot: s.slot ?? null,
-      examWeightPercent: 50,
-    };
-  });
-  return {
-    rulesetId: RS,
-    examVariantId,
-    subjects,
-    courses: subs.flatMap((s) =>
-      s.pts.flatMap((p, halfYear) =>
-        p === null
-          ? []
-          : [
-              {
-                subjectId: s.key,
-                halfYear,
-                taken: true,
-                officialPoints: p,
-                inclusion: "auto" as const,
-                grades: [],
-                targetPoints: null,
-              },
-            ],
-      ),
-    ),
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras: {},
-  };
-}
-
-function summary(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    deficits: e.blockI.deficits.total,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const count = (e: AbiturEvaluation, id: string) =>
-  e.blockI.included.filter((c) => c.subjectId === id).length;
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-const weighted = (e: AbiturEvaluation, slot: ExamSlot) =>
-  e.blockII.components.find((c) => c.slot === slot)?.weighted;
 
 /**
  * LK Englisch (P1) and Biologie (P2); Deutsch P3 (written), Mathematik P4
  * (oral), Geschichte P5 (presentation). Second FS Französisch, Chemie.
  */
-function typical(over: Partial<Record<string, (number | null)[]>> = {}) {
-  const s: Sub[] = [
-    { key: "en", level: "elevated", slot: "P1", pts: [11, 12, 12, 13] },
-    { key: "bio", level: "elevated", slot: "P2", pts: [9, 10, 8, 9] },
-    { key: "de", slot: "P3", pts: [10, 10, 11, 12] },
-    { key: "ma", slot: "P4", pts: [8, 9, 9, 10] },
-    { key: "ge", slot: "P5", pts: [12, 11, 12, 13] },
-    { key: "fr", pts: [7, 8, 9, 6] },
-    { key: "ch", pts: [6, 5, 7, 4] },
-    { key: "pol", pts: [9, 10, 11, 10] },
-    { key: "rel_ev", pts: [13, 13, 14, 12] },
-    { key: "ku", pts: [12, 14, 13, 15] },
-    { key: "sp", pts: [14, 15, 15, 13] },
+function typical(over: Partial<Record<string, Points[]>> = {}) {
+  const s: Spec[] = [
+    { key: "en", lk: true, slot: "P1", p: [11, 12, 12, 13] },
+    { key: "bio", lk: true, slot: "P2", p: [9, 10, 8, 9] },
+    { key: "de", slot: "P3", p: [10, 10, 11, 12] },
+    { key: "ma", slot: "P4", p: [8, 9, 9, 10] },
+    { key: "ge", slot: "P5", p: [12, 11, 12, 13] },
+    { key: "fr", p: [7, 8, 9, 6] },
+    { key: "ch", p: [6, 5, 7, 4] },
+    { key: "pol", p: [9, 10, 11, 10] },
+    { key: "rel_ev", p: [13, 13, 14, 12] },
+    { key: "ku", p: [12, 14, 13, 15] },
+    { key: "sp", p: [14, 15, 15, 13] },
   ];
-  return s.map((x) => (over[x.key] ? { ...x, pts: over[x.key] ?? x.pts } : x));
+  return withPoints(s, over);
 }
 // Block II of the typical student:
 // P1 En 12 → 48; P2 Bio 9 + zusätzliche mündliche 11: (18 + 11) · 4/3
 // = 38,67 → Anlage 10a 38; P3 De 10 → 40; P4 Ma 8 → 32; P5 Ge 13 → 52.
 // Sum 210.
-const EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const EXAMS: Exams = {
   P1: [12],
   P2: [9, 11],
   P3: [10],
@@ -144,7 +70,7 @@ describe("Hessen (HE-2027)", () => {
     // 18 GK so far, 6 free: Sport 15 + 15 + 14 (max. 3), Rel 14 + 13 + 13 = 84.
     // GK = 43 + 36 + 48 + 21 + 29 + 17 + 84 = 278; E_I = 168 + 278 = 446.
     // Total 446 + 210 = 656 → Anlage 10b: 643–660 = 2,0.
-    const e = evaluate(build(typical(), EXAMS));
+    const e = evaluate(build(RS, typical(), EXAMS));
     expect(summary(e)).toEqual({
       blockI: 446,
       blockII: 210,
@@ -169,6 +95,7 @@ describe("Hessen (HE-2027)", () => {
     // E_I = 401; total 401 + 210 = 611 → 2,2 (607–624).
     const six = evaluate(
       build(
+        RS,
         typical({ bio: [4, 4, 9, 9], de: [4, 4, 10, 10], ma: [4, 4, 9, 9] }),
         EXAMS,
       ),
@@ -186,6 +113,7 @@ describe("Hessen (HE-2027)", () => {
     // Ge Q1 4 instead of 12 (exam subject): 7 deficits, E_I 401 − 8 = 393.
     const seven = evaluate(
       build(
+        RS,
         typical({
           bio: [4, 4, 9, 9],
           de: [4, 4, 10, 10],
@@ -206,7 +134,7 @@ describe("Hessen (HE-2027)", () => {
     });
     // Three LK deficits (Bio 4, 4, 4, 9), nothing else below 5:
     // LK (48 + 21) · 2 = 138, GK 278 → E_I 416, not admitted.
-    const lk3 = evaluate(build(typical({ bio: [4, 4, 4, 9] }), EXAMS));
+    const lk3 = evaluate(build(RS, typical({ bio: [4, 4, 4, 9] }), EXAMS));
     expect(summary(lk3)).toMatchObject({
       blockI: 416,
       deficits: 3,
@@ -229,13 +157,14 @@ describe("Hessen (HE-2027)", () => {
     // Block II: 48 + 38 + 40 + 32 + BLL 12 · 4 = 48 → 206. Total 615 → 2,2.
     const e = evaluate(
       build(
+        RS,
         typical({
           ge: [6, 6, 6, 6],
           pol: [7, 7, 7, 7],
           rel_ev: [5, 5, 5, 5],
         }).map((s) => (s.key === "ge" ? { ...s, slot: undefined } : s)),
         { ...EXAMS, P5: [12] },
-        "bll",
+        { variant: "bll" },
       ),
     );
     expect(summary(e)).toEqual({
@@ -259,7 +188,7 @@ describe("Hessen (HE-2027)", () => {
     // En LK 5, 5, 5, 5 and Bio LK 5, 5, 4, 5: (20 + 19) · 2 = 78 < 80.
     // One LK deficit only, everything else as typical.
     const e = evaluate(
-      build(typical({ en: [5, 5, 5, 5], bio: [5, 5, 4, 5] }), EXAMS),
+      build(RS, typical({ en: [5, 5, 5, 5], bio: [5, 5, 4, 5] }), EXAMS),
     );
     expect(e.blockI.points).toBe(78 + 278);
     expect(check(e, "block1.elevatedSum")).toBe(false);
@@ -270,7 +199,7 @@ describe("Hessen (HE-2027)", () => {
     // P3 De written 0 + oral 2: (0 + 2) · 4/3 = 2,67 → 2: not 0, passes the
     // 0-rule (§ 26 Abs. 13 Nr. 5). Block II 48 + 38 + 2 + 32 + 52 = 172.
     // Total 446 + 172 = 618 → 2,2.
-    const rescued = evaluate(build(typical(), { ...EXAMS, P3: [0, 2] }));
+    const rescued = evaluate(build(RS, typical(), { ...EXAMS, P3: [0, 2] }));
     expect(summary(rescued)).toEqual({
       blockI: 446,
       blockII: 172,
@@ -281,18 +210,20 @@ describe("Hessen (HE-2027)", () => {
       passed: true,
     });
     // Written 0 + oral 0 → 0 → failed.
-    const zero = evaluate(build(typical(), { ...EXAMS, P3: [0, 0] }));
+    const zero = evaluate(build(RS, typical(), { ...EXAMS, P3: [0, 0] }));
     expect(check(zero, "block2.noZero")).toBe(false);
     expect(zero.total.passed).toBe(false);
     // 20-point rule with both LK weak: P1 En 4 + oral 7: 15 · 4/3 = 20 → counts;
     // P2 Bio 4 + oral 6: 14 · 4/3 = 18,67 → 18. Three results ≥ 20 incl. an LK:
     // En 20, De 40, Ge 52 → passed.
-    const lk = evaluate(build(typical(), { ...EXAMS, P1: [4, 7], P2: [4, 6] }));
+    const lk = evaluate(
+      build(RS, typical(), { ...EXAMS, P1: [4, 7], P2: [4, 6] }),
+    );
     expect([weighted(lk, "P1"), weighted(lk, "P2")]).toEqual([20, 18]);
     expect(check(lk, "block2.min20")).toBe(true);
     // En 4 + oral 6 → 18 as well: no LK reaches 20 → not passed.
     const noLk = evaluate(
-      build(typical(), { ...EXAMS, P1: [4, 6], P2: [4, 6] }),
+      build(RS, typical(), { ...EXAMS, P1: [4, 6], P2: [4, 6] }),
     );
     expect(check(noLk, "block2.min20")).toBe(false);
     expect(noLk.total.passed).toBe(false);
@@ -308,9 +239,10 @@ describe("Hessen (HE-2027)", () => {
     // Total 654 → 2,0.
     const e = evaluate(
       build(
+        RS,
         typical().map((s) => (s.key === "ge" ? { ...s, slot: undefined } : s)),
         { ...EXAMS, P5: [12] },
-        "bll",
+        { variant: "bll" },
       ),
     );
     expect(summary(e)).toEqual({
@@ -326,7 +258,7 @@ describe("Hessen (HE-2027)", () => {
 
   it("a newly begun foreign language with 0 points blocks admission (§ 14 Abs. 2, 3)", () => {
     const e = evaluate(
-      build([...typical(), { key: "fs_new", pts: [6, 0, 7, 8] }], EXAMS),
+      build(RS, [...typical(), { key: "fs_new", p: [6, 0, 7, 8] }], EXAMS),
     );
     expect(check(e, "block1.zeroTaken")).toBe(false);
     expect(e.blockI.admitted).toBe(false);
@@ -348,7 +280,7 @@ describe("Hessen ab Abitur 2030 (HE-2030, draft on the KMK framework)", () => {
     // Block II: P2 Bio 9 + 11 → 38,67 → 39 (KMK rounds half up, OAVO
     // Anlage 10a would give 38): 48 + 39 + 40 + 32 + 52 = 211.
     // Total 664 → 1,9.
-    const input = { ...build(typical(), EXAMS), rulesetId: "HE-2030" };
+    const input = { ...build(RS, typical(), EXAMS), rulesetId: "HE-2030" };
     const e = evaluate(input);
     expect(summary(e)).toEqual({
       blockI: 453,

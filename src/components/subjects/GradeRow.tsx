@@ -4,7 +4,13 @@
 
 import React from "react";
 
-import { Chip, ListRow, PointsBadge, gradeEquivalent } from "@components/ui";
+import {
+  Chip,
+  ListRow,
+  PointsBadge,
+  gradeEquivalent,
+  spokenPoints,
+} from "@components/ui";
 import { useTranslation } from "@locales/index";
 import type { GradeRecord } from "@services/database";
 
@@ -36,16 +42,17 @@ export const GradeRow = ({ grade, onEdit }: GradeRowProps) => {
       title={title}
       subtitle={date}
       leading={
-        <PointsBadge points={grade.points} source="official" size="medium" />
+        <PointsBadge
+          points={grade.points}
+          source="official"
+          size="medium"
+          accessibilityLabel={spokenPoints(grade.points)}
+        />
       }
       badges={weight ? <Chip label={weight} tone="neutral" /> : undefined}
       value={gradeEquivalent(grade.points)}
       onPress={() => onEdit(grade)}
-      accessibilityLabel={[
-        t("subjects.grade.a11y", { title, points: grade.points }),
-        date,
-        weight,
-      ]
+      accessibilityLabel={[title, spokenPoints(grade.points), date, weight]
         .filter(Boolean)
         .join(", ")}
       menu={{

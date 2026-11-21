@@ -1,4 +1,4 @@
-// Formatting helpers of the subjects lane: dates, weights, level titles and
+// Formatting helpers of the subject screens: dates, weights, level titles and
 // the reason behind a mandatory Block I inclusion. Pure functions.
 
 import type { CourseLevel, RulesetSummary } from "@domain/model";

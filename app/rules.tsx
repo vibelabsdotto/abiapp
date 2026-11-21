@@ -17,6 +17,7 @@ import {
 } from "@components/ui";
 import { Bullets, Fact } from "@components/abitur/parts";
 import { showError } from "@components/overview/feedback";
+import { RulesetUnavailable } from "@components/overview/RulesetUnavailable";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import { useTranslation } from "@locales/index";
 import { useThemeStore } from "@stores/themeStore";
@@ -46,7 +47,9 @@ export default function RulesScreen() {
     return (
       <>
         {header}
-        <ScreenLayout>{null}</ScreenLayout>
+        <ScreenLayout>
+          <RulesetUnavailable withAction={false} />
+        </ScreenLayout>
       </>
     );
   }

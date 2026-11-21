@@ -1,4 +1,4 @@
-// Data hooks of the subjects lane: current/selected half-year and the
+// Data hooks of the subject screens: selected half-year and the
 // engine's course values plus Block I inclusion per subject x half-year.
 // Without an evaluation (engine error) values fall back to the store:
 // official result, else the prognosis from the entered grades.
@@ -25,9 +25,6 @@ import { usePreferencesStore } from "@stores/preferencesStore";
 import { useProfileStore } from "@stores/profileStore";
 
 const key = (subjectId: string, halfYear: number) => `${subjectId}:${halfYear}`;
-
-/** Shared rule for overview and subjects tab (hooks/useCurrentHalfYear). */
-export { useCurrentHalfYear };
 
 /** Half-year shown in the subjects tab (persisted choice or current one). */
 export function useSelectedHalfYear(): [number, (halfYear: number) => void] {
@@ -76,9 +73,11 @@ export const fallbackCourseValue = (
   const own = grades
     .filter((g) => g.subjectId === subject.id && g.halfYear === halfYear)
     .map(({ id, kind, points, weight }) => ({ id, kind, points, weight }));
-  const prognosis = tryDomain(() =>
-    halfYearPrognosis(own, subject.examWeightPercent, rulesetId),
-  ).value;
+  const prognosis = rulesetId
+    ? tryDomain(() =>
+        halfYearPrognosis(own, subject.examWeightPercent, rulesetId),
+      ).value
+    : null;
   if (prognosis && prognosis.points !== null) {
     return {
       subjectId: subject.id,

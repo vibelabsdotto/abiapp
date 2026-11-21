@@ -1,7 +1,7 @@
 // Abitur tab building blocks: total card, block summary head, key/value
 // facts and the bullet list for assumptions.
 
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
 import { Chip, ProgressBar, formatGrade } from "@components/ui";
@@ -176,7 +176,10 @@ export const BlockHead = ({
   );
 };
 
-/** Two-column fact: label left, value right. */
+/**
+ * Two-column fact: label left, value right. A value that would wrap (long
+ * level names, large text) goes under the label, left-aligned.
+ */
 export const Fact = ({
   label,
   value,
@@ -189,8 +192,11 @@ export const Fact = ({
   tone?: string;
 }) => {
   const colors = useThemeStore((state) => state.colors);
-  // Large text: value under the label, left-aligned.
-  const stacked = useWindowDimensions().fontScale >= 1.6;
+  const largeText = useWindowDimensions().fontScale >= 1.6;
+  // Measured in the side-by-side layout only and kept for this value, so the
+  // stacked layout (where it fits in one line) cannot switch it back.
+  const [wrappedValue, setWrappedValue] = useState<string | null>(null);
+  const stacked = largeText || wrappedValue === value;
   return (
     <View style={[styles.fact, stacked && styles.factStacked]}>
       <Text
@@ -210,6 +216,14 @@ export const Fact = ({
             stacked && styles.factValueTextStacked,
             { color: tone ?? colors.text },
           ]}
+          onTextLayout={
+            stacked
+              ? undefined
+              : (event) => {
+                  if (event.nativeEvent.lines.length > 1)
+                    setWrappedValue(value);
+                }
+          }
         >
           {value}
         </Text>

@@ -16,86 +16,12 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary, gradeFromPoints } from "@domain/index";
-import type { AbiturEvaluation, EngineInput, ExamSlot } from "@domain/model";
+import { evaluate, gradeFromPoints } from "@domain/index";
+import type { ExamSlot } from "@domain/model";
 import { defaultCombine } from "../../engine/blockII";
 import { SN_2027 } from "../SN";
+import { build, all, errors, outcome, type Spec, type Exams } from "./build";
 
-// ---------------------------------------------------------------------------
-// Input builder: one subject per catalog key, official half-year points
-// (null = not taken), exam points as main or [main, oral].
-// ---------------------------------------------------------------------------
-
-interface Subj {
-  key: string;
-  p: (number | null)[];
-  lk?: boolean;
-  slot?: ExamSlot;
-}
-
-type Exams = Partial<Record<ExamSlot, number | [number, number]>>;
-
-function build(
-  rulesetId: string,
-  subjects: Subj[],
-  exams: Exams,
-  opts: { variant?: string; extras?: Record<string, number | null> } = {},
-): EngineInput {
-  const cat = new Map(
-    getRulesetSummary(rulesetId).catalog.map((c) => [c.key, c]),
-  );
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: subjects.map((s) => {
-      const c = cat.get(s.key);
-      if (!c) throw new Error(`unknown catalog key ${s.key}`);
-      return {
-        id: s.key,
-        catalogKey: s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lk ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: subjects.flatMap((s) =>
-      s.p.map((points, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: points !== null,
-        officialPoints: points,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(exams).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: Array.isArray(v) ? v[0] : (v as number),
-      oralPoints: Array.isArray(v) ? v[1] : null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-function outcome(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-
-const all = (n: number) => [n, n, n, n];
 const ID = "SN-2027";
 
 // ---------------------------------------------------------------------------
@@ -103,7 +29,7 @@ const ID = "SN-2027";
 // Biologie P4 and Geschichte P5 oral.
 // ---------------------------------------------------------------------------
 
-const typical: Subj[] = [
+const typical: Spec[] = [
   { key: "ma", lk: true, slot: "P1", p: [12, 13, 11, 12] }, // 48
   { key: "en", lk: true, slot: "P2", p: [10, 11, 10, 9] }, // 40
   { key: "de", slot: "P3", p: [9, 10, 8, 9] }, // 36
@@ -224,7 +150,7 @@ describe("SN-2027 Defizit-Grenzen (§ 48 Abs. 3 S. 3)", () => {
   // P = 2 · (16 + 40) + De 40 + Bio 40 + Ge 40 + Ch 16 + 16 · 10 = 408,
   // E_I = 408 · 40 / 48 = 340. E_II = 4 · (5 + 10 + 10 + 10 + 10) = 180.
   // Total 520 → 2,7 (534–517).
-  const base: Subj[] = [
+  const base: Spec[] = [
     { key: "ma", lk: true, slot: "P1", p: all(4) },
     { key: "en", lk: true, slot: "P2", p: all(10) },
     { key: "de", slot: "P3", p: all(10) },
@@ -438,7 +364,7 @@ describe("SN-2027 Informatik statt Naturwissenschaft (§ 42, § 43 Abs. 3, § 48
   // Inf: 36 + Ch 5 + 15 · 10 = 191; Ch: 20 + Inf 9 + 15 · 10 = 179.
   // P = 2 · 80 + 120 + 191 = 471 → E_I = 471 · 40 / 48 = 392,5 → 393.
   // Total 393 + 200 = 593 → 2,3 (606–589).
-  const others: Subj[] = [
+  const others: Spec[] = [
     { key: "ch", p: all(5) },
     { key: "inf", p: all(9) },
     { key: "ku", p: all(10) },
@@ -613,7 +539,7 @@ describe("SN-2027 Fächerwahl (§ 41, § 50)", () => {
   // § 50 Abs. 6 S. 2: a natural science or a foreign language among the exam
   // subjects – not required with Kunst as LK and a BeLL (S. 3).
   it("requires a science or language among the exams, except Kunst-LK with BeLL", () => {
-    const subjects: Subj[] = [
+    const subjects: Spec[] = [
       { key: "ma", lk: true, slot: "P1", p: all(10) },
       { key: "ku", lk: true, slot: "P2", p: all(10) },
       { key: "de", slot: "P3", p: all(10) },

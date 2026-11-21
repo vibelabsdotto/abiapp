@@ -78,7 +78,7 @@ export function usePrognosis(
       targetPoints: course?.targetPoints ?? null,
       courseValue,
     };
-    if (examWeightPercent === null) {
+    if (examWeightPercent === null || rulesetId === null) {
       return {
         ...base,
         exact: null,

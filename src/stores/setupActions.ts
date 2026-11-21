@@ -35,7 +35,7 @@ import {
   requireRuleset,
   tryDomain,
 } from "./domainAccess";
-import { buildEngineInput } from "./engineInput";
+import { selectEngineInput } from "./engineInput";
 import { useExamStore } from "./examStore";
 import { usePreferencesStore } from "./preferencesStore";
 import { useProfileStore } from "./profileStore";
@@ -57,12 +57,15 @@ export function resetAllStores(): void {
   usePreferencesStore.getState().reset();
 }
 
-/** Current EngineInput outside React (services, dev tools). */
+/**
+ * Current EngineInput outside React (services, dev tools). Same memoized
+ * object as useEngineInput, so evaluateCached shares the screen's result.
+ */
 export function getEngineInputSnapshot() {
   const { profile } = useProfileStore.getState();
   const { subjects, courses, grades } = useCourseStore.getState();
   const { results, extras } = useExamStore.getState();
-  return buildEngineInput({
+  return selectEngineInput({
     profile,
     subjects,
     courses,

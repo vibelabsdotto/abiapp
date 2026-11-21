@@ -64,7 +64,7 @@ function weightings(ctx: RuleContext): WeightingOption[] {
       ...(doubledDeficits(ctx) > 0
         ? {
             assumption:
-              "Annahme: Ein doppelt gewichtetes Kurshalbjahr unter 5 Punkten zählt als zwei Defizite (nicht geregelt).",
+              "Annahme: Ein doppelt gewichtetes Kurshalbjahr unter 5 Punkten zählt als zwei Unterkurse (Defizite; nicht geregelt).",
           }
         : {}),
     },

@@ -32,7 +32,7 @@ export async function importBackupInteractive(
       );
       return false;
     }
-    const { summary } = result;
+    const { summary, warnings } = result;
     const backupState = listStates().find(
       (state) => state.code === summary.state,
     );
@@ -55,9 +55,11 @@ export async function importBackupInteractive(
     });
     const confirmed = await confirmAsync({
       title: t(hasData ? "settings.importTitle" : "settings.restoreTitle"),
-      message: hasData
-        ? `${contents}\n\n${t("settings.importReplace")}`
-        : contents,
+      message: [
+        contents,
+        ...warnings.map((warning) => warning.message),
+        ...(hasData ? [t("settings.importReplace")] : []),
+      ].join("\n\n"),
       confirm: t(
         hasData ? "settings.importConfirm" : "settings.restoreConfirm",
       ),

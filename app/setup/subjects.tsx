@@ -10,7 +10,7 @@ import {
   showError,
 } from "@components/setup";
 import { ModalHeader } from "@components/common/ModalHeader";
-import { useSubjectsDraft } from "@hooks/useSetupFlows";
+import { useSubjectsDraft, subjectsNote } from "@hooks/useSetupFlows";
 import { useSetupModal } from "@hooks/useSetupModal";
 import { useTranslation } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
@@ -42,16 +42,7 @@ export default function SetupSubjectsScreen() {
         saveDisabled={!draft.dirty || !draft.canSave || saving || closing}
       />
       <ScreenLayout>
-        <IntroText
-          text={
-            draft.canSave
-              ? t("setup.subjects.selected", { count: draft.selectedCount })
-              : t("setup.subjects.minHint", {
-                  count: draft.selectedCount,
-                  min: draft.minimum,
-                })
-          }
-        />
+        <IntroText text={subjectsNote(draft)} />
         {draft.ruleset ? (
           <SubjectPicker
             ruleset={draft.ruleset}

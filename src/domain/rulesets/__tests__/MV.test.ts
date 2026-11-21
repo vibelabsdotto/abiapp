@@ -14,121 +14,43 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  CourseLevel,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
-
-interface Sub {
-  key: string;
-  /** Official points per half-year 11/1 … 12/2, null = not taken. */
-  pts: (number | null)[];
-  level?: CourseLevel;
-  slot?: ExamSlot;
-}
-
-function build(
-  rulesetId: string,
-  subs: Sub[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  extras: Record<string, number | null> = {},
-  examVariantId: string | null = null,
-): EngineInput {
-  const cat = new Map(
-    getRulesetSummary(rulesetId).catalog.map((c) => [c.key, c]),
-  );
-  const subjects: EngineSubject[] = subs.map((s) => {
-    const c = cat.get(s.key);
-    if (!c) throw new Error(`unknown subject ${s.key}`);
-    return {
-      id: s.key,
-      catalogKey: s.key,
-      name: c.name,
-      field: c.field,
-      tags: c.tags,
-      level: s.level ?? "basic",
-      examSlot: s.slot ?? null,
-      examWeightPercent: 50,
-    };
-  });
-  return {
-    rulesetId,
-    examVariantId,
-    subjects,
-    courses: subs.flatMap((s) =>
-      s.pts.flatMap((p, halfYear) =>
-        p === null
-          ? []
-          : [
-              {
-                subjectId: s.key,
-                halfYear,
-                taken: true,
-                officialPoints: p,
-                inclusion: "auto" as const,
-                grades: [],
-                targetPoints: null,
-              },
-            ],
-      ),
-    ),
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras,
-  };
-}
-
-function summary(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    deficits: e.blockI.deficits.total,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const count = (e: AbiturEvaluation, id: string) =>
-  e.blockI.included.filter((c) => c.subjectId === id).length;
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-const weighted = (e: AbiturEvaluation, slot: ExamSlot) =>
-  e.blockII.components.find((c) => c.slot === slot)?.weighted;
+import { evaluate } from "@domain/index";
+import {
+  build,
+  withPoints,
+  check,
+  count,
+  weighted,
+  errors,
+  summary,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 /**
  * LK Mathematik (P1) and Biologie (P2); Deutsch P3 (written), Geschichte
  * P4 and Englisch P5 (oral). Chemie as second NW.
  */
-function typical(over: Partial<Record<string, (number | null)[]>> = {}) {
-  const s: Sub[] = [
-    { key: "ma", level: "elevated", slot: "P1", pts: [10, 11, 12, 11] },
-    { key: "bio", level: "elevated", slot: "P2", pts: [9, 9, 10, 8] },
-    { key: "de", slot: "P3", pts: [13, 12, 13, 14] },
-    { key: "ge", slot: "P4", pts: [7, 8, 9, 10] },
-    { key: "en", slot: "P5", pts: [8, 9, 7, 8] },
-    { key: "ch", pts: [6, 7, 5, 9] },
-    { key: "pol", pts: [11, 10, 12, 11] },
-    { key: "ku", pts: [13, 13, 14, 15] },
-    { key: "sp", pts: [15, 15, 14, 15] },
-    { key: "rel_ev", pts: [12, 12, 13, 14] },
+function typical(over: Partial<Record<string, Points[]>> = {}) {
+  const s: Spec[] = [
+    { key: "ma", lk: true, slot: "P1", p: [10, 11, 12, 11] },
+    { key: "bio", lk: true, slot: "P2", p: [9, 9, 10, 8] },
+    { key: "de", slot: "P3", p: [13, 12, 13, 14] },
+    { key: "ge", slot: "P4", p: [7, 8, 9, 10] },
+    { key: "en", slot: "P5", p: [8, 9, 7, 8] },
+    { key: "ch", p: [6, 7, 5, 9] },
+    { key: "pol", p: [11, 10, 12, 11] },
+    { key: "ku", p: [13, 13, 14, 15] },
+    { key: "sp", p: [15, 15, 14, 15] },
+    { key: "rel_ev", p: [12, 12, 13, 14] },
   ];
-  return s.map((x) => (over[x.key] ? { ...x, pts: over[x.key] ?? x.pts } : x));
+  return withPoints(s, over);
 }
 // Block II: P1 Ma 9 → 36; P2 Bio 7 + zusätzliche mündliche 9: (14 + 9) · 4/3
 // = 30,67 → Anlage 5 31; P3 De 12 → 48; P4 Ge 10 → 40; P5 En 11 → 44.
 // Sum 199.
-const EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const EXAMS: Exams = {
   P1: [9],
   P2: [7, 9],
   P3: [12],
@@ -212,13 +134,17 @@ describe("Mecklenburg-Vorpommern ab Abitur 2028 (MV-2028)", () => {
     // Facharbeit 12 counts as 2 HJL with 12 each (24 of max. 30) and
     // replaces the two weakest free courses PB 11 + 10: P = 487 − 21 + 24
     // = 490 → 445,45 → 445.
-    const fa12 = evaluate(build(RS, typical(), EXAMS, { facharbeit: 12 }));
+    const fa12 = evaluate(
+      build(RS, typical(), EXAMS, { extras: { facharbeit: 12 } }),
+    );
     expect(fa12.blockI.points).toBe(445);
     expect(
       fa12.blockI.included.filter((c) => c.extraId === "facharbeit"),
     ).toHaveLength(2);
     // Facharbeit 10 → 20 < 21: not included, E_I stays 443.
-    const fa10 = evaluate(build(RS, typical(), EXAMS, { facharbeit: 10 }));
+    const fa10 = evaluate(
+      build(RS, typical(), EXAMS, { extras: { facharbeit: 10 } }),
+    );
     expect(fa10.blockI.points).toBe(443);
     expect(
       fa10.blockI.included.filter((c) => c.extraId === "facharbeit"),
@@ -238,8 +164,7 @@ describe("Mecklenburg-Vorpommern ab Abitur 2028 (MV-2028)", () => {
         RS,
         typical().map((s) => (s.key === "ge" ? { ...s, slot: undefined } : s)),
         { ...EXAMS, P4: [11, 13] },
-        {},
-        "bll",
+        { variant: "bll" },
       ),
     );
     expect(summary(e)).toEqual({

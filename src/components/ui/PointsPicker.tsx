@@ -11,6 +11,7 @@ import { useTranslation } from "@locales/index";
 import { FontScale, NumberType, Radius, Type } from "@constants/typography";
 
 import { gradeEquivalent, pointsPalette, pointsTier } from "./points";
+import { spokenPointsWithGrade } from "./spokenPoints";
 
 export interface PointsPickerProps {
   value: number | null;
@@ -61,10 +62,7 @@ export const PointsPicker = ({
                 onPress={() => handlePress(points)}
                 disabled={disabled}
                 accessibilityRole="radio"
-                accessibilityLabel={t("ui.pointsWithGrade", {
-                  points,
-                  grade,
-                })}
+                accessibilityLabel={spokenPointsWithGrade(points, grade)}
                 accessibilityState={{ checked: selected, disabled }}
                 style={({ pressed }) => [
                   styles.cell,

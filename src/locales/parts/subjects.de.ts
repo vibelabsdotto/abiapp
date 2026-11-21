@@ -17,10 +17,6 @@ export const subjectsDE = {
       errorTitle: "Speichern fehlgeschlagen",
       unknownError: "Unbekannter Fehler. Versuche es noch einmal.",
       missingSubject: "Dieses Fach gibt es nicht mehr.",
-      discardTitle: "Änderungen verwerfen?",
-      discardMessage: "Deine Änderungen gehen verloren.",
-      discardConfirm: "Verwerfen",
-      keepEditing: "Weiter bearbeiten",
     },
     list: {
       add: "Fach hinzufügen",
@@ -166,7 +162,6 @@ export const subjectsDE = {
       deleted: "Note gelöscht",
       undo: "Wiederherstellen",
       restored: "Note wiederhergestellt",
-      a11y: "{{title}}, {{points}} Punkte",
     },
     gradeEditor: {
       titleNew: "Neue Note",

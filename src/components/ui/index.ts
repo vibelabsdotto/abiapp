@@ -50,3 +50,4 @@ export {
 } from "./subjects";
 export { subjectTile } from "./subjectPalette";
 export { useSubjectVisualResolver, type SubjectLike } from "./useSubjectVisual";
+export { spokenPoints, spokenPointsWithGrade } from "./spokenPoints";

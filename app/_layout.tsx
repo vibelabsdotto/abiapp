@@ -16,7 +16,6 @@ import {
   DefaultTheme,
   Stack,
   ThemeProvider,
-  usePathname,
   useSegments,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -43,8 +42,8 @@ import { Radius } from "@constants/typography";
 import { AppProvider } from "@providers/AppProvider";
 import {
   initializeAnalytics,
-  trackScreenView,
-} from "@services/analytics/analyticsService";
+  trackScreen,
+} from "@services/analytics/appEvents";
 import { useLanguageStore } from "@stores/languageStore";
 import { selectIsOnboarded, useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
@@ -186,22 +185,15 @@ function useToastConfig(): ToastConfig {
 }
 
 function AnalyticsAutoCapture() {
-  const pathname = usePathname();
-  const segments = useSegments();
+  const route = useSegments().join("/");
 
   useEffect(() => {
     void initializeAnalytics();
   }, []);
 
   useEffect(() => {
-    if (!pathname) return;
-    const screenName =
-      segments
-        .filter((segment) => !segment.startsWith("("))
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(" - ") || "Home";
-    void trackScreenView(screenName, pathname);
-  }, [pathname, segments]);
+    if (route) trackScreen(route);
+  }, [route]);
 
   return null;
 }
@@ -270,12 +262,12 @@ function RootLayoutNav() {
       >
         <Stack.Protected guard={isOnboarded}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          {/* Setup flows reused from settings: subjects, levels, exams (lane: setup). */}
+          {/* Setup flows reused from settings: subjects, levels, exams. */}
           <Stack.Screen
             name="setup"
             options={{ presentation: "modal", headerShown: false }}
           />
-          {/* Editors (lane: subjects). Screens set their own header buttons. */}
+          {/* Editors. Screens set their own header buttons. */}
           <Stack.Screen
             name="grade-editor"
             options={{ presentation: "modal" }}
@@ -288,7 +280,7 @@ function RootLayoutNav() {
             name="subject-editor"
             options={{ presentation: "modal" }}
           />
-          {/* Editors and info (lane: overview). */}
+          {/* Editors and info. */}
           <Stack.Screen
             name="exam-editor"
             options={{ presentation: "modal" }}
@@ -303,7 +295,7 @@ function RootLayoutNav() {
             options={{ presentation: "modal", headerShown: true }}
           />
         </Stack.Protected>
-        {/* First-run flow (lane: setup), only without a finished onboarding. */}
+        {/* First-run flow, only without a finished onboarding. */}
         <Stack.Protected guard={!isOnboarded}>
           <Stack.Screen
             name="(onboarding)"

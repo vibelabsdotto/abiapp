@@ -15,91 +15,21 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
-import type { AbiturEvaluation, EngineInput, ExamSlot } from "@domain/model";
+import { evaluate } from "@domain/index";
 import { defaultCombine } from "../../engine/blockII";
 import { SL_2027 } from "../SL";
+import {
+  build,
+  all,
+  _,
+  replace,
+  codes,
+  outcome,
+  type Spec,
+  type Exams,
+} from "./build";
 
-// ---------------------------------------------------------------------------
-// Input builder: one subject per catalog key, official half-year points
-// (null = not taken), exam points as main or [main, oral].
-// ---------------------------------------------------------------------------
-
-interface Subj {
-  key: string;
-  p: (number | null)[];
-  lk?: boolean;
-  slot?: ExamSlot;
-}
-
-type Exams = Partial<Record<ExamSlot, number | [number, number]>>;
-
-function build(
-  rulesetId: string,
-  subjects: Subj[],
-  exams: Exams,
-  opts: { variant?: string; extras?: Record<string, number | null> } = {},
-): EngineInput {
-  const cat = new Map(
-    getRulesetSummary(rulesetId).catalog.map((c) => [c.key, c]),
-  );
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: subjects.map((s) => {
-      const c = cat.get(s.key);
-      if (!c) throw new Error(`unknown catalog key ${s.key}`);
-      return {
-        id: s.key,
-        catalogKey: s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lk ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: subjects.flatMap((s) =>
-      s.p.map((points, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: points !== null,
-        officialPoints: points,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(exams).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: Array.isArray(v) ? v[0] : (v as number),
-      oralPoints: Array.isArray(v) ? v[1] : null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-function outcome(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const codes = (e: AbiturEvaluation, severity: string) =>
-  e.issues.filter((i) => i.severity === severity).map((i) => i.code);
-
-const all = (n: number) => [n, n, n, n];
-const _ = null;
 const ID = "SL-2027";
-
-const replace = (subjects: Subj[], key: string, p: (number | null)[]) =>
-  subjects.map((s) => (s.key === key ? { ...s, p } : s));
 
 // ---------------------------------------------------------------------------
 // SL-2027
@@ -107,7 +37,7 @@ const replace = (subjects: Subj[], key: string, p: (number | null)[]) =>
 
 // L-Kurse Deutsch (P1) and Englisch (P2), Mathematik P3 and Biologie P4
 // written, Geschichte P5 oral (the only two-hour exam subject).
-const typical: Subj[] = [
+const typical: Spec[] = [
   { key: "de", lk: true, slot: "P1", p: [11, 12, 12, 13] }, // 48
   { key: "en", lk: true, slot: "P2", p: [10, 10, 11, 11] }, // 42
   { key: "ma", slot: "P3", p: [9, 10, 9, 10] }, // 38
@@ -167,7 +97,7 @@ describe("SL-2027 Defizit-Grenzen (§ 35 Abs. 3)", () => {
   // 40 courses taken, all included. Mathematik 4, 4, 4, 4, Geschichte (P5)
   // 4, 4, 10, 10 and Kunst 4, 4 (the only arts subject): 8 courses under 5
   // points, 4 of them in Kernfächern. Sum 352.
-  const base: Subj[] = [
+  const base: Spec[] = [
     { key: "de", lk: true, slot: "P1", p: all(10) },
     { key: "en", lk: true, slot: "P2", p: all(10) },
     { key: "ma", slot: "P3", p: all(4) },
@@ -205,7 +135,7 @@ describe("SL-2027 Defizit-Grenzen (§ 35 Abs. 3)", () => {
   // so not the Pflichtfremdsprache and no Kernfach (§ 17 Abs. 2 Nr. 1):
   // 8 courses under 5 in total. Sum 22 + 40 + 16 + 40 + 40 + 34 + 20 + 20 +
   // 40 + 40 + 40 = 352.
-  const core: Subj[] = [
+  const core: Spec[] = [
     { key: "de", lk: true, slot: "P1", p: [4, 4, 4, 10] },
     { key: "en", lk: true, slot: "P2", p: all(10) },
     { key: "ma", slot: "P3", p: all(4) },
@@ -349,7 +279,7 @@ describe("SL-2027 Bestehensregeln Block II (§ 51)", () => {
   // Mathematik, both at 4 (16). Biologie-LK, Chemie and Geschichte reach 20
   // or more, but no Kernfach does → not passed (§ 51 Nr. 2).
   it("needs one Kernfach exam with 20 points", () => {
-    const subjects: Subj[] = [
+    const subjects: Spec[] = [
       { key: "de", lk: true, slot: "P1", p: all(10) },
       { key: "bio", lk: true, slot: "P2", p: all(10) },
       { key: "ma", slot: "P3", p: all(10) },
@@ -402,7 +332,7 @@ describe("SL-2030 Entwurf nach KMK-Rahmen", () => {
   // P = 2 · 48 + 2 · 52 + 44 + 36 + 200 = 480, S = 36 + 8 = 44.
   // E_I = 480 · 40 / 44 = 436,4 → 436. E_II = 5 · (12 + 13 + 11 + 9) = 225.
   // Total 661 → 1,9.
-  const subjects: Subj[] = [
+  const subjects: Spec[] = [
     { key: "de", lk: true, slot: "P1", p: all(12) },
     { key: "ma", lk: true, slot: "P2", p: all(13) },
     { key: "en", lk: true, slot: "P3", p: all(11) },

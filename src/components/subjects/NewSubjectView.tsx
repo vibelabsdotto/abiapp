@@ -25,7 +25,7 @@ import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
 import { Type } from "@constants/typography";
 
-import { savedFeedback, showError } from "./actions";
+import { savedFeedback, showSaveError } from "./actions";
 import { ChoiceChips, EditorScroll, FormTextInput } from "./form";
 import { ModalHeader } from "@components/common/ModalHeader";
 import { FIELD_ORDER, TAGS_BY_FIELD, suggestFromName } from "./subjectSuggest";
@@ -102,7 +102,7 @@ const CatalogPicker = ({
       close(true);
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
@@ -128,7 +128,7 @@ const CatalogPicker = ({
       onCustom();
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
@@ -285,7 +285,7 @@ const CustomSubjectForm = ({ ruleset }: { ruleset: RulesetSummary | null }) => {
       close(true);
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 

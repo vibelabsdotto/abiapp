@@ -16,79 +16,15 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary, validateSetup } from "@domain/index";
-import type {
-  AbiturEvaluation,
-  EngineInput,
-  ExamSlot,
-  SubjectField,
-} from "@domain/model";
-
-type Points = number | null; // null = course not taken
-
-interface Spec {
-  key: string;
-  lf?: boolean;
-  slot?: ExamSlot;
-  hy: Points[];
-  /** Custom subject outside the catalog (e.g. a Zusatzkurs). */
-  custom?: { name: string; field: SubjectField };
-}
-
-interface Opts {
-  exams?: Partial<Record<ExamSlot, [number, number?]>>;
-  variant?: string;
-}
-
-function build(rulesetId: string, specs: Spec[], opts: Opts = {}): EngineInput {
-  const cat = getRulesetSummary(rulesetId).catalog;
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: specs.map((s) => {
-      const c = s.custom
-        ? { ...s.custom, tags: ["other" as const] }
-        : cat.find((x) => x.key === s.key);
-      if (!c) throw new Error(`catalog key ${s.key} missing in ${rulesetId}`);
-      return {
-        id: s.key,
-        catalogKey: s.custom ? null : s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lf ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: specs.flatMap((s) =>
-      s.hy.map((p, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: p !== null,
-        officialPoints: p,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(opts.exams ?? {}).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: v[0],
-      oralPoints: v[1] ?? null,
-    })),
-    extras: {},
-  };
-}
-
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
-
-const included = (e: AbiturEvaluation, key: string) =>
-  e.blockI.included
-    .filter((c) => c.subjectId === key)
-    .map((c) => c.halfYear)
-    .sort();
+import { evaluate, validateSetup } from "@domain/index";
+import {
+  build,
+  check,
+  included,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 const IDS = ["BE-2027", "BE-2028", "BE-2029", "BE-2030"];
 
@@ -99,24 +35,24 @@ const IDS = ["BE-2027", "BE-2028", "BE-2029", "BE-2030"];
 // exam subjects and results below are added to complete the example.
 // ---------------------------------------------------------------------------
 const MUSTER: Spec[] = [
-  { key: "de", slot: "P3", hy: [11, 11, 10, 11] },
-  { key: "en", lf: true, slot: "P1", hy: [8, 7, 6, 8] },
-  { key: "la", hy: [7, 7, 6, 5] },
-  { key: "mu", hy: [7, 8, null, null] },
-  { key: "ku", lf: true, slot: "P2", hy: [13, 13, 11, 14] },
-  { key: "ge", hy: [5, 5, null, null] },
-  { key: "pol", slot: "P5", hy: [8, 8, 6, 7] },
-  { key: "ma", slot: "P4", hy: [7, 6, 5, 6] },
-  { key: "ph", hy: [5, 5, null, null] },
-  { key: "bio", hy: [10, 8, 5, 10] },
-  { key: "sp", hy: [12, 8, 10, 9] },
+  { key: "de", slot: "P3", p: [11, 11, 10, 11] },
+  { key: "en", lk: true, slot: "P1", p: [8, 7, 6, 8] },
+  { key: "la", p: [7, 7, 6, 5] },
+  { key: "mu", p: [7, 8, null, null] },
+  { key: "ku", lk: true, slot: "P2", p: [13, 13, 11, 14] },
+  { key: "ge", p: [5, 5, null, null] },
+  { key: "pol", slot: "P5", p: [8, 8, 6, 7] },
+  { key: "ma", slot: "P4", p: [7, 6, 5, 6] },
+  { key: "ph", p: [5, 5, null, null] },
+  { key: "bio", p: [10, 8, 5, 10] },
+  { key: "sp", p: [12, 8, 10, 9] },
   {
     key: "stub",
     custom: { name: "Studium und Beruf", field: "other" },
-    hy: [13, 14, null, null],
+    p: [13, 14, null, null],
   },
 ];
-const MUSTER_EXAMS: Opts["exams"] = {
+const MUSTER_EXAMS: Exams = {
   P1: [8],
   P2: [13],
   P3: [11, 8],
@@ -125,7 +61,7 @@ const MUSTER_EXAMS: Opts["exams"] = {
 };
 
 describe.each(IDS)("%s Zeugnis-Muster (Broschüre S. 40)", (id) => {
-  const e = evaluate(build(id, MUSTER, { exams: MUSTER_EXAMS }));
+  const e = evaluate(build(id, MUSTER, MUSTER_EXAMS));
 
   it("Block I: 2 · 80 + 198 = 358", () => {
     // LK: Englisch 8+7+6+8 = 29, Kunst 13+13+11+14 = 51 → 2 · 80 = 160.
@@ -172,16 +108,16 @@ describe.each(IDS)("%s Zeugnis-Muster (Broschüre S. 40)", (id) => {
 // ---------------------------------------------------------------------------
 function limits(de: Points[], bio: Points[], ma: Points[]): Spec[] {
   return [
-    { key: "de", lf: true, slot: "P1", hy: de },
-    { key: "bio", lf: true, slot: "P2", hy: bio },
-    { key: "en", slot: "P3", hy: [4, 4, 8, 8] },
-    { key: "ma", slot: "P4", hy: ma },
-    { key: "ge", slot: "P5", hy: [4, 8, 8, 8] },
-    { key: "pol", hy: [null, null, 8, 8] },
-    { key: "ph", hy: [8, 8, null, null] },
-    { key: "mu", hy: [8, 8, null, null] },
-    { key: "ku", hy: [8, 8, null, null] },
-    { key: "sp", hy: [8, 8, 8, 8] },
+    { key: "de", lk: true, slot: "P1", p: de },
+    { key: "bio", lk: true, slot: "P2", p: bio },
+    { key: "en", slot: "P3", p: [4, 4, 8, 8] },
+    { key: "ma", slot: "P4", p: ma },
+    { key: "ge", slot: "P5", p: [4, 8, 8, 8] },
+    { key: "pol", p: [null, null, 8, 8] },
+    { key: "ph", p: [8, 8, null, null] },
+    { key: "mu", p: [8, 8, null, null] },
+    { key: "ku", p: [8, 8, null, null] },
+    { key: "sp", p: [8, 8, 8, 8] },
   ];
 }
 const TEN: Points[] = [10, 10, 10, 10];
@@ -233,9 +169,9 @@ describe.each(IDS)("%s admission limits", (id) => {
     // With a fixed pair (12 + 4) there would be 5 GK deficits.
     const specs = limits(TEN, [4, 4, 10, 10], [4, 8, 8, 8]).map((s) =>
       s.key === "mu"
-        ? { ...s, hy: [12, 4, 4, 12] }
+        ? { ...s, p: [12, 4, 4, 12] }
         : s.key === "ku"
-          ? { key: "geo", hy: [8, 8, null, null] }
+          ? { key: "geo", p: [8, 8, null, null] }
           : s,
     );
     const e = evaluate(build(id, specs));
@@ -254,7 +190,7 @@ describe.each(IDS)("%s admission limits", (id) => {
     const ok = evaluate(
       build(id, [
         ...limits(TEN, [4, 4, 10, 10], [4, 8, 8, 8]),
-        { key: "la", hy: [0, null, null, null] },
+        { key: "la", p: [0, null, null, null] },
       ]),
     );
     expect(ok.blockI.admitted).toBe(true);
@@ -273,16 +209,16 @@ describe.each(IDS)("%s admission limits", (id) => {
 // ---------------------------------------------------------------------------
 function newLanguage(en: Points[], es: Points[]): Spec[] {
   return [
-    { key: "de", lf: true, slot: "P1", hy: TEN },
-    { key: "ma", lf: true, slot: "P2", hy: TEN },
-    { key: "ph", slot: "P3", hy: [9, 9, 9, 9] },
-    { key: "ge", slot: "P4", hy: [9, 9, 9, 9] },
-    { key: "pol", hy: [null, null, 9, 9] },
-    { key: "inf", slot: "P5", hy: [9, 9, 9, 9] },
-    { key: "en", hy: en },
-    { key: "fs_new", hy: es },
-    { key: "sp", hy: [8, 8, 8, 8] },
-    { key: "ku", hy: [7, 7, 7, 7] },
+    { key: "de", lk: true, slot: "P1", p: TEN },
+    { key: "ma", lk: true, slot: "P2", p: TEN },
+    { key: "ph", slot: "P3", p: [9, 9, 9, 9] },
+    { key: "ge", slot: "P4", p: [9, 9, 9, 9] },
+    { key: "pol", p: [null, null, 9, 9] },
+    { key: "inf", slot: "P5", p: [9, 9, 9, 9] },
+    { key: "en", p: en },
+    { key: "fs_new", p: es },
+    { key: "sp", p: [8, 8, 8, 8] },
+    { key: "ku", p: [7, 7, 7, 7] },
   ];
 }
 
@@ -317,10 +253,7 @@ describe.each(IDS)("%s neu begonnene Fremdsprache", (id) => {
 describe("BE fifth exam component (§ 44, § 49 Abs. 12)", () => {
   const bll = (id: string) =>
     evaluate(
-      build(id, MUSTER, {
-        variant: "bll",
-        exams: { ...MUSTER_EXAMS, P5: [13, 8] },
-      }),
+      build(id, MUSTER, { ...MUSTER_EXAMS, P5: [13, 8] }, { variant: "bll" }),
     );
 
   it("BE-2027 (old § 44): BLL (3 · 13 + 8) / 4 = 11,75 → 12 → 48", () => {
@@ -343,8 +276,7 @@ describe("BE fifth exam component (§ 44, § 49 Abs. 12)", () => {
 });
 
 describe.each(IDS)("%s Block II minimum conditions", (id) => {
-  const run = (exams: Opts["exams"]) =>
-    evaluate(build(id, MUSTER, { exams })).blockII;
+  const run = (exams: Exams) => evaluate(build(id, MUSTER, exams)).blockII;
 
   it("no written exam with 5 points: not passed (§ 42 Abs. 2 Nr. 2)", () => {
     // 16 + 16 + 16 + 60 + 60 = 168 ≥ 100, but every written exam has 4

@@ -2,7 +2,7 @@
 // ruleset extra (`?extra=seminar_paper`). Points picker, optional
 // supplementary oral exam, live preview through the engine, remove.
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Platform,
@@ -38,6 +38,7 @@ import {
 } from "@components/overview/feedback";
 import { useAbiturData } from "@components/overview/useAbiturData";
 import type { ExamSlot } from "@domain/model";
+import { examVariantOf } from "@hooks/useRuleset";
 import { useTranslation } from "@locales/index";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useExamStore } from "@stores/examStore";
@@ -69,10 +70,7 @@ export default function ExamEditorScreen() {
     params.slot && SLOTS.includes(params.slot)
       ? (params.slot as ExamSlot)
       : null;
-  const variantId = input?.examVariantId ?? ruleset?.examVariants[0]?.id;
-  const variant =
-    ruleset?.examVariants.find((option) => option.id === variantId) ??
-    ruleset?.examVariants[0];
+  const variant = examVariantOf(ruleset, input?.examVariantId);
   const info = slot
     ? variant?.components.find((component) => component.slot === slot)
     : undefined;
@@ -80,11 +78,15 @@ export default function ExamEditorScreen() {
   const extraInfo = extraId
     ? ruleset?.extraInputs.find((extra) => extra.id === extraId)
     : undefined;
-  const target: ExamTarget | null = extraId
-    ? { kind: "extra", slot, extraId }
-    : slot && info
-      ? { kind: "slot", slot, extraId: null }
-      : null;
+  const target = useMemo<ExamTarget | null>(
+    () =>
+      extraId
+        ? { kind: "extra", slot, extraId }
+        : slot && info
+          ? { kind: "slot", slot, extraId: null }
+          : null,
+    [extraId, slot, info],
+  );
 
   const stored = results.find((result) => result.slot === slot);
   const initialMain = extraId
@@ -114,9 +116,13 @@ export default function ExamEditorScreen() {
     !extraId && info !== undefined && info.requiresSubject !== false;
   const component = evaluation?.blockII.components.find((c) => c.slot === slot);
 
-  // evaluate() takes a few milliseconds; recomputing per tap is fine.
-  const preview =
-    input && target ? previewEvaluation(input, target, main, oralValue) : null;
+  const preview = useMemo(
+    () =>
+      input && target
+        ? previewEvaluation(input, target, main, oralValue)
+        : null,
+    [input, target, main, oralValue],
+  );
 
   const title = extraInfo
     ? t("examEditor.extraTitle")

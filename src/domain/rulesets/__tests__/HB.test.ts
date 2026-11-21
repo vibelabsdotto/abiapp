@@ -15,91 +15,21 @@
 
 import { describe, expect, it } from "vitest";
 
-import { evaluate, getRulesetSummary } from "@domain/index";
-import type { AbiturEvaluation, EngineInput, ExamSlot } from "@domain/model";
+import { evaluate } from "@domain/index";
 import { defaultCombine } from "../../engine/blockII";
 import { HB_2027 } from "../HB";
+import {
+  build,
+  all,
+  _,
+  replace,
+  errors,
+  outcome,
+  type Spec,
+  type Exams,
+} from "./build";
 
-// ---------------------------------------------------------------------------
-// Input builder: one subject per catalog key, official half-year points
-// (null = not taken), exam points as main or [main, oral].
-// ---------------------------------------------------------------------------
-
-interface Subj {
-  key: string;
-  p: (number | null)[];
-  lk?: boolean;
-  slot?: ExamSlot;
-}
-
-type Exams = Partial<Record<ExamSlot, number | [number, number]>>;
-
-function build(
-  rulesetId: string,
-  subjects: Subj[],
-  exams: Exams,
-  opts: { variant?: string; extras?: Record<string, number | null> } = {},
-): EngineInput {
-  const cat = new Map(
-    getRulesetSummary(rulesetId).catalog.map((c) => [c.key, c]),
-  );
-  return {
-    rulesetId,
-    examVariantId: opts.variant ?? null,
-    subjects: subjects.map((s) => {
-      const c = cat.get(s.key);
-      if (!c) throw new Error(`unknown catalog key ${s.key}`);
-      return {
-        id: s.key,
-        catalogKey: s.key,
-        name: c.name,
-        field: c.field,
-        tags: c.tags,
-        level: s.lk ? "elevated" : "basic",
-        examSlot: s.slot ?? null,
-        examWeightPercent: 50,
-      };
-    }),
-    courses: subjects.flatMap((s) =>
-      s.p.map((points, halfYear) => ({
-        subjectId: s.key,
-        halfYear,
-        taken: points !== null,
-        officialPoints: points,
-        inclusion: "auto" as const,
-        grades: [],
-        targetPoints: null,
-      })),
-    ),
-    exams: Object.entries(exams).map(([slot, v]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: Array.isArray(v) ? v[0] : (v as number),
-      oralPoints: Array.isArray(v) ? v[1] : null,
-    })),
-    extras: opts.extras ?? {},
-  };
-}
-
-function outcome(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-
-const all = (n: number) => [n, n, n, n];
-const _ = null;
 const ID = "HB-2027";
-
-const replace = (subjects: Subj[], key: string, p: (number | null)[]) =>
-  subjects.map((s) => (s.key === key ? { ...s, p } : s));
 
 // ---------------------------------------------------------------------------
 // HB-2027
@@ -107,7 +37,7 @@ const replace = (subjects: Subj[], key: string, p: (number | null)[]) =>
 
 // LK Mathematik (P1) and Englisch (P2), Geschichte P3 written, Biologie P4
 // oral, Projektarbeit 12.
-const typical: Subj[] = [
+const typical: Spec[] = [
   { key: "ma", lk: true, slot: "P1", p: [12, 12, 13, 13] },
   { key: "en", lk: true, slot: "P2", p: [10, 11, 11, 12] },
   { key: "de", p: [9, 9, 10, 10] }, // 38
@@ -164,7 +94,7 @@ describe("HB-2027 Defizit-Grenzen (§ 8 Abs. 1 Nr. 1)", () => {
   // Projektarbeit with 4 points does not count (only courses of a and b).
   // LK Ma 8 + 8 + 20 + 10 = 46, En 70; GK De 28 + Ge 28 + Bio 40 + Ku 20 +
   // ten 10s = 216; Projektarbeit 8 → Block I = 340.
-  const base: Subj[] = [
+  const base: Spec[] = [
     { key: "ma", lk: true, slot: "P1", p: [4, 4, 10, 10] },
     { key: "en", lk: true, slot: "P2", p: all(10) },
     { key: "de", p: [4, 4, 10, 10] },
@@ -414,7 +344,7 @@ describe("HB-2030 nach Verordnungsentwurf", () => {
   // LK all doubled: 2 · 50 + 2 · 44 = 188. Projektkurs 25.
   // P = 279 + 188 + 25 = 492, S = 24 + 16 + 2 = 42.
   // E_I = 492 · 40 / 42 = 468,6 → 469. E_II = 230, total 699 → 1,7.
-  const subjects2030: Subj[] = [
+  const subjects2030: Spec[] = [
     ...typical,
     { key: "projekt", p: [12, 13, _, _] },
   ];
@@ -441,7 +371,7 @@ describe("HB-2030 nach Verordnungsentwurf", () => {
   // = 136 + 222 + 14 = 372 → 372 · 40 / 42 = 354,3 → 354.
   // Projektkurs 4, 4: 7 → rejected, P = 366 → 348,6 → 349.
   it("counts the Projektkurs for the 6-deficit limit", () => {
-    const weak: Subj[] = [
+    const weak: Spec[] = [
       { key: "ma", lk: true, slot: "P1", p: [4, 4, 10, 10] },
       { key: "en", lk: true, slot: "P2", p: all(10) },
       { key: "de", p: [4, 4, 10, 10] },

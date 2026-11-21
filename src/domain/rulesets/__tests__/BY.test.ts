@@ -13,127 +13,47 @@
 
 import { describe, expect, it } from "vitest";
 
+import { evaluate, halfYearPrognosis, requiredNextGrade } from "@domain/index";
+import type { EngineGrade } from "@domain/model";
 import {
-  evaluate,
-  getRulesetSummary,
-  halfYearPrognosis,
-  requiredNextGrade,
-} from "@domain/index";
-import type {
-  AbiturEvaluation,
-  CourseLevel,
-  EngineGrade,
-  EngineInput,
-  EngineSubject,
-  ExamSlot,
-} from "@domain/model";
+  build,
+  withPoints,
+  check,
+  count,
+  errors,
+  summary,
+  type Points,
+  type Spec,
+  type Exams,
+} from "./build";
 
 const RS = "BY-G9-2027";
-
-interface Sub {
-  key: string;
-  /** Official points per half-year 12/1 … 13/2, null = not taken. */
-  pts: (number | null)[];
-  level?: CourseLevel;
-  slot?: ExamSlot;
-  custom?: Pick<EngineSubject, "name" | "field" | "tags">;
-}
-
-function build(
-  subs: Sub[],
-  exams: Partial<Record<ExamSlot, [number, number?]>>,
-  extras: Record<string, number | null>,
-): EngineInput {
-  const cat = new Map(getRulesetSummary(RS).catalog.map((c) => [c.key, c]));
-  const subjects: EngineSubject[] = subs.map((s) => {
-    const c = cat.get(s.key);
-    const base = s.custom ?? c;
-    if (!base) throw new Error(`unknown subject ${s.key}`);
-    return {
-      id: s.key,
-      catalogKey: s.custom ? null : s.key,
-      name: base.name,
-      field: base.field,
-      tags: base.tags,
-      level: s.level ?? "basic",
-      examSlot: s.slot ?? null,
-      examWeightPercent: 50,
-    };
-  });
-  return {
-    rulesetId: RS,
-    examVariantId: null,
-    subjects,
-    courses: subs.flatMap((s) =>
-      s.pts.flatMap((p, halfYear) =>
-        p === null
-          ? []
-          : [
-              {
-                subjectId: s.key,
-                halfYear,
-                taken: true,
-                officialPoints: p,
-                inclusion: "auto" as const,
-                grades: [],
-                targetPoints: null,
-              },
-            ],
-      ),
-    ),
-    exams: Object.entries(exams).map(([slot, [main, oral]]) => ({
-      slot: slot as ExamSlot,
-      mainPoints: main,
-      oralPoints: oral ?? null,
-    })),
-    extras,
-  };
-}
-
-function summary(e: AbiturEvaluation) {
-  return {
-    blockI: e.blockI.points,
-    blockII: e.blockII.points,
-    total: e.total.points,
-    grade: e.total.gradeTenths,
-    deficits: e.blockI.deficits.total,
-    admitted: e.blockI.admitted,
-    passed: e.total.passed,
-  };
-}
-
-const count = (e: AbiturEvaluation, id: string) =>
-  e.blockI.included.filter((c) => c.subjectId === id).length;
-const errors = (e: AbiturEvaluation) =>
-  e.issues.filter((i) => i.severity === "error").map((i) => i.code);
-const check = (e: AbiturEvaluation, id: string) =>
-  [...e.blockI.checks, ...e.blockII.checks].find((c) => c.id === id)?.passed;
 
 /**
  * Typical student: LF Englisch, exams D (P1), M (P2), E (P3), Bio (P4),
  * Geo (P5), second NW Chemie, PuG only in 12, Geo continued in 13.
  */
-function typical(over: Partial<Record<string, (number | null)[]>> = {}) {
-  const s: Sub[] = [
-    { key: "de", level: "elevated", slot: "P1", pts: [10, 11, 12, 11] },
-    { key: "ma", level: "elevated", slot: "P2", pts: [9, 9, 10, 8] },
-    { key: "en", level: "elevated", slot: "P3", pts: [13, 12, 13, 14] },
-    { key: "bio", slot: "P4", pts: [8, 9, 7, 8] },
-    { key: "geo", slot: "P5", pts: [11, 10, 12, 11] },
-    { key: "ch", pts: [6, 7, 5, 9] },
-    { key: "rel_kath", pts: [12, 12, 13, 14] },
-    { key: "ge", pts: [7, 8, 9, 10] },
-    { key: "pol", pts: [9, 11, null, null] },
-    { key: "ku", pts: [13, 13, 14, 15] },
-    { key: "sp", pts: [15, 15, 14, 15] },
-    { key: "w_seminar", pts: [12, 13, null, null] },
+function typical(over: Partial<Record<string, Points[]>> = {}) {
+  const s: Spec[] = [
+    { key: "de", lk: true, slot: "P1", p: [10, 11, 12, 11] },
+    { key: "ma", lk: true, slot: "P2", p: [9, 9, 10, 8] },
+    { key: "en", lk: true, slot: "P3", p: [13, 12, 13, 14] },
+    { key: "bio", slot: "P4", p: [8, 9, 7, 8] },
+    { key: "geo", slot: "P5", p: [11, 10, 12, 11] },
+    { key: "ch", p: [6, 7, 5, 9] },
+    { key: "rel_kath", p: [12, 12, 13, 14] },
+    { key: "ge", p: [7, 8, 9, 10] },
+    { key: "pol", p: [9, 11, null, null] },
+    { key: "ku", p: [13, 13, 14, 15] },
+    { key: "sp", p: [15, 15, 14, 15] },
+    { key: "w_seminar", p: [12, 13, null, null] },
   ];
-  return s.map((x) => (over[x.key] ? { ...x, pts: over[x.key] ?? x.pts } : x));
+  return withPoints(s, over);
 }
 // Block II of the typical student:
 // P1 De 9 → 36; P2 Ma 7 + Zusatzprüfung 9 → (2·7 + 9)/3 · 4 = 92/3 = 30,67 → 31;
 // P3 En 12 → 48; P4 Bio 10 → 40; P5 Geo 11 → 44. Sum 199.
-const TYPICAL_EXAMS: Partial<Record<ExamSlot, [number, number?]>> = {
+const TYPICAL_EXAMS: Exams = {
   P1: [9],
   P2: [7, 9],
   P3: [12],
@@ -155,7 +75,9 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // dropping Ge instead: 191).
     // E_I = 208 + 25 + 23 + 193 = 449 (S = 40, so E_I = P).
     // Total 449 + 199 = 648 → Anlage 13: 660–643 = 2,0.
-    const e = evaluate(build(typical(), TYPICAL_EXAMS, SEMINAR));
+    const e = evaluate(
+      build(RS, typical(), TYPICAL_EXAMS, { extras: SEMINAR }),
+    );
     expect(summary(e)).toEqual({
       blockI: 449,
       blockII: 199,
@@ -188,23 +110,24 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // Block II: 8·4 + 9·4 + 10·4 + 11·4 + 12·4 = 200. Total 612 → 2,2.
     const e = evaluate(
       build(
+        RS,
         [
-          { key: "de", level: "elevated", slot: "P1", pts: [10, 10, 10, 10] },
-          { key: "ma", level: "elevated", slot: "P2", pts: [10, 10, 10, 10] },
-          { key: "wr", slot: "P3", pts: [9, 9, 9, 9] },
-          { key: "es", slot: "P4", pts: [10, 10, 10, 10] },
-          { key: "sp", level: "elevated", slot: "P5", pts: [12, 12, 12, 12] },
-          { key: "la", pts: [11, 12, null, null] },
-          { key: "vk_de", pts: [8, 9, null, null] },
-          { key: "ch", pts: [8, 8, 8, 8] },
-          { key: "ge", pts: [9, 10, 9, 10] },
-          { key: "pol", pts: [10, 11, null, null] },
-          { key: "eth", pts: [6, 7, 13, 14] },
-          { key: "ku", pts: [11, 12, 12, 11] },
-          { key: "w_seminar", pts: [10, 11, null, null] },
+          { key: "de", lk: true, slot: "P1", p: [10, 10, 10, 10] },
+          { key: "ma", lk: true, slot: "P2", p: [10, 10, 10, 10] },
+          { key: "wr", slot: "P3", p: [9, 9, 9, 9] },
+          { key: "es", slot: "P4", p: [10, 10, 10, 10] },
+          { key: "sp", lk: true, slot: "P5", p: [12, 12, 12, 12] },
+          { key: "la", p: [11, 12, null, null] },
+          { key: "vk_de", p: [8, 9, null, null] },
+          { key: "ch", p: [8, 8, 8, 8] },
+          { key: "ge", p: [9, 10, 9, 10] },
+          { key: "pol", p: [10, 11, null, null] },
+          { key: "eth", p: [6, 7, 13, 14] },
+          { key: "ku", p: [11, 12, 12, 11] },
+          { key: "w_seminar", p: [10, 11, null, null] },
         ],
         { P1: [8], P2: [9], P3: [10], P4: [11], P5: [12] },
-        { seminar_paper: 10, seminar_talk: 12 },
+        { extras: { seminar_paper: 10, seminar_talk: 12 } },
       ),
     );
     expect(summary(e)).toEqual({
@@ -231,9 +154,10 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // Total 413 + 199 = 612 → 2,2 (624–607).
     const ok = evaluate(
       build(
+        RS,
         typical({ ma: [4, 4, 4, 4], bio: [4, 4, 4, 4] }),
         TYPICAL_EXAMS,
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(ok)).toEqual({
@@ -248,9 +172,10 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // One more forced deficit: Geo 12/1 4 instead of 11 → 413 − 7 = 406.
     const bad = evaluate(
       build(
+        RS,
         typical({ ma: [4, 4, 4, 4], bio: [4, 4, 4, 4], geo: [4, 10, 12, 11] }),
         TYPICAL_EXAMS,
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(bad)).toEqual({
@@ -271,7 +196,9 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // Seminararbeit 218 → E_I = 177 + 218 + 9 = 404.
     const subs = typical({ ma: [4, 4, 4, 4], bio: [4, 4, 4, 9] });
     const ok = evaluate(
-      build(subs, TYPICAL_EXAMS, { seminar_paper: 5, seminar_talk: 4 }),
+      build(RS, subs, TYPICAL_EXAMS, {
+        extras: { seminar_paper: 5, seminar_talk: 4 },
+      }),
     );
     expect(summary(ok)).toMatchObject({
       blockI: 404,
@@ -280,7 +207,9 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     });
     // 4 / 4: 12 · 2/3 = 8 < 9 → two deficits → 9 → not admitted.
     const bad = evaluate(
-      build(subs, TYPICAL_EXAMS, { seminar_paper: 4, seminar_talk: 4 }),
+      build(RS, subs, TYPICAL_EXAMS, {
+        extras: { seminar_paper: 4, seminar_talk: 4 },
+      }),
     );
     expect(summary(bad)).toMatchObject({
       blockI: 403,
@@ -290,7 +219,9 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     });
     // Prüfungsgespräch with 0 points: not admitted (§ 44 Abs. 2 Nr. 6).
     const zero = evaluate(
-      build(typical(), TYPICAL_EXAMS, { seminar_paper: 15, seminar_talk: 0 }),
+      build(RS, typical(), TYPICAL_EXAMS, {
+        extras: { seminar_paper: 15, seminar_talk: 0 },
+      }),
     );
     expect(check(zero, "block1.seminar")).toBe(false);
     expect(zero.blockI.admitted).toBe(false);
@@ -310,22 +241,23 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // Block II: 36 + 40 + 48 + 32 + 44 = 200 → 645 → 2,0 (660–643).
     const e = evaluate(
       build(
+        RS,
         [
-          { key: "de", level: "elevated", slot: "P1", pts: [10, 11, 12, 11] },
-          { key: "ma", level: "elevated", slot: "P2", pts: [9, 9, 10, 8] },
-          { key: "en", level: "elevated", slot: "P3", pts: [13, 12, 13, 14] },
-          { key: "ge", slot: "P4", pts: [7, 8, 9, 10] },
-          { key: "geo", slot: "P5", pts: [11, 10, 12, 11] },
-          { key: "ph", pts: [12, 11, 10, 1] },
-          { key: "inf", pts: [6, 7, 5, 9] },
-          { key: "rel_kath", pts: [12, 12, 13, 14] },
-          { key: "pol", pts: [9, 11, null, null] },
-          { key: "ku", pts: [13, 13, 14, 15] },
-          { key: "sp", pts: [15, 15, 14, 15] },
-          { key: "w_seminar", pts: [12, 13, null, null] },
+          { key: "de", lk: true, slot: "P1", p: [10, 11, 12, 11] },
+          { key: "ma", lk: true, slot: "P2", p: [9, 9, 10, 8] },
+          { key: "en", lk: true, slot: "P3", p: [13, 12, 13, 14] },
+          { key: "ge", slot: "P4", p: [7, 8, 9, 10] },
+          { key: "geo", slot: "P5", p: [11, 10, 12, 11] },
+          { key: "ph", p: [12, 11, 10, 1] },
+          { key: "inf", p: [6, 7, 5, 9] },
+          { key: "rel_kath", p: [12, 12, 13, 14] },
+          { key: "pol", p: [9, 11, null, null] },
+          { key: "ku", p: [13, 13, 14, 15] },
+          { key: "sp", p: [15, 15, 14, 15] },
+          { key: "w_seminar", p: [12, 13, null, null] },
         ],
         { P1: [9], P2: [10], P3: [12], P4: [8], P5: [11] },
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(e)).toEqual({
@@ -349,7 +281,12 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // Block II 36 + 4 + 48 + 40 + 44 = 172; Kern: De 36 + Ma 4 + En 48,
     // only Ma below 16. Total 449 + 172 = 621 → 2,2 (624–607).
     const ok = evaluate(
-      build(typical(), { ...TYPICAL_EXAMS, P2: [0, 3] }, SEMINAR),
+      build(
+        RS,
+        typical(),
+        { ...TYPICAL_EXAMS, P2: [0, 3] },
+        { extras: SEMINAR },
+      ),
     );
     expect(summary(ok)).toEqual({
       blockI: 449,
@@ -362,7 +299,12 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     });
     // Zusatzprüfung 2: 2/3 · 4 = 2,67 → 3 < 4 → not passed (§ 54 Abs. 1 Nr. 3).
     const bad = evaluate(
-      build(typical(), { ...TYPICAL_EXAMS, P2: [0, 2] }, SEMINAR),
+      build(
+        RS,
+        typical(),
+        { ...TYPICAL_EXAMS, P2: [0, 2] },
+        { extras: SEMINAR },
+      ),
     );
     expect(bad.blockII.points).toBe(171);
     expect(check(bad, "block2.noneBelow")).toBe(false);
@@ -374,7 +316,12 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // Other conditions hold: 12 + 12 + 48 + 40 + 44 = 156 ≥ 100, three
     // results ≥ 20 incl. the LF, each Aufgabenfeld only once below 16.
     const e = evaluate(
-      build(typical(), { ...TYPICAL_EXAMS, P1: [3], P2: [3] }, SEMINAR),
+      build(
+        RS,
+        typical(),
+        { ...TYPICAL_EXAMS, P1: [3], P2: [3] },
+        { extras: SEMINAR },
+      ),
     );
     expect(e.blockII.points).toBe(156);
     expect(check(e, "block2.core")).toBe(false);
@@ -389,11 +336,12 @@ describe("Bayern G9 (BY-G9-2027)", () => {
     // 12/1 it would replace Ku 13 → 450). Not compulsory → still admitted.
     const extra = evaluate(
       build(
+        RS,
         [
           ...typical(),
           {
             key: "vokal",
-            pts: [14, 0, null, null],
+            p: [14, 0, null, null],
             custom: {
               name: "Vokalensemble",
               field: "language",
@@ -402,14 +350,16 @@ describe("Bayern G9 (BY-G9-2027)", () => {
           },
         ],
         TYPICAL_EXAMS,
-        SEMINAR,
+        { extras: SEMINAR },
       ),
     );
     expect(summary(extra)).toMatchObject({ blockI: 449, admitted: true });
     // Kunst 13/1 0 points: Kunst counts as not taken in 13, which breaks
     // the Belegungspflicht (§ 44 Abs. 2 Nr. 5) → not admitted.
     const ku = evaluate(
-      build(typical({ ku: [13, 13, 0, 15] }), TYPICAL_EXAMS, SEMINAR),
+      build(RS, typical({ ku: [13, 13, 0, 15] }), TYPICAL_EXAMS, {
+        extras: SEMINAR,
+      }),
     );
     expect(check(ku, "block1.zeroTaken")).toBe(false);
     expect(ku.blockI.admitted).toBe(false);
@@ -418,14 +368,14 @@ describe("Bayern G9 (BY-G9-2027)", () => {
   it("Kunst as Leistungsfach cannot be a Kolloquium subject (§ 48 Abs. 1 Satz 9 Nr. 1)", () => {
     const subs = typical().map((s) =>
       s.key === "en"
-        ? { ...s, level: "basic" as const, slot: undefined }
+        ? { ...s, lk: false, slot: undefined }
         : s.key === "ku"
-          ? { ...s, level: "elevated" as const, slot: "P5" as const }
+          ? { ...s, lk: true, slot: "P5" as const }
           : s.key === "geo"
             ? { ...s, slot: "P3" as const }
             : s,
     );
-    const e = evaluate(build(subs, TYPICAL_EXAMS, SEMINAR));
+    const e = evaluate(build(RS, subs, TYPICAL_EXAMS, { extras: SEMINAR }));
     expect(errors(e)).toContain("exam.arts.oral");
   });
 });
@@ -440,13 +390,12 @@ describe("Bayern: Halbjahresleistung is never rounded up to 1 point (GSO § 29 A
   // Schulaufgabe 1, kleine Leistungsnachweise 0, 1:1 → 0,5.
   const half = [g("exam", 1), g("other", 0)];
 
-  it("prognosis: 0,5 → 0 in Bayern, 1 elsewhere and without ruleset", () => {
+  it("prognosis: 0,5 → 0 in Bayern, 1 elsewhere", () => {
     expect(halfYearPrognosis(half, 50, RS)).toEqual({ exact: 0.5, points: 0 });
     expect(halfYearPrognosis(half, 50, "HE-2027")).toEqual({
       exact: 0.5,
       points: 1,
     });
-    expect(halfYearPrognosis(half, 50)).toEqual({ exact: 0.5, points: 1 });
     // Exactly 1,0 stays 1 (no rounding up involved).
     expect(
       halfYearPrognosis([g("exam", 1), g("other", 1)], 50, RS).points,
@@ -469,14 +418,10 @@ describe("Bayern: Halbjahresleistung is never rounded up to 1 point (GSO § 29 A
       points: 1,
       status: "reachable",
     });
-    expect(requiredNextGrade(exam0, 50, "other", 1)).toEqual({
-      points: 1,
-      status: "reachable",
-    });
   });
 
   it("prognosis and engine count the same value", () => {
-    const input = build(typical(), TYPICAL_EXAMS, SEMINAR);
+    const input = build(RS, typical(), TYPICAL_EXAMS, { extras: SEMINAR });
     const course = input.courses.find(
       (c) => c.subjectId === "ch" && c.halfYear === 3,
     );

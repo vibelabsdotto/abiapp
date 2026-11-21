@@ -79,6 +79,12 @@ export const overviewDE = {
       action: "So funktioniert es",
       dismiss: "Hinweis schließen",
     },
+    rulesetUnavailable: {
+      title: "Regelversion nicht verfügbar",
+      message:
+        "Diese App-Version kennt deine Regelversion {{id}} nicht. Aktualisiere AbiApp oder wähle eine andere Regelversion.",
+      action: "Regelversion wählen",
+    },
   },
   abitur: {
     title: "Abitur",

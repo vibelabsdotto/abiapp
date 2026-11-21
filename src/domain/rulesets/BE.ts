@@ -210,7 +210,7 @@ function requirements(ctx: RuleContext, v: Version): Requirement[] {
   }
   reqs.push({
     id: "af2",
-    label: `4 Kurse eines Fachs im Aufgabenfeld II, dazu Geschichte (2) oder ${pbName} Kurs 3 und 4`,
+    label: `4 Kurse eines Fachs im Aufgabenfeld II, dazu 2 Kurse Geschichte oder Kurs 3 und 4 in ${pbName}`,
     options: af,
   });
   // § 25 Abs. 2: Musik, Bildende Kunst oder Darstellendes Spiel, Kurs 1+2 oder 3+4.

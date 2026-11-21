@@ -19,7 +19,7 @@ import {
 import {
   deleteGradeWithUndo,
   savedFeedback,
-  showError,
+  showSaveError,
 } from "@components/subjects/actions";
 import {
   ChoiceChips,
@@ -138,7 +138,7 @@ export default function GradeEditorScreen() {
   );
 
   const preview = useMemo(() => {
-    if (!subject || draft.points === null) return null;
+    if (!subject || draft.points === null || !rulesetId) return null;
     const toEngine = (list: typeof siblings): EngineGrade[] =>
       list.map(({ id, kind, points, weight }) => ({
         id,
@@ -210,7 +210,7 @@ export default function GradeEditorScreen() {
       close(true);
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 

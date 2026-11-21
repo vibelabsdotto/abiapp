@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { getRulesetSummary } from "@domain/index";
-import type { RulesetSummary } from "@domain/model";
+import type { ExamVariantInfo, RulesetSummary } from "@domain/model";
 import { tryDomain } from "@stores/domainAccess";
 import { useProfileStore } from "@stores/profileStore";
 
@@ -27,4 +27,28 @@ const EMPTY: string[] = [];
 export function useHalfYearLabels(): string[] {
   const { ruleset } = useRuleset();
   return ruleset?.halfYears ?? EMPTY;
+}
+
+/** Exam variant the engine uses: the chosen one, else the first. */
+export function examVariantOf(
+  ruleset: RulesetSummary | null,
+  variantId: string | null | undefined,
+): ExamVariantInfo | null {
+  if (!ruleset) return null;
+  return (
+    ruleset.examVariants.find((variant) => variant.id === variantId) ??
+    ruleset.examVariants[0] ??
+    null
+  );
+}
+
+/**
+ * Version label without the state ("Abitur ab 2027" instead of
+ * "Sachsen · Abitur ab 2027") for places that show the state right above.
+ */
+export function rulesetVersionLabel(ruleset: RulesetSummary): string {
+  const prefix = `${ruleset.stateName} · `;
+  return ruleset.label.startsWith(prefix)
+    ? ruleset.label.slice(prefix.length)
+    : ruleset.label;
 }

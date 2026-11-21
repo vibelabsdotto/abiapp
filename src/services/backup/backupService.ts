@@ -9,7 +9,7 @@
 
 import Constants from "expo-constants";
 import * as DocumentPicker from "expo-document-picker";
-import { File, Paths } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 import { getRulesetSummary } from "@domain/index";
@@ -93,12 +93,25 @@ export function backupFileName(date = new Date()): string {
   )}-${pad(date.getHours())}${pad(date.getMinutes())}.json`;
 }
 
-/** Writes the backup JSON into the cache directory. */
+/** Earlier exports in the cache (they hold all grades). */
+function deleteCachedBackups(): void {
+  for (const entry of new Directory(Paths.cache).list()) {
+    if (entry instanceof File && /^abiapp-backup-.*\.json$/.test(entry.name)) {
+      entry.delete();
+    }
+  }
+}
+
+/**
+ * Writes the backup JSON into the cache directory; earlier exports there
+ * are removed, so only the file being shared stays.
+ */
 export async function writeBackupFile(
   backup?: BackupFile,
 ): Promise<{ uri: string; fileName: string; backup: BackupFile }> {
   const content = backup ?? (await createBackup());
   const fileName = backupFileName(new Date(content.exportedAt));
+  deleteCachedBackups();
   const file = new File(Paths.cache, fileName);
   file.create({ overwrite: true, intermediates: true });
   file.write(JSON.stringify(content, null, 2));
@@ -192,7 +205,10 @@ export async function pickBackupFile(): Promise<
   });
   if (picked.canceled || !picked.assets[0]) return { canceled: true };
   const asset = picked.assets[0];
-  const text = await new File(asset.uri).text();
+  // The picker copied the file into the cache; read it and drop the copy.
+  const copy = new File(asset.uri);
+  const text = await copy.text();
+  copy.delete();
   return { canceled: false, fileName: asset.name, result: parseBackup(text) };
 }
 
