@@ -53,6 +53,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
 - **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13.
 - **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
+- **MV:** MV-2027 folgt der APVO i. d. F. vom 30.04.2024 (Übergang Art. 2 Abs. 3 der VO vom 01.08.2025). Deren Volltext war bei der Prüfung im November 2026 nicht abrufbar; Berechnung (§ 43, Anlagen 4, 5, 7) wie in der geltenden Fassung angenommen, Geschichte und Politische Bildung mit 4 Pflicht-Halbjahren, Sozialkunde ohne Pflicht, BLL je zur Hälfte. Eine neu einsetzende Fremdsprache gilt immer als Pflicht nach § 6 (Q3 und Q4 einbringen).
 
 ## Bekannte Grenzen
 
