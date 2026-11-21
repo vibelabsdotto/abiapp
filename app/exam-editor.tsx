@@ -42,7 +42,13 @@ import { useTranslation } from "@locales/index";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useExamStore } from "@stores/examStore";
 import { useThemeStore } from "@stores/themeStore";
-import { FontScale, NumberType, Radius, Type } from "@constants/typography";
+import {
+  FontScale,
+  NumberType,
+  Radius,
+  Type,
+  readableContent,
+} from "@constants/typography";
 
 const SLOTS: readonly string[] = ["P1", "P2", "P3", "P4", "P5"];
 
@@ -347,7 +353,7 @@ export default function ExamEditorScreen() {
         </View>
         <ScrollView
           contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, readableContent]}
         >
           <Section
             title={mainLabel}

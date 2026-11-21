@@ -1,14 +1,15 @@
-// Overview tab: Abitur average (hero), goal, Block I/II, admission status
-// and the subjects of the current half-year.
+// Overview tab: Abitur average (hero), goal, Block I/II, admission status,
+// the subjects of the current half-year and, last, the clipping hint.
 
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { router, Stack } from "expo-router";
+import { router, Stack, type Href } from "expo-router";
 import { CircleAlert } from "lucide-react-native";
 
 import { ScreenLayout } from "@components/common";
 import { EmptyState, GradeHero } from "@components/ui";
 import { BlockTiles } from "@components/overview/BlockTiles";
+import { ClippingCard } from "@components/overview/ClippingCard";
 import { CurrentHalfYear } from "@components/overview/CurrentHalfYear";
 import { EmptyOverview } from "@components/overview/EmptyOverview";
 import { GoalLine } from "@components/overview/GoalLine";
@@ -19,6 +20,7 @@ import { minPointsForGrade } from "@domain/index";
 import { useTargetAnalysis } from "@hooks/useEvaluation";
 import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { useTranslation } from "@locales/index";
+import { useFirstGradeIntent } from "@stores/firstGradeIntent";
 import { useProfileStore } from "@stores/profileStore";
 
 export default function HomeScreen() {
@@ -30,6 +32,20 @@ export default function HomeScreen() {
   );
   const { analysis } = useTargetAnalysis();
   const { evaluation, ruleset, input } = data;
+  const pendingFirstGrade = useFirstGradeIntent((state) => state.subjectId);
+  const { currentHalfYear } = data;
+
+  // Onboarding ended with "Erste Note eintragen": open the editor once the
+  // overview is mounted (the route tree has just switched).
+  useEffect(() => {
+    if (pendingFirstGrade === null) return;
+    const subjectId = useFirstGradeIntent.getState().take();
+    if (!subjectId) return;
+    router.push({
+      pathname: "/grade-editor",
+      params: { subjectId, halfYear: String(currentHalfYear) },
+    } as Href);
+  }, [pendingFirstGrade, currentHalfYear]);
 
   const toolbar = (
     <Stack.Toolbar placement="right" tintColor={toolbarTint}>
@@ -128,6 +144,7 @@ export default function HomeScreen() {
             courses={evaluation.courses}
           />
         ) : null}
+        <ClippingCard />
       </ScreenLayout>
     </>
   );

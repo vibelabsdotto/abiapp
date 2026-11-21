@@ -50,6 +50,10 @@ export interface GradeHeroProps {
    */
   goalTenths?: number | null;
   goalPoints?: number | null;
+  /** Replaces the status label ("Prognose"), e.g. "Dein Ziel". */
+  label?: string;
+  /** Scale legend below the arch (pass, 1,0, goal). Default true. */
+  legend?: boolean;
   onPress?: () => void;
 }
 
@@ -66,6 +70,8 @@ export const GradeHero = ({
   passed = null,
   goalTenths = null,
   goalPoints = null,
+  label,
+  legend = true,
   onPress,
 }: GradeHeroProps) => {
   const colors = useThemeStore((state) => state.colors);
@@ -83,11 +89,12 @@ export const GradeHero = ({
 
   const shape = basis ?? (predicted ? "prognosis" : "official");
   const statusLabel =
-    shape === "estimate"
+    label ??
+    (shape === "estimate"
       ? t("ui.source.estimate")
       : shape === "prognosis"
         ? t("ui.hero.prognosis")
-        : t("ui.hero.result");
+        : t("ui.hero.result"));
   const pointsLine =
     totalPoints !== null
       ? t("ui.hero.totalOf", { points: totalPoints, max: maxPoints })
@@ -195,32 +202,34 @@ export const GradeHero = ({
         ) : null}
       </View>
 
-      <View style={styles.legend}>
-        <LegendItem
-          kind="tick"
-          label={t("ui.hero.passMarker", { points: passPoints })}
-          textColor={colors.textSecondary}
-          arcColor={colors.separator}
-          markColor={colors.textSecondary}
-        />
-        <LegendItem
-          kind="tick"
-          label={t("ui.hero.topMarker", { points: topPoints })}
-          textColor={colors.textSecondary}
-          arcColor={colors.separator}
-          markColor={colors.textSecondary}
-        />
-        {showGoal ? (
+      {legend ? (
+        <View style={styles.legend}>
           <LegendItem
-            kind="dot"
-            label={t("ui.hero.goalMarker")}
+            kind="tick"
+            label={t("ui.hero.passMarker", { points: passPoints })}
             textColor={colors.textSecondary}
             arcColor={colors.separator}
-            markColor={colors.text}
-            ringColor={colors.background}
+            markColor={colors.textSecondary}
           />
-        ) : null}
-      </View>
+          <LegendItem
+            kind="tick"
+            label={t("ui.hero.topMarker", { points: topPoints })}
+            textColor={colors.textSecondary}
+            arcColor={colors.separator}
+            markColor={colors.textSecondary}
+          />
+          {showGoal ? (
+            <LegendItem
+              kind="dot"
+              label={t("ui.hero.goalMarker")}
+              textColor={colors.textSecondary}
+              arcColor={colors.separator}
+              markColor={colors.text}
+              ringColor={colors.background}
+            />
+          ) : null}
+        </View>
+      ) : null}
     </>
   );
 

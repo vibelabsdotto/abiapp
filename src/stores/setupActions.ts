@@ -220,6 +220,7 @@ export async function completeOnboarding(): Promise<void> {
       subject_count: subjects.length,
       elevated_count: subjects.filter((s) => s.level === "elevated").length,
       exam_slots_set: subjects.filter((s) => s.examSlot !== null).length,
+      has_goal: profile.targetTenths !== null,
     });
   }
 }

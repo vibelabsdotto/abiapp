@@ -1,15 +1,17 @@
 // Settings tab: profile and setup flows, goal, appearance, data (backup,
-// import, delete all), feedback, about and, in dev builds, developer tools.
+// import, delete all), feedback, clipping ("Mitmachen"), about and, in dev
+// builds, developer tools.
 // Every menu carries SF Symbols (NativeMenu adapter); destructive actions
 // ask natively first.
 
-import React, { useCallback, useMemo } from "react";
-import { Alert, Linking, Platform, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useEffect, useMemo } from "react";
+import { Linking, Platform, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import * as Application from "expo-application";
 import * as StoreReview from "expo-store-review";
 import {
   ArrowUpWideNarrow,
+  Banknote,
   BookOpenText,
   Calendar,
   ChevronsUpDown,
@@ -44,6 +46,7 @@ import type { MenuSymbol } from "@constants/menuIcons";
 import {
   confirmAsync,
   elevatedPlural,
+  importBackupInteractive,
   isProvisional,
   shortLabel,
   showError,
@@ -63,12 +66,13 @@ import { useSetupIssues } from "@hooks/useEvaluation";
 import { useRuleset } from "@hooks/useRuleset";
 import { useProfileDraft } from "@hooks/useSetupDraft";
 import { useTranslation } from "@locales/index";
+import { deleteAllData, exportBackup } from "@services/backup/backupService";
 import {
-  deleteAllData,
-  exportBackup,
-  pickBackupFile,
-  restoreBackup,
-} from "@services/backup/backupService";
+  ANALYTICS_EVENTS,
+  track,
+  trackClippingShown,
+} from "@services/analytics/appEvents";
+import { clippingUrl } from "@services/clipping/clipping";
 import { seedDemoData } from "@services/demo/demoData";
 import { useCourseStore } from "@stores/courseStore";
 import { componentNeedsSubject } from "@stores/domainAccess";
@@ -184,6 +188,10 @@ export default function SettingsScreen() {
     [profile?.state, states],
   );
 
+  useEffect(() => {
+    trackClippingShown("settings");
+  }, []);
+
   const openProfile = useCallback(() => {
     useProfileDraft.getState().initFrom(useProfileStore.getState().profile);
     router.push("/setup/profile");
@@ -202,6 +210,11 @@ export default function SettingsScreen() {
     [t],
   );
 
+  const openClipping = () => {
+    track(ANALYTICS_EVENTS.clippingOpened, { placement: "settings" });
+    void openUrl(clippingUrl("settings"));
+  };
+
   const handleExport = async () => {
     try {
       await exportBackup();
@@ -210,48 +223,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleImport = async () => {
-    try {
-      const picked = await pickBackupFile();
-      if (picked.canceled) return;
-      const { result } = picked;
-      if (!result.ok) {
-        Alert.alert(
-          t("settings.importInvalid"),
-          result.errors
-            .slice(0, 3)
-            .map((error) => error.message)
-            .join("\n"),
-        );
-        return;
-      }
-      const { summary } = result;
-      const backupState = states.find((state) => state.code === summary.state);
-      const confirmed = await confirmAsync({
-        title: t("settings.importTitle"),
-        message: t("settings.importMessage", {
-          date: new Date(summary.exportedAt).toLocaleString(
-            locale === "de" ? "de-DE" : "en-US",
-            { dateStyle: "medium", timeStyle: "short" },
-          ),
-          profile: backupState
-            ? `${backupState.name} · ${summary.abiturYear ?? ""}`
-            : t("settings.importNoProfile"),
-          subjects: summary.subjects,
-          grades: summary.grades,
-          official: summary.officialResults,
-          exams: summary.examResults,
-        }),
-        confirm: t("settings.importConfirm"),
-        destructive: true,
-      });
-      if (!confirmed) return;
-      await restoreBackup(result.backup);
-      showSuccess(t("settings.importDone"));
-    } catch (error) {
-      showError(t("settings.importFailed"), error);
-    }
-  };
+  const handleImport = () => importBackupInteractive(locale);
 
   const handleDeleteAll = async () => {
     const first = await confirmAsync({
@@ -507,6 +479,16 @@ export default function SettingsScreen() {
           title={t("settings.rate")}
           leading={<SettingsIcon icon={Star} />}
           onPress={() => void handleRate()}
+        />
+      </Section>
+
+      <Section title={t("settings.join")} separatorInset={48}>
+        <ListRow
+          title={t("settings.clipping")}
+          subtitle={t("settings.clippingSubtitle")}
+          leading={<SettingsIcon icon={Banknote} />}
+          chevron
+          onPress={openClipping}
         />
       </Section>
 

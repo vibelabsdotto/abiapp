@@ -1,4 +1,5 @@
-// Summary of the saved setup on the last onboarding step.
+// Summary of the saved setup on the last onboarding step: state, year with
+// rules version, number of subjects (elevated ones named) and exam subjects.
 
 import React, { useMemo } from "react";
 
@@ -52,24 +53,22 @@ export const OnboardingSummary = () => {
         />
         <ListRow
           title={t("settings.abiturYear")}
+          subtitle={ruleset.label}
           value={String(profile.abiturYear)}
         />
-        <ListRow title={t("settings.ruleset")} subtitle={ruleset.label} />
         <ListRow
-          title={t("settings.subjects")}
-          subtitle={subjects.map((subject) => compactName(subject)).join(", ")}
-          value={String(subjects.length)}
-        />
-        <ListRow
-          title={elevatedPlural(ruleset, locale)}
+          title={t("onboarding.done.subjects")}
           subtitle={
             elevated.length > 0
-              ? elevated.map((subject) => compactName(subject)).join(", ")
+              ? t("onboarding.done.elevated", {
+                  name: elevatedPlural(ruleset, locale),
+                  subjects: elevated
+                    .map((subject) => compactName(subject))
+                    .join(", "),
+                })
               : undefined
           }
-          value={
-            elevated.length > 0 ? String(elevated.length) : t("settings.notSet")
-          }
+          value={String(subjects.length)}
         />
         <ListRow
           title={t("settings.exams")}

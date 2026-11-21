@@ -49,8 +49,15 @@ export const LevelPicker = ({
   );
   const { min, max } = ruleset.elevatedSubjects;
   const count = elevatedIds.length;
-  const valid = count >= min && count <= max;
+  // "2 von 2 gewählt" only looks done when no rule blocks the choice.
+  const valid =
+    count >= min &&
+    count <= max &&
+    !issues.some((issue) => issue.severity === "error");
   const short = ruleset.levelNames.elevated.short;
+  // The chip already says "0 von 2 gewählt"; the engine's count message
+  // would repeat it.
+  const shown = issues.filter((issue) => issue.code !== "setup.elevated.count");
 
   if (subjects.length === 0) {
     return (
@@ -120,9 +127,9 @@ export const LevelPicker = ({
           );
         })}
       </Section>
-      {issues.length > 0 ? (
+      {shown.length > 0 ? (
         <View style={styles.issues}>
-          {issues.map((issue, index) => (
+          {shown.map((issue, index) => (
             <IssueBanner
               key={`${issue.code}-${index}`}
               severity={issue.severity}

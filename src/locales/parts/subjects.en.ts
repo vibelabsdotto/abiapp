@@ -18,7 +18,7 @@ export const subjectsEN = {
       unknownError: "Unknown error. Please try again.",
       missingSubject: "This subject no longer exists.",
       discardTitle: "Discard changes?",
-      discardMessage: "Your input will be lost.",
+      discardMessage: "Your changes will be lost.",
       discardConfirm: "Discard",
       keepEditing: "Keep editing",
     },
@@ -26,7 +26,7 @@ export const subjectsEN = {
       add: "Add subject",
       emptyTitle: "No subjects yet",
       emptyMessage:
-        "Add your courses. Then enter grades and see your prognosis right away.",
+        "Add your subjects. Then enter grades and see your prognosis right away.",
       notTakenSection: "Not taken in {{halfYear}}",
       legend:
         "Faded values do not count in Block I. Dashed values are estimates.",
@@ -69,7 +69,7 @@ export const subjectsEN = {
     detail: {
       notFoundTitle: "Subject not found",
       notFoundMessage: "You may have just removed it.",
-      back: "Back to subjects",
+      back: "Show subjects",
       resultLabel: "Semester result {{halfYear}}",
       source: {
         official: "Official half-year result from your report card",
@@ -116,8 +116,7 @@ export const subjectsEN = {
       firstOther: "First other grade",
       reached: "Goal holds",
       impossible: "out of reach",
-      reachedFooter:
-        "Goal holds: even 0 points in the next grade will not put it at risk.",
+      reachedFooter: "Even 0 points in the next grade keep you on your goal.",
       impossibleFooter:
         "A single grade is no longer enough. Several good grades can still get you there.",
       officialReached: "Reached, official {{points}}",
@@ -276,7 +275,7 @@ export const subjectsEN = {
       language: "Languages, literature and arts",
       social: "Social sciences",
       science: "Mathematics, sciences and technology",
-      religion: "Religion and ethics",
+      religion: "Religion, ethics, philosophy",
       sport: "Sports",
       other: "Other subjects",
     },
