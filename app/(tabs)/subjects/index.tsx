@@ -16,7 +16,10 @@ import {
   formatDecimal,
   type ListRowMenu,
 } from "@components/ui";
-import { confirmRemoveSubject, showError } from "@components/subjects/actions";
+import {
+  confirmRemoveSubject,
+  showSaveError,
+} from "@components/subjects/actions";
 import { levelSectionTitle } from "@components/subjects/format";
 import { HalfYearPicker } from "@components/subjects/headers";
 import { SubjectRow } from "@components/subjects/SubjectRow";
@@ -141,7 +144,7 @@ export default function SubjectsScreen() {
             title: t("subjects.menu.markTaken"),
             image: "checkmark.circle",
             onSelect: () => {
-              setCourseTaken(subject.id, selected, true).catch(showError);
+              setCourseTaken(subject.id, selected, true).catch(showSaveError);
             },
           },
         ];

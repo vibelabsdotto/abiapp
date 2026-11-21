@@ -3,11 +3,10 @@
 // After a successful save, `close(true)` leaves without asking.
 
 import { useCallback, useRef } from "react";
-import { Alert } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 
-import { t } from "@locales/index";
+import { confirmDiscard } from "@components/common/feedback";
 
 export function useEditorClose(dirty: boolean): (force?: boolean) => void {
   const router = useRouter();
@@ -19,18 +18,7 @@ export function useEditorClose(dirty: boolean): (force?: boolean) => void {
       navigation.dispatch(data.action);
       return;
     }
-    Alert.alert(
-      t("subjects.common.discardTitle"),
-      t("subjects.common.discardMessage"),
-      [
-        { text: t("subjects.common.keepEditing"), style: "cancel" },
-        {
-          text: t("subjects.common.discardConfirm"),
-          style: "destructive",
-          onPress: () => navigation.dispatch(data.action),
-        },
-      ],
-    );
+    confirmDiscard(() => navigation.dispatch(data.action));
   });
 
   return useCallback(

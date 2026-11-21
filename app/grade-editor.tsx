@@ -19,7 +19,7 @@ import {
 import {
   deleteGradeWithUndo,
   savedFeedback,
-  showError,
+  showSaveError,
 } from "@components/subjects/actions";
 import {
   ChoiceChips,
@@ -210,7 +210,7 @@ export default function GradeEditorScreen() {
       close(true);
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 

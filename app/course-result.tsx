@@ -14,7 +14,7 @@ import {
   Section,
   SegmentedControl,
 } from "@components/ui";
-import { savedFeedback, showError } from "@components/subjects/actions";
+import { savedFeedback, showSaveError } from "@components/subjects/actions";
 import { EditorScroll } from "@components/subjects/form";
 import { formatExact } from "@components/subjects/format";
 import { ModalHeader } from "@components/common/ModalHeader";
@@ -85,7 +85,7 @@ export default function CourseResultScreen() {
       close(true);
     } catch (error) {
       setSaving(false);
-      showError(error);
+      showSaveError(error);
     }
   };
 
@@ -140,7 +140,9 @@ export default function CourseResultScreen() {
               <ListRow
                 title={t("subjects.courseResult.markTaken")}
                 onPress={() => {
-                  setCourseTaken(subject.id, halfYear, true).catch(showError);
+                  setCourseTaken(subject.id, halfYear, true).catch(
+                    showSaveError,
+                  );
                 }}
               />
             </Section>

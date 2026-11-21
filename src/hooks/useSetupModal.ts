@@ -3,10 +3,9 @@
 // successful save closes without asking.
 
 import { useCallback, useEffect, useState } from "react";
-import { Alert } from "react-native";
 import { useNavigation, usePreventRemove, useRouter } from "expo-router";
 
-import { t } from "@locales/index";
+import { confirmDiscard } from "@components/common/feedback";
 
 export function useSetupModal(dirty: boolean) {
   const router = useRouter();
@@ -14,14 +13,7 @@ export function useSetupModal(dirty: boolean) {
   const [closing, setClosing] = useState(false);
 
   usePreventRemove(dirty && !closing, ({ data }) => {
-    Alert.alert(t("setup.discardTitle"), t("setup.discardMessage"), [
-      { text: t("setup.keepEditing"), style: "cancel" },
-      {
-        text: t("setup.discard"),
-        style: "destructive",
-        onPress: () => navigation.dispatch(data.action),
-      },
-    ]);
+    confirmDiscard(() => navigation.dispatch(data.action));
   });
 
   // Navigate only after the prevent-remove guard saw `closing`.
