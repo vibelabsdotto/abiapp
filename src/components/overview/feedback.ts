@@ -1,4 +1,4 @@
-// Toasts and haptics for the overview lane. Store actions throw
+// Toasts and haptics for the overview and Abitur screens. Store actions throw
 // DataValidationError (German message) or Error; both end up as a toast.
 
 import { Alert } from "react-native";
@@ -22,10 +22,6 @@ export function showInfo(text1: string, text2?: string): void {
 
 export function hapticSuccess(): void {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-}
-
-export function hapticLight(): void {
-  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 }
 
 /**

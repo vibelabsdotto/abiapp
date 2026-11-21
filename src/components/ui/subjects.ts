@@ -15,7 +15,6 @@ import {
   BookOpen,
   BookOpenText,
   Brain,
-  Building2,
   CodeXml,
   Drama,
   FileSearch,
@@ -160,6 +159,3 @@ export const subjectVisual = (
     icon: byTag?.icon ?? DEFAULT_VISUAL.icon,
   };
 };
-
-/** Building icon for school-wide items (e.g. Seminararbeit). */
-export const SchoolIcon = Building2;

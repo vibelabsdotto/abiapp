@@ -8,7 +8,7 @@
 // Rules:
 // - Components use only semantic tokens; never hard-code hex values (lint
 //   rule `abiapp/no-hex-colors` in eslint.config.js).
-// - Token names are a contract with the UI lanes: extend, never rename.
+// - Token names are a contract with the UI: extend, never rename.
 //   `success`, `warning` and `info` stay as names but are neutral ink: met
 //   is a black check mark, hints are neutral with an icon.
 // - Neutrals are true greys (R = G = B), no blue cast.

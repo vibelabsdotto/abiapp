@@ -270,12 +270,12 @@ function RootLayoutNav() {
       >
         <Stack.Protected guard={isOnboarded}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          {/* Setup flows reused from settings: subjects, levels, exams (lane: setup). */}
+          {/* Setup flows reused from settings: subjects, levels, exams. */}
           <Stack.Screen
             name="setup"
             options={{ presentation: "modal", headerShown: false }}
           />
-          {/* Editors (lane: subjects). Screens set their own header buttons. */}
+          {/* Editors. Screens set their own header buttons. */}
           <Stack.Screen
             name="grade-editor"
             options={{ presentation: "modal" }}
@@ -288,7 +288,7 @@ function RootLayoutNav() {
             name="subject-editor"
             options={{ presentation: "modal" }}
           />
-          {/* Editors and info (lane: overview). */}
+          {/* Editors and info. */}
           <Stack.Screen
             name="exam-editor"
             options={{ presentation: "modal" }}
@@ -303,7 +303,7 @@ function RootLayoutNav() {
             options={{ presentation: "modal", headerShown: true }}
           />
         </Stack.Protected>
-        {/* First-run flow (lane: setup), only without a finished onboarding. */}
+        {/* First-run flow, only without a finished onboarding. */}
         <Stack.Protected guard={!isOnboarded}>
           <Stack.Screen
             name="(onboarding)"

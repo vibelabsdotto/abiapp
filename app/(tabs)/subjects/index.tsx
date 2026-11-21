@@ -18,7 +18,7 @@ import {
 } from "@components/ui";
 import { confirmRemoveSubject, showError } from "@components/subjects/actions";
 import { levelSectionTitle } from "@components/subjects/format";
-import { HalfYearPicker, toolbarIcon } from "@components/subjects/headers";
+import { HalfYearPicker } from "@components/subjects/headers";
 import { SubjectRow } from "@components/subjects/SubjectRow";
 import {
   useCourseOverview,
@@ -30,7 +30,7 @@ import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
 import { useCourseStore } from "@stores/courseStore";
 import { useThemeStore } from "@stores/themeStore";
-import { useToolbarTint } from "@constants/toolbarIcons";
+import { toolbarIcon, useToolbarTint } from "@constants/toolbarIcons";
 import { Type } from "@constants/typography";
 
 interface RowModel {

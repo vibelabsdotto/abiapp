@@ -1,4 +1,4 @@
-// User actions of the subjects lane that need feedback: error toasts,
+// Subject screen actions that need feedback: error toasts,
 // subject removal with a native confirmation and grade deletion with undo.
 
 import { Alert } from "react-native";

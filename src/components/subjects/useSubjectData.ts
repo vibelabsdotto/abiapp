@@ -1,4 +1,4 @@
-// Data hooks of the subjects lane: current/selected half-year and the
+// Data hooks of the subject screens: selected half-year and the
 // engine's course values plus Block I inclusion per subject x half-year.
 // Without an evaluation (engine error) values fall back to the store:
 // official result, else the prognosis from the entered grades.
