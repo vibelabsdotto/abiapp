@@ -64,6 +64,12 @@ interface CourseState {
   courses: CourseRecord[];
   grades: GradeRecord[];
   isLoaded: boolean;
+  /**
+   * Bumped by every full load and reset (start, backup import, cloud copy,
+   * demo data, rules change): what changes with it is a baseline, never a
+   * new entry by the user (engagement prompts).
+   */
+  loadGeneration: number;
 
   load: () => Promise<void>;
   /** Re-reads the given tables (default: all three). */
@@ -221,9 +227,15 @@ export const useCourseStore = create<CourseState>()((set, get) => {
     courses: [],
     grades: [],
     isLoaded: false,
+    loadGeneration: 0,
 
     load: async () => {
-      set({ ...(await readParts(ALL_PARTS)), isLoaded: true });
+      const parts = await readParts(ALL_PARTS);
+      set((state) => ({
+        ...parts,
+        isLoaded: true,
+        loadGeneration: state.loadGeneration + 1,
+      }));
     },
 
     refresh,
@@ -443,6 +455,13 @@ export const useCourseStore = create<CourseState>()((set, get) => {
       await refresh(["grades"]);
     },
 
-    reset: () => set({ subjects: [], courses: [], grades: [], isLoaded: true }),
+    reset: () =>
+      set((state) => ({
+        subjects: [],
+        courses: [],
+        grades: [],
+        isLoaded: true,
+        loadGeneration: state.loadGeneration + 1,
+      })),
   };
 });

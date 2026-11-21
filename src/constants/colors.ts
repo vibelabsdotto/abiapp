@@ -96,6 +96,8 @@ export const Colors = {
     tabBarInactive: "#6B6B6B",
     tabIndicator: "#E6E6E6",
     ripple: "#0000001F",
+    /** Max's handwritten signature (review sheet): his dark blue ink. */
+    signatureInk: "#2B2A73",
   },
   dark: {
     background: "#000000",
@@ -149,6 +151,7 @@ export const Colors = {
     tabBarInactive: "#8F8F8F",
     tabIndicator: "#2E2E2E",
     ripple: "#FFFFFF29",
+    signatureInk: "#9CC4FF",
   },
 } as const;
 

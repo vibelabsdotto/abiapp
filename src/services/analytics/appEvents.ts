@@ -34,6 +34,8 @@ export const ANALYTICS_EVENTS = {
   clippingShown: "clipping_shown",
   clippingOpened: "clipping_opened",
   clippingDismissed: "clipping_dismissed",
+  engagementPromptShown: "engagement_prompt_shown",
+  engagementPromptAction: "engagement_prompt_action",
 } as const;
 
 type EventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
@@ -53,8 +55,18 @@ export const ACQUISITION_SOURCES = [
 ] as const;
 export type AcquisitionSource = (typeof ACQUISITION_SOURCES)[number];
 
-/** Where the clipping hint sits. */
-export type ClippingPlacement = "overview" | "settings";
+/** Where the clipping hint sits ("prompt" = sheet after a new entry). */
+export type ClippingPlacement = "overview" | "settings" | "prompt";
+
+/** Prompts after a new entry (src/services/engagement). Enum values. */
+export type EngagementPromptKind = "rating" | "recommend" | "clipping";
+/**
+ * accept = primary button (Bewerten, Teilen, So funktioniert es), later =
+ * secondary button, dismiss = "Kein Interesse", feedback = wish link,
+ * close = swiped or tapped away without a button.
+ */
+export type EngagementPromptAction =
+  "accept" | "later" | "dismiss" | "feedback" | "close";
 
 /**
  * The only parameters each event may send. Allowed: states, ruleset ids,
@@ -97,6 +109,11 @@ interface EventParams {
   clipping_shown: { placement: ClippingPlacement };
   clipping_opened: { placement: ClippingPlacement };
   clipping_dismissed: { placement: ClippingPlacement };
+  engagement_prompt_shown: { prompt: EngagementPromptKind };
+  engagement_prompt_action: {
+    prompt: EngagementPromptKind;
+    action: EngagementPromptAction;
+  };
 }
 
 type ParamArgs<E extends EventName> = EventParams[E] extends undefined

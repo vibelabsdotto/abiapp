@@ -71,5 +71,6 @@ describe("clippingUrl", () => {
       "https://abi-app.io/clippen?utm_source=app&utm_medium=overview",
     );
     expect(clippingUrl("settings")).toContain("utm_medium=settings");
+    expect(clippingUrl("prompt")).toContain("utm_medium=prompt");
   });
 });

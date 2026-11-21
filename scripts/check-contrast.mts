@@ -98,6 +98,13 @@ for (const mode of ["light", "dark"] as const) {
   }
   // Non-text: the ink tiers must stay apart from the card (3:1 for top).
   expect(`${mode}.pointsTopSolid on card`, c.pointsTopSolid, c.card, 3);
+  // The signature is read like text on the review sheet (page background).
+  expect(
+    `${mode}.signatureInk on background`,
+    c.signatureInk,
+    c.background,
+    4.5,
+  );
   expect(`${mode}.tabBarInactive on tabBar`, c.tabBarInactive, c.tabBar, 4.5);
 
   for (const [key, value] of Object.entries(AccentPalette)) {

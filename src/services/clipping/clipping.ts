@@ -9,8 +9,9 @@ export const CLIPPING_MIN_GRADES = 5;
 export const CLIPPING_MIN_ACTIVE_DAYS = 2;
 
 /** Link with UTM parameters for the placement it was opened from. */
-export const clippingUrl = (medium: "overview" | "settings"): string =>
-  `${CLIPPING_URL}?utm_source=app&utm_medium=${medium}`;
+export const clippingUrl = (
+  medium: "overview" | "settings" | "prompt",
+): string => `${CLIPPING_URL}?utm_source=app&utm_medium=${medium}`;
 
 export interface ClippingCardInput {
   /** Grades entered in total (Klausuren and sonstige Noten). */

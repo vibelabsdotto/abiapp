@@ -40,6 +40,7 @@ import { CloudBackupHost } from "@components/backup/CloudBackupHost";
 import { ErrorBoundary } from "@components/common/ErrorBoundary";
 import { VIBEUPDATE_APP_ID } from "@constants/config";
 import { Radius } from "@constants/typography";
+import { useEngagementPrompts } from "@hooks/useEngagementPrompts";
 import { AppProvider } from "@providers/AppProvider";
 import {
   initializeAnalytics,
@@ -199,8 +200,20 @@ function AnalyticsAutoCapture() {
   return null;
 }
 
+/** Rating, recommendation and clipping prompts after a new entry. */
+function EngagementPrompts() {
+  useEngagementPrompts();
+  return null;
+}
+
 /** Root routes that lay out their own bottom inset on Android. */
-const FULL_SCREEN_ROUTES = new Set(["(tabs)", "(onboarding)", "+not-found"]);
+const FULL_SCREEN_ROUTES = new Set([
+  "(tabs)",
+  "(onboarding)",
+  "+not-found",
+  "review-request",
+  "clipping-offer",
+]);
 
 function RootLayoutNav() {
   const isDark = useThemeStore((state) => state.isDark);
@@ -242,9 +255,18 @@ function RootLayoutNav() {
     };
   }, [colors, isDark]);
 
+  const promptSheetOptions = {
+    headerShown: false,
+    presentation: "formSheet",
+    sheetAllowedDetents: "fitToContents",
+    sheetGrabberVisible: true,
+    contentStyle: { backgroundColor: colors.background },
+  } as const;
+
   return (
     <ThemeProvider value={routerTheme}>
       <AnalyticsAutoCapture />
+      <EngagementPrompts />
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={({ route }) => ({
@@ -295,6 +317,9 @@ function RootLayoutNav() {
             name="feature-requests"
             options={{ presentation: "modal", headerShown: true }}
           />
+          {/* Prompts after a new entry: native sheets sized to their content. */}
+          <Stack.Screen name="review-request" options={promptSheetOptions} />
+          <Stack.Screen name="clipping-offer" options={promptSheetOptions} />
         </Stack.Protected>
         {/* First-run flow, only without a finished onboarding. */}
         <Stack.Protected guard={!isOnboarded}>
