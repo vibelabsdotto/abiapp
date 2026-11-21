@@ -17,7 +17,7 @@ import type {
 } from "@domain/model";
 import { useTranslation } from "@locales/index";
 import type { SubjectRecord } from "@services/database";
-import type { SFSymbol } from "sf-symbols-typescript";
+import type { MenuSymbol } from "@constants/menuIcons";
 import { useProfileStore } from "@stores/profileStore";
 import { useThemeStore } from "@stores/themeStore";
 import { FontScale, NumberType, Radius, Type } from "@constants/typography";
@@ -33,7 +33,7 @@ interface BlockIISectionProps {
   variant: ExamVariantInfo | null;
 }
 
-const variantIcon = (variant: ExamVariantInfo): SFSymbol =>
+const variantIcon = (variant: ExamVariantInfo): MenuSymbol =>
   variant.components.some((component) => component.kind === "bll")
     ? "doc.richtext"
     : "list.number";

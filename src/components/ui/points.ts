@@ -24,11 +24,12 @@ export const pointsTier = (points: number | null | undefined): PointsTier => {
  * ink:     ink density, 13-15 full ink, 10-12 mid grey, 5-9 light grey,
  *          0-4 red.
  * neutral: every value neutral grey, only the deficit (0-4) red.
- * The app uses `POINTS_SCALE`; the dev gallery renders both for comparison.
+ * The app uses `POINTS_SCALE` ("neutral": calmer in the Block I grid and
+ * deficits stand out more); the dev gallery renders both for comparison.
  */
 export type PointsScale = "ink" | "neutral";
 
-export const POINTS_SCALE: PointsScale = "ink";
+export const POINTS_SCALE: PointsScale = "neutral";
 
 export interface PointsPalette {
   /** Text/icon colour on `card` and on `fill`. */
@@ -72,7 +73,7 @@ export const pointsPalette = (
       fill: colors.fill,
       solid: colors.fill,
       onSolid: colors.text,
-      edge: colors.textSecondary,
+      edge: colors.textTertiary,
     };
   }
   switch (tier) {

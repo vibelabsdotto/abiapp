@@ -40,6 +40,7 @@ import {
 } from "@components/common/NativeMenu";
 import { ScreenLayout } from "@components/common/ScreenLayout";
 import { SettingsIcon } from "@components/settings/SettingsIcon";
+import type { MenuSymbol } from "@constants/menuIcons";
 import {
   confirmAsync,
   elevatedPlural,
@@ -84,7 +85,7 @@ const APP_STORE_REVIEW_URL =
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.max.mannstein.abisax";
 
-const THEME_ICONS: Record<ThemeMode, string> = {
+const THEME_ICONS: Record<ThemeMode, MenuSymbol> = {
   [ThemeMode.System]: "circle.lefthalf.filled",
   [ThemeMode.Light]: "sun.max",
   [ThemeMode.Dark]: "moon",
@@ -96,7 +97,7 @@ const THEME_LABEL_KEYS: Record<ThemeMode, string> = {
   [ThemeMode.Dark]: "settings.themeDark",
 };
 
-const LANGUAGE_ICONS: Record<LanguageMode, string> = {
+const LANGUAGE_ICONS: Record<LanguageMode, MenuSymbol> = {
   system: "globe",
   de: "d.circle",
   en: "e.circle",

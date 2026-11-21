@@ -1,5 +1,5 @@
 // InclusionMatrix - Block I as subjects x half-years. Counted courses sit on
-// a grey fill, others are dimmed; a small square marks mandatory courses,
+// the page colour (white/black) inside the grey card, others are dimmed; a small square marks mandatory courses,
 // an ink dot the student's own choice. Tap a cell: native menu Automatisch / Immer / Nie.
 
 import React from "react";
@@ -71,7 +71,7 @@ export const InclusionMatrix = ({ rows, ruleset }: InclusionMatrixProps) => {
             {row.weight > 1 ? (
               <Chip
                 label={`×${row.weight}`}
-                tone="accent"
+                tone="neutral"
                 accessibilityLabel={t("abitur.cell.spokenWeight", {
                   weight: row.weight,
                 })}
@@ -207,7 +207,7 @@ const MatrixCell = ({ cell, subjectName, halfYearLabel }: MatrixCellProps) => {
           accessibilityHint={t("abitur.cell.hint")}
           style={[
             styles.cell,
-            isIncluded && { backgroundColor: colors.accentLight },
+            isIncluded && { backgroundColor: colors.background },
           ]}
         >
           <PointsBadge
@@ -248,7 +248,7 @@ export const MatrixLegend = () => {
     <View style={styles.legend}>
       <View style={styles.legendItem}>
         <View
-          style={[styles.legendSwatch, { backgroundColor: colors.accentLight }]}
+          style={[styles.legendSwatch, { backgroundColor: colors.background }]}
         />
         <Text style={[Type.caption1, { color: colors.textSecondary }]}>
           {t("abitur.blockI.legend.included")}

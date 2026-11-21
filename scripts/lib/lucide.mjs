@@ -15,9 +15,35 @@ const iconsDir = path.join(
   "node_modules/lucide-react-native/dist/esm/icons",
 );
 
+const pascal = (name) =>
+  name.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
+
+let aliasIndex;
+/** Lucide file name for a name or alias ("trash-2" -> "trash"). */
+async function resolveFile(name) {
+  if (!aliasIndex) {
+    const index = await readFile(
+      path.join(iconsDir, "../lucide-react-native.mjs"),
+      "utf8",
+    );
+    aliasIndex = new Map();
+    for (const [, names, file] of index.matchAll(
+      /export \{([^}]+)\} from '\.\/icons\/([a-z0-9-]+)\.mjs'/g,
+    )) {
+      for (const alias of names.matchAll(/as (\w+)/g)) {
+        aliasIndex.set(alias[1], file);
+      }
+    }
+  }
+  const file = aliasIndex.get(pascal(name));
+  if (!file) throw new Error(`lucide: unknown icon "${name}"`);
+  return file;
+}
+
 /** [[tag, attrs], ...] of a Lucide icon by kebab-case name ("chart-pie"). */
 export async function lucideNodes(name) {
-  const source = await readFile(path.join(iconsDir, `${name}.mjs`), "utf8");
+  const file = await resolveFile(name);
+  const source = await readFile(path.join(iconsDir, `${file}.mjs`), "utf8");
   const literal = source.match(/const __iconData = (\{[\s\S]*?\n\});/)?.[1];
   if (!literal) throw new Error(`lucide: cannot parse ${name}`);
   const data = new Function(`return (${literal});`)();

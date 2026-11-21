@@ -1,7 +1,7 @@
 // PointsBadge - one course value on the 0-15 scale.
-// Source decides the shape (matches CourseValue.source), the tier only the
-// ink density (see points.ts):
-//   official  filled with the tier ink   "12"    report-card value
+// Source decides the shape (matches CourseValue.source); colour only marks
+// deficits (0-4 red, see points.ts):
+//   official  filled grey                "12"    report-card value
 //   grades    solid outline, no fill     "11,4"  prognosis from grades
 //   estimate  dashed outline             "10"    extrapolated, no grades yet
 //   none      dashed hairline            "–"

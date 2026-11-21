@@ -71,7 +71,7 @@ export const RulesetCard = ({ ruleset, title, footer }: RulesetCardProps) => {
             </Text>
             <View style={styles.chips}>
               {ruleset.halfYears.map((label) => (
-                <Chip key={label} label={label} tone="accent" size="medium" />
+                <Chip key={label} label={label} tone="neutral" size="medium" />
               ))}
             </View>
           </View>
