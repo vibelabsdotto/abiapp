@@ -48,7 +48,7 @@ Das Cloud-Backup nutzt den iCloud Key-Value-Store (`modules/abiapp-cloud`). `app
 
 ## Android Auto Backup
 
-`plugins/withAndroidBackupRules.js` setzt `allowBackup`, `fullBackupContent` (bis Android 11) und `dataExtractionRules` (ab 12). Gesichert werden `files/SQLite/`, `files/cloud-backup/`, `databases/RKStorage*` und `shared_prefs/`; Cache, OTA-Dateien (`files/.expo-internal`) und `files/dev-cloud` nicht. Nachweis im Emulator mit lokalem Transport:
+`plugins/withAndroidBackupRules.js` setzt `allowBackup`, `fullBackupContent` (bis Android 11) und `dataExtractionRules` (ab 12). Gesichert werden `files/SQLite/`, `files/cloud-backup/`, `databases/RKStorage*`; Cache, `shared_prefs` (Firebase-Zustand), OTA-Dateien (`files/.expo-internal`) und `files/dev-cloud` nicht. Nachweis im Emulator mit lokalem Transport:
 
 ```sh
 adb shell bmgr enable true

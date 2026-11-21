@@ -5,10 +5,10 @@
 // - files/SQLite/        all grades (expo-sqlite)
 // - files/cloud-backup/  the safety copy before a take-over
 // - databases/RKStorage  AsyncStorage (settings, sync metadata)
-// - shared_prefs/        small native preferences
 // Not included: the cache (backup file exports with all grades, always
-// excluded by Android), files/.expo-internal (OTA updates belong to the
-// binary) and files/dev-cloud (development stand-in for iCloud).
+// excluded by Android), shared_prefs (Firebase measurement state and other
+// per-device native state), files/.expo-internal (OTA updates belong to
+// the binary) and files/dev-cloud (development stand-in for iCloud).
 // fullBackupContent covers Android 11 and lower, dataExtractionRules
 // Android 12+ (cloud backup and device-to-device transfer).
 
@@ -28,7 +28,6 @@ const INCLUDES = [
   '<include domain="file" path="cloud-backup/" />',
   '<include domain="database" path="RKStorage" />',
   '<include domain="database" path="RKStorage-journal" />',
-  '<include domain="sharedpref" path="." />',
 ];
 
 const indent = (lines, spaces) =>
