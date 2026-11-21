@@ -107,7 +107,44 @@ function weightings2027(ctx: RuleContext): WeightingOption[] {
   return out.length ? out : [{ id: "plain", label: null, weight: () => 1 }];
 }
 
-function requirements(ctx: RuleContext): Requirement[] {
+/**
+ * § 7 Abs. 3: whoever had no four years of a second language before the
+ * Studienstufe takes one for four semesters. With two continued languages a
+ * new one is voluntary; with at most one the app assumes it is compulsory.
+ */
+function compulsoryNewFs(ctx: RuleContext): EngineSubject[] {
+  return continuedLanguages(ctx).length <= 1 ? taken(ctx, isNewFs) : [];
+}
+
+/** § 7 Abs. 1, § 21: 0 points in the compulsory second language block the admission. */
+function newFsZeroCheck(ctx: RuleContext): RuleCheck[] {
+  const subs = compulsoryNewFs(ctx);
+  if (subs.length === 0) return [];
+  const zeros: string[] = [];
+  let predicted = false;
+  for (const s of subs) {
+    for (const hy of ctx.takenHalfYears(s.id)) {
+      const v = ctx.values.get(`${s.id}:${hy}`);
+      if (v?.points === 0) {
+        zeros.push(`${s.name} ${ctx.ruleset.halfYears[hy]}`);
+        if (v.source !== "official") predicted = true;
+      }
+    }
+  }
+  return [
+    {
+      id: "block1.newFsZero",
+      label:
+        "Kein Semester der zweiten Fremdsprache (§ 7 Abs. 3) mit 0 Punkten",
+      passed: zeros.length === 0,
+      detail: zeros.length ? zeros.join(", ") : null,
+      predicted,
+    },
+  ];
+}
+
+/** `artsCount`: 4 semesters (§ 32 Abs. 2 Nr. 4), 2 in the 2030 draft (KMK Ziff. 7.1). */
+function requirements(ctx: RuleContext, artsCount = 4): Requirement[] {
   const reqs: Requirement[] = [...examSubjectRequirements(ctx)];
   reqs.push(oneOf("de", "4 Ergebnisse Deutsch", byKey(ctx, "de"), 4));
   reqs.push(oneOf("ma", "4 Ergebnisse Mathematik", byKey(ctx, "ma"), 4));
@@ -130,9 +167,9 @@ function requirements(ctx: RuleContext): Requirement[] {
   reqs.push({
     ...oneOf(
       "arts",
-      "4 Ergebnisse im belegten künstlerischen Fach",
+      `${artsCount} Ergebnisse im belegten künstlerischen Fach`,
       byKey(ctx, ...ARTS),
-      4,
+      artsCount,
     ),
     short: "künstlerisches Fach",
   });
@@ -148,7 +185,7 @@ function requirements(ctx: RuleContext): Requirement[] {
     oneOf("nw", "4 Ergebnisse einer Naturwissenschaft", byKey(ctx, ...NWS), 4),
   );
   // § 32 Abs. 2 Nr. 5: a mandatory second foreign language counts with S3 and S4.
-  for (const s of taken(ctx, isNewFs)) {
+  for (const s of compulsoryNewFs(ctx)) {
     reqs.push({
       id: `newFs.${s.id}`,
       label: `${s.name}: Ergebnisse aus S3 und S4`,
@@ -231,7 +268,33 @@ function validate2027(ctx: RuleContext): Issue[] {
       );
   }
   out.push(...examRules(ctx));
+  out.push(...profileExamIssue(ctx));
   return out;
+}
+
+/** § 20 Abs. 2: one exam in a profilgebendes Fach (eA) that is no Kernfach. */
+function profileExamIssue(ctx: RuleContext): Issue[] {
+  const ex = examSubjects(ctx);
+  const needed = ctx.variant.components.filter(
+    (c) => c.requiresSubject ?? c.kind !== "bll",
+  ).length;
+  if (ex.length < needed) return [];
+  const fsCount = taken(ctx, isFs).length;
+  const ok = ex.some(
+    (s) =>
+      s.level === "elevated" &&
+      !hasKey(s, "de", "ma") &&
+      (!isFs(s) || fsCount > 1),
+  );
+  return ok
+    ? []
+    : [
+        issue(
+          "exam.profile",
+          "error",
+          "Eine Prüfung muss im profilgebenden Fach auf erhöhtem Niveau sein, das nicht dein Kernfach ist.",
+        ),
+      ];
 }
 
 function examRules(ctx: RuleContext): Issue[] {
@@ -370,7 +433,7 @@ const BLL_INPUT = {
 
 /** Belegpflicht: 0 points in Sport or Religion/Philosophie block the admission (§ 7 Abs. 1). */
 const zeroFails = (s: EngineSubject): boolean =>
-  hasKey(s, "sp", "rel_ev", "phil") || isNewFs(s);
+  hasKey(s, "sp", "rel_ev", "phil");
 
 export const HH_2027: Ruleset = {
   id: "HH-2027",
@@ -388,24 +451,25 @@ export const HH_2027: Ruleset = {
   defaults: { examWeightPercent: 50 },
   summary: [
     "Studienstufe S1 bis S4: mindestens zwei Kernfächer (Deutsch, Mathematik, Fremdsprache) und ein profilgebendes Fach auf erhöhtem Niveau.",
-    "Block 1: 32 bis 40 Semesterergebnisse nach deiner Wahl, die App wählt die beste Anzahl. Punkte = 40 × Summe / gewichtete Anzahl, ab 0,5 aufgerundet.",
-    "Doppelt zählen nur das geprüfte Profilfach und ein eA-Kernfach, das Prüfungsfach ist. Sind zwei eA-Kernfächer Prüfungsfächer, nimmt die App das günstigere.",
-    "Pflicht: die drei Kernfächer, alle Prüfungsfächer, das künstlerische Fach, Geschichte, PGW oder Geografie und eine Naturwissenschaft, jeweils alle 4 Semester.",
-    "Zulassung: mindestens 200 Punkte, höchstens ein Fünftel der Ergebnisse unter 5 Punkten, kein eingebrachtes Ergebnis mit 0 Punkten. 0 Punkte in einem belegpflichtigen Fach verhindern die Zulassung.",
-    "Block 2: vier Prüfungen fünffach, drei schriftlich und eine mündlich oder als Präsentation.",
-    "Zusätzliche mündliche Prüfung nur bei 4 Punkten Abweichung vom Semesterschnitt: (2 × schriftlich + mündlich) / 3, ungerundet, dann × 5 und gerundet.",
+    "Block 1: 32 bis 40 Semesterergebnisse nach deiner Wahl, die App wählt die beste Anzahl. Punkte = 40 × Summe ÷ gewichtete Anzahl, ab ,5 aufgerundet.",
+    "Doppelt zählen nur das geprüfte profilgebende Fach und ein eA-Kernfach, das Prüfungsfach ist. Sind zwei eA-Kernfächer Prüfungsfächer, nimmt die App das günstigere.",
+    "Pflicht: die drei Kernfächer, alle Prüfungsfächer, das künstlerische Fach, Geschichte, PGW oder Geografie und eine Naturwissenschaft, jeweils alle 4 Semester. Hast du die zweite Fremdsprache erst für die Studienstufe begonnen, zählen S3 und S4 dieser Sprache mit.",
+    "Zulassung: mindestens 200 Punkte, höchstens ein Fünftel der Ergebnisse unter 5 Punkten (bei 32–34 Ergebnissen 6, bei 35–39 7, bei 40 8), kein eingebrachtes Ergebnis mit 0 Punkten. 0 Punkte in einem belegpflichtigen Fach verhindern die Zulassung.",
+    "Block 2: vier Prüfungen fünffach, drei schriftlich und eine mündlich oder als Präsentation. Eine Prüfung ist im profilgebenden Fach.",
+    "Zusätzliche mündliche Prüfung auf Antrag, wenn die Klausur mindestens 4 Punkte vom Semesterschnitt abweicht: (2 × schriftlich + mündlich) ÷ 3, ungerundet, dann × 5 und gerundet.",
     "Eine Besondere Lernleistung zählt als ein Ergebnis in Block 1 oder als 5. Element in Block 2. Dann zählen alle fünf vierfach.",
     "Bestehen: Block 2 mindestens 100 Punkte und zwei Prüfungsfächer mit je mindestens 5 Punkten, darunter ein eA-Fach.",
   ],
   sources: [
     {
       title: "APO-AH Hamburg, amtliche Gesamtausgabe",
-      section: "§§ 5–8, 20, 21, 25, 26, 32, Anlagen 1–4",
+      section: "§§ 6–8, 20, 21, 25, 26, 32, Anlagen 1–4",
       url: "https://www.landesrecht-hamburg.de/bsha/document/jlr-NNLHH000066DF",
     },
     {
-      title: "APO-AH § 32 Allgemeine Hochschulreife",
-      section: "§ 32",
+      title:
+        "APO-AH § 32 Allgemeine Hochschulreife (Normtext, landesrecht.online)",
+      section: "§ 32 Abs. 2, 3, 5",
       url: "https://www.landesrecht.online/HH/APO-AH/32",
     },
     {
@@ -414,13 +478,14 @@ export const HH_2027: Ruleset = {
       url: "https://www.landesrecht.online/HH/APO-AH/Anlage_4",
     },
     {
-      title: "APO-AH § 25 Zulassung zur mündlichen Prüfung",
-      section: "§ 25",
-      url: "https://www.landesrecht.online/HH/APO-AH/25",
+      title: "APO-AH § 7 Belegverpflichtungen",
+      section: "§ 7 Abs. 1–3",
+      url: "https://www.landesrecht.online/HH/APO-AH/7",
     },
     {
-      title: "BSB: Die Studienstufe an allgemeinbildenden Schulen",
-      section: "S. 20–31",
+      title:
+        "BSB: Die Studienstufe an allgemeinbildenden Schulen (09/2022, APO-AH i. d. F. 25.06.2021)",
+      section: "S. 20–25 mit Rechenbeispielen",
       url: "https://www.hamburg.de/resource/blob/119634/0ec5ca578ef7ec422122c6888c196a92/br-studienstufe-an-allgemeinbildenden-schulen-data.pdf",
     },
   ],
@@ -440,6 +505,7 @@ export const HH_2027: Ruleset = {
       ),
     ],
     zero: { includable: false, failIfTaken: zeroFails },
+    checks: (ctx) => newFsZeroCheck(ctx),
   },
   blockII: {
     maxPoints: 300,
@@ -486,7 +552,7 @@ export const HH_2030: Ruleset = {
     "Vorläufig: Die Dritte Änderungsverordnung zur APO-AH ist noch nicht verkündet. Grundlage sind der Entwurf und die KMK-Vereinbarung 2024.",
     "Studienstufe S1 bis S4 mit zwei Fächern auf erhöhtem Niveau, die Profiloberstufe bleibt.",
     "Block 1: genau 36 Semesterergebnisse, beide eA-Prüfungsfächer zählen doppelt. Punkte = 40 × Summe / 44, ab 0,5 aufgerundet.",
-    "Pflichteinbringungen wie bisher angenommen: Kernfächer, Prüfungsfächer, künstlerisches Fach, Geschichte, PGW oder Geografie und eine Naturwissenschaft, je 4 Semester.",
+    "Pflichteinbringungen angenommen: Kernfächer, Prüfungsfächer, Geschichte, PGW oder Geografie und eine Naturwissenschaft je 4 Semester, das künstlerische Fach nur noch 2 (Entwurf und KMK-Vereinbarung).",
     "Zulassung: mindestens 200 Punkte, höchstens 7 Ergebnisse unter 5 Punkten, kein eingebrachtes Ergebnis mit 0 Punkten.",
     "Block 2: vier Prüfungen fünffach, drei schriftlich und eine mündlich. Die Präsentationsprüfung entfällt.",
     "Zusätzliche mündliche Prüfung wie bisher angenommen: (2 × schriftlich + mündlich) / 3 × 5, gerundet. Regeln zur Besonderen Lernleistung sind noch offen.",
@@ -518,11 +584,12 @@ export const HH_2030: Ruleset = {
         "eA",
         (names) => `Annahme: ${names} zählen als eA-Prüfungsfächer doppelt.`,
       ),
-    requirements,
+    requirements: (ctx) => requirements(ctx, 2),
     deficitLimits: () => [
       limit("total", 7, "Höchstens 7 Ergebnisse unter 5 Punkten"),
     ],
     zero: { includable: false, failIfTaken: zeroFails },
+    checks: (ctx) => newFsZeroCheck(ctx),
   },
   blockII: {
     maxPoints: 300,

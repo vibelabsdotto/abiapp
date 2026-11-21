@@ -50,7 +50,10 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
 - **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben.
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
-- **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13.
+- **RP:** Prüfungshalbjahr-Regel gilt für alle Grundfächer mit einem Kurs in 13. Zusätzliche mündliche Prüfung kaufmännisch gerundet nach mss.rlp.de; die AbiPrO-Fassung 2010 (§ 12, Anlagen 1, 2) schnitt ab, der aktuelle Wortlaut war nicht abrufbar. Facharbeit unter 5 Punkten zählt als ein Defizit.
+- **NI, RP, HH, SH:** Eine neu begonnene Fremdsprache gilt als Pflichtsprache (Zusatzeinbringung, 0-Punkte-Sperre), wenn höchstens eine fortgeführte Fremdsprache belegt ist; bei zwei fortgeführten gilt sie als freiwillig.
+- **HH ab 2030:** Künstlerisches Fach nur 2 Ergebnisse (Entwurf laut Stellungnahmen, KMK Ziff. 7.1), übrige Pflichten wie 2027 angenommen.
+- **SH:** Kern-Fremdsprache ist die in P1/P2 geprüfte, sonst eine fortgeführte Sprache.
 - **HB:** Formel statt der fehlerhaften amtlichen Tabelle (15/2 → 43).
 
 ## Bekannte Grenzen
