@@ -15,6 +15,7 @@ import {
 } from "react-native";
 
 import { useThemeStore } from "@stores/themeStore";
+import { readableContent } from "@constants/typography";
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
@@ -43,6 +44,7 @@ export const ScreenLayout = ({
           styles.flex,
           background,
           padding && styles.padding,
+          readableContent,
           contentContainerStyle,
         ]}
       >
@@ -58,6 +60,7 @@ export const ScreenLayout = ({
       contentContainerStyle={[
         styles.content,
         padding && styles.padding,
+        readableContent,
         contentContainerStyle,
       ]}
       refreshControl={refreshControl}

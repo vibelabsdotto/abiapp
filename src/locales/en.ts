@@ -23,12 +23,13 @@ export const en: Translations = {
   },
   errors: {
     title: "Something went wrong",
-    message: "The app ran into an unexpected error.",
-    initFailed: "The database could not be opened.",
+    message:
+      "AbiApp ran into an unexpected error. Your data is safe. Please try again.",
+    initFailed: "AbiApp could not open your data. Please try again.",
   },
   notFound: {
     title: "Page not found",
-    back: "Go to overview",
+    back: "Open overview",
   },
   ui: {
     points: "Points",
@@ -47,7 +48,7 @@ export const en: Translations = {
       prognosis: "Prognosis",
       result: "Result",
       notPassed: "Not passed",
-      noGrade: "No grade yet",
+      noGrade: "No average yet",
       totalOf: "{{points}} of {{max}} points",
       passMarker: "Pass from {{points}}",
       topMarker: "1.0 from {{points}}",

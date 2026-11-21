@@ -17,6 +17,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 
+import { localDay } from "@services/clipping/clipping";
 import { initDatabase } from "@services/database/database";
 import { useLanguageStore } from "@stores/languageStore";
 import { usePreferencesStore } from "@stores/preferencesStore";
@@ -78,6 +79,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       initDatabase().then(loadAllStores),
     ])
       .then(() => {
+        usePreferencesStore.getState().recordActiveDay(localDay(new Date()));
         isAppReady = true;
         if (!cancelled) setIsReady(true);
       })
@@ -115,6 +117,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     });
     const appState = AppState.addEventListener("change", (state) => {
       if (state === "active") {
+        usePreferencesStore.getState().recordActiveDay(localDay(new Date()));
         useLanguageStore.getState().updateSystemLanguage();
         useThemeStore.getState().updateSystemTheme();
       }

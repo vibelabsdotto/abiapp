@@ -26,9 +26,31 @@ export const ANALYTICS_EVENTS = {
   backupExported: "backup_exported",
   backupRestored: "backup_restored",
   dataDeleted: "data_deleted",
+  onboardingSource: "onboarding_source",
+  clippingShown: "clipping_shown",
+  clippingOpened: "clipping_opened",
+  clippingDismissed: "clipping_dismissed",
 } as const;
 
 type EventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
+
+/**
+ * Answers of "Woher kennst du AbiApp?" (onboarding_source.source, user
+ * property acquisition_source). Enum values: never rename.
+ */
+export const ACQUISITION_SOURCES = [
+  "tiktok",
+  "instagram",
+  "friends",
+  "school",
+  "store",
+  "google",
+  "other",
+] as const;
+export type AcquisitionSource = (typeof ACQUISITION_SOURCES)[number];
+
+/** Where the clipping hint sits. */
+export type ClippingPlacement = "overview" | "settings";
 
 /**
  * The only parameters each event may send. Allowed: states, ruleset ids,
@@ -44,6 +66,7 @@ interface EventParams {
     subject_count: number;
     elevated_count: number;
     exam_slots_set: number;
+    has_goal: boolean;
   };
   subject_added: { source: "catalog" | "custom"; count: number };
   grade_added: { kind: GradeKind };
@@ -55,6 +78,10 @@ interface EventParams {
   backup_exported: undefined;
   backup_restored: undefined;
   data_deleted: undefined;
+  onboarding_source: { source: AcquisitionSource | "skipped" };
+  clipping_shown: { placement: ClippingPlacement };
+  clipping_opened: { placement: ClippingPlacement };
+  clipping_dismissed: { placement: ClippingPlacement };
 }
 
 type ParamArgs<E extends EventName> = EventParams[E] extends undefined
@@ -82,6 +109,23 @@ export function trackProfile(profile: {
     setUserProperty("ruleset_id", profile.rulesetId),
     setUserProperty("abitur_year", String(profile.abiturYear)),
   ]).catch(() => undefined);
+}
+
+/** Answer of the onboarding question "Woher kennst du AbiApp?". */
+export function trackAcquisitionSource(
+  source: AcquisitionSource | "skipped",
+): void {
+  track(ANALYTICS_EVENTS.onboardingSource, { source });
+  void setUserProperty("acquisition_source", source).catch(() => undefined);
+}
+
+const clippingShownThisSession = new Set<ClippingPlacement>();
+
+/** clipping_shown at most once per app session and placement. */
+export function trackClippingShown(placement: ClippingPlacement): void {
+  if (clippingShownThisSession.has(placement)) return;
+  clippingShownThisSession.add(placement);
+  track(ANALYTICS_EVENTS.clippingShown, { placement });
 }
 
 /** grade_added on every grade, first_grade_added once per installation. */

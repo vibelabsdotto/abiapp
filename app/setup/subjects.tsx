@@ -46,7 +46,10 @@ export default function SetupSubjectsScreen() {
           text={
             draft.canSave
               ? t("setup.subjects.selected", { count: draft.selectedCount })
-              : t("setup.subjects.minHint", { count: draft.minimum })
+              : t("setup.subjects.minHint", {
+                  count: draft.selectedCount,
+                  min: draft.minimum,
+                })
           }
         />
         {draft.ruleset ? (

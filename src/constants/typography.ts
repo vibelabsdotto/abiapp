@@ -103,6 +103,22 @@ export const Radius = {
   hero: 16,
 } as const;
 
+/**
+ * Layout: content never stretches across a tablet. Scroll containers
+ * (ScreenLayout, EditorScroll, setup, exam editor) cap their content at the
+ * readable width and centre it.
+ */
+export const Layout = {
+  readableWidth: 680,
+} as const;
+
+/** Spread into a scroll view's contentContainerStyle. */
+export const readableContent = {
+  width: "100%",
+  maxWidth: Layout.readableWidth,
+  alignSelf: "center",
+} as const;
+
 /** 4-pt grid. */
 export const Spacing = {
   xxs: 2,

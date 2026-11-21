@@ -15,10 +15,10 @@ export const subjectsDE = {
       atLeast: "mind. {{points}}",
       noValue: "Kein Wert",
       errorTitle: "Speichern fehlgeschlagen",
-      unknownError: "Unbekannter Fehler. Versuch es noch einmal.",
+      unknownError: "Unbekannter Fehler. Versuche es noch einmal.",
       missingSubject: "Dieses Fach gibt es nicht mehr.",
       discardTitle: "Änderungen verwerfen?",
-      discardMessage: "Deine Eingaben gehen verloren.",
+      discardMessage: "Deine Änderungen gehen verloren.",
       discardConfirm: "Verwerfen",
       keepEditing: "Weiter bearbeiten",
     },
@@ -26,14 +26,14 @@ export const subjectsDE = {
       add: "Fach hinzufügen",
       emptyTitle: "Noch keine Fächer",
       emptyMessage:
-        "Leg deine Kurse an. Danach trägst du Noten ein und siehst sofort deine Prognose.",
+        "Lege deine Fächer an. Danach trägst du Noten ein und siehst sofort deine Prognose.",
       notTakenSection: "In {{halfYear}} nicht belegt",
       legend:
         "Blasse Werte zählen nicht in Block I. Gestrichelte Werte sind geschätzt.",
       included: "eingebracht",
       notIncluded: "nicht eingebracht",
       notTaken: "nicht belegt",
-      average: "Schnitt {{halfYear}}",
+      average: "Durchschnitt {{halfYear}}",
       averageCount: {
         one: "aus {{count}} Kurs",
         other: "aus {{count}} Kursen",
@@ -68,7 +68,7 @@ export const subjectsDE = {
     detail: {
       notFoundTitle: "Fach nicht gefunden",
       notFoundMessage: "Vielleicht hast du es gerade entfernt.",
-      back: "Zur Fächerliste",
+      back: "Fächer anzeigen",
       resultLabel: "Halbjahresergebnis {{halfYear}}",
       source: {
         official: "Amtliches Halbjahresergebnis vom Zeugnis",
@@ -85,7 +85,7 @@ export const subjectsDE = {
       editResult: "Ändern",
       notTaken: "In {{halfYear}} nicht belegt",
       notTakenMessage:
-        "Dieser Kurs zählt nicht. Hast du ihn doch belegt, markier ihn als belegt.",
+        "Dieser Kurs zählt nicht. Hast du ihn doch belegt, markiere ihn als belegt.",
       markTaken: "Als belegt markieren",
       exams: "Klausuren",
       others: "Sonstige Noten",
@@ -116,7 +116,7 @@ export const subjectsDE = {
       reached: "Ziel hält",
       impossible: "nicht erreichbar",
       reachedFooter:
-        "Ziel hält: Auch 0 Punkte in der nächsten Note gefährden es nicht.",
+        "Selbst mit 0 Punkten in der nächsten Note hältst du dein Ziel.",
       impossibleFooter:
         "Mit einer einzelnen Note reicht es nicht mehr. Mehrere gute Noten können es noch schaffen.",
       officialReached: "Erreicht, amtlich {{points}}",
@@ -189,9 +189,9 @@ export const subjectsDE = {
       date: "Datum",
       weight: "Gewicht",
       weightFooterExam:
-        "Unter den Klausuren zählt Gewicht 2 doppelt und 0,5 halb.",
+        "Gewicht 2 zählt unter den Klausuren doppelt, 0,5 halb.",
       weightFooterOther:
-        "Unter den sonstigen Noten zählt Gewicht 2 doppelt und 0,5 halb.",
+        "Gewicht 2 zählt unter den sonstigen Noten doppelt, 0,5 halb.",
       preview: "Prognose {{halfYear}}",
       previewOfficial:
         "{{halfYear}} hat ein amtliches Ergebnis ({{points}}). Die Note ändert es nicht.",
@@ -278,7 +278,7 @@ export const subjectsDE = {
       language: "Sprachlich-literarisch-künstlerisch",
       social: "Gesellschaftswissenschaftlich",
       science: "Mathematisch-naturwissenschaftlich-technisch",
-      religion: "Religion und Ethik",
+      religion: "Religion, Ethik, Philosophie",
       sport: "Sport",
       other: "Weitere Fächer",
     },

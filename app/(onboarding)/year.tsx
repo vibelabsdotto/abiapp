@@ -1,7 +1,7 @@
-// Onboarding step 2: Abiturjahrgang with the detected ruleset version.
-// "Weiter" creates the profile (or switches its rules) via setupActions.
+// Onboarding step 2: Abiturjahrgang. One tap chooses, creates the profile
+// (or switches its rules) via setupActions and advances.
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "expo-router";
 
 import {
@@ -26,22 +26,22 @@ export default function OnboardingYearScreen() {
   const rulesetId = useProfileDraft((draft) => draft.rulesetId);
   const setAbiturYear = useProfileDraft((draft) => draft.setAbiturYear);
   const [saving, setSaving] = useState(false);
+  const [missingRules, setMissingRules] = useState(false);
 
-  const ruleset = useMemo(
-    () => resolveDraftRuleset({ state, abiturYear, rulesetId }),
-    [state, abiturYear, rulesetId],
-  );
-
-  const next = async () => {
-    if (!state || abiturYear === null || !ruleset) return;
+  const choose = async (year: number) => {
+    if (!state || saving) return;
+    setAbiturYear(year);
+    const ruleset = resolveDraftRuleset({ state, abiturYear: year, rulesetId });
+    setMissingRules(ruleset === null);
+    if (!ruleset) return;
     setSaving(true);
     try {
       const result = await applyRulesChange({
         state,
-        abiturYear,
+        abiturYear: year,
         rulesetId: ruleset.id,
       });
-      if (result) router.push("/(onboarding)/subjects");
+      if (result) router.push("/(onboarding)/goal");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
@@ -55,21 +55,13 @@ export default function OnboardingYearScreen() {
       step={ONBOARDING_STEPS.year}
       totalSteps={ONBOARDING_TOTAL_STEPS}
       intro={t("onboarding.year.intro")}
-      primary={{
-        title: t("onboarding.next"),
-        disabled: abiturYear === null || ruleset === null,
-        loading: saving,
-        onPress: () => void next(),
-      }}
     >
-      <YearPicker value={abiturYear} onChange={setAbiturYear} />
-      {abiturYear !== null ? (
-        <RulesetCard
-          ruleset={ruleset}
-          title={t("setup.ruleset.detected")}
-          footer={t("onboarding.year.footer")}
-        />
-      ) : null}
+      <YearPicker
+        value={abiturYear}
+        onChange={(year) => void choose(year)}
+        footer={t("onboarding.year.footer")}
+      />
+      {missingRules ? <RulesetCard ruleset={null} /> : null}
     </OnboardingStep>
   );
 }
