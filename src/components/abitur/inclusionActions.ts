@@ -4,9 +4,9 @@
 import { Alert } from "react-native";
 import * as Haptics from "expo-haptics";
 
-import { evaluate } from "@domain/index";
 import { t } from "@locales/index";
 import { useCourseStore } from "@stores/courseStore";
+import { evaluateCached } from "@stores/engineInput";
 import { getEngineInputSnapshot } from "@stores/setupActions";
 
 import { formatDelta } from "@components/overview/data";
@@ -14,14 +14,10 @@ import { showError, showInfo } from "@components/overview/feedback";
 
 import type { Inclusion } from "./matrix";
 
+/** Block I points of the stored data (shares the screen's cached result). */
 function blockIPointsNow(): number | null {
   const input = getEngineInputSnapshot();
-  if (!input) return null;
-  try {
-    return evaluate(input).blockI.points;
-  } catch {
-    return null;
-  }
+  return input ? (evaluateCached(input).value?.blockI.points ?? null) : null;
 }
 
 function announce(before: number | null): void {
@@ -69,10 +65,7 @@ export function confirmResetInclusions(
         void (async () => {
           const before = blockIPointsNow();
           try {
-            const { setInclusion } = useCourseStore.getState();
-            for (const { subjectId, halfYear } of overrides) {
-              await setInclusion(subjectId, halfYear, "auto");
-            }
+            await useCourseStore.getState().resetInclusions(overrides);
             void Haptics.notificationAsync(
               Haptics.NotificationFeedbackType.Success,
             );
