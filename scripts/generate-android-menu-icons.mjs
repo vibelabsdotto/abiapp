@@ -5,7 +5,9 @@
 //   names in src/constants/menuIcons.ts (copied to res/drawable at prebuild
 //   by plugins/withAndroidMenuIcons.js);
 // - toolbar icons: assets/icons/toolbar/<lucide>.xml, required by
-//   src/constants/toolbarIcons.ts.
+//   src/constants/toolbarIcons.ts. Stack.Toolbar on Android loads them
+//   through @expo/ui, whose vector parser fills paths and ignores strokes,
+//   so they are written with the strokes outlined into fills (macOS).
 // `menu_letter_*` drawables are drawn by hand and skipped. Rewrites every
 // file (deterministic output). A new SF Symbol in a menu: add it to
 // menuIcons.ts, run this script, prebuild, native Android build.
@@ -17,7 +19,10 @@ import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { lucideVectorDrawable } from "./lib/lucide.mjs";
+import {
+  lucideFilledVectorDrawable,
+  lucideVectorDrawable,
+} from "./lib/lucide.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const menuDir = path.join(root, "assets/android-menu-icons");
@@ -41,11 +46,12 @@ const toolbar = await drawablesIn(
 );
 
 const failed = [];
-const write = async (dir, file, lucideName, size) => {
+const write = async (dir, file, lucideName, size, filled = false) => {
   try {
+    const render = filled ? lucideFilledVectorDrawable : lucideVectorDrawable;
     await writeFile(
       path.join(dir, file),
-      await lucideVectorDrawable(lucideName, { size, strokeWidth: 2 }),
+      await render(lucideName, { size, strokeWidth: 2 }),
     );
   } catch (error) {
     failed.push(`${file} (${error.message})`);
@@ -77,8 +83,9 @@ for (const drawable of menu) {
   const lucide = drawable.slice("menu_".length).replaceAll("_", "-");
   await write(menuDir, `${drawable}.xml`, lucide, 24);
 }
+// Toolbar icons load through @expo/ui (fills only): outlined strokes.
 for (const name of toolbar) {
-  await write(toolbarDir, `${name}.xml`, name, 24);
+  await write(toolbarDir, `${name}.xml`, name, 24, true);
 }
 
 console.log(`${menu.length} menu drawables, ${toolbar.length} toolbar icons`);
