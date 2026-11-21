@@ -51,6 +51,9 @@ export const Section = ({
             <Text
               accessibilityRole="header"
               maxFontSizeMultiplier={FontScale.heading}
+              // Android otherwise splits hyphenated compounds inside a part
+              // ("…-tec / hnisch") instead of after a hyphen (as ListRow).
+              android_hyphenationFrequency="normal"
               style={[Type.title3, styles.title, { color: colors.text }]}
             >
               {title}
