@@ -226,7 +226,6 @@ export const subjectsDE = {
       add: "Hinzufügen",
       selected: "{{count}} gewählt",
       catalogTitle: "Katalog {{state}}",
-      catalogFooter: "Du kannst mehrere Fächer auf einmal auswählen.",
       allAdded:
         "Alle Fächer aus dem Katalog von {{state}} sind schon angelegt.",
       customRow: "Eigenes Fach anlegen",

@@ -225,7 +225,6 @@ export const subjectsEN = {
       add: "Add",
       selected: "{{count}} selected",
       catalogTitle: "Catalog {{state}}",
-      catalogFooter: "You can select several subjects at once.",
       allAdded: "All subjects from the {{state}} catalog are already added.",
       customRow: "Create custom subject",
       customRowHint: "For subjects that are not in the catalog",

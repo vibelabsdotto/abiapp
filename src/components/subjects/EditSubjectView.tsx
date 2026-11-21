@@ -236,7 +236,7 @@ export const EditSubjectView = ({
         {labels.length > 0 ? (
           <Section
             title={t("subjects.subjectEditor.halfYears")}
-            footer={t("subjects.subjectEditor.halfYearsFooter")}
+            info={t("subjects.subjectEditor.halfYearsFooter")}
           >
             {labels.map((label, halfYear) => (
               <FormSwitchRow
@@ -260,13 +260,15 @@ export const EditSubjectView = ({
           </Section>
         ) : null}
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.examWeight")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.examWeight")}
+          info={t("subjects.subjectEditor.examWeightFooter", {
+            exam: draft.examWeightPercent,
+            other: 100 - draft.examWeightPercent,
+            default: ruleset?.defaults.examWeightPercent ?? 50,
+          })}
+          variant="plain"
+        >
           <SegmentedControl<number>
             options={presets.map((percent) => ({
               value: percent,
@@ -276,28 +278,13 @@ export const EditSubjectView = ({
             onChange={(examWeightPercent) => update({ examWeightPercent })}
             accessibilityLabel={t("subjects.subjectEditor.examWeight")}
           />
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("subjects.subjectEditor.examWeightFooter", {
-              exam: draft.examWeightPercent,
-              other: 100 - draft.examWeightPercent,
-              default: ruleset?.defaults.examWeightPercent ?? 50,
-            })}
-          </Text>
-        </View>
+        </Section>
 
-        <View style={styles.block}>
-          <Text
-            accessibilityRole="header"
-            style={[Type.title3, styles.heading, { color: colors.text }]}
-          >
-            {t("subjects.subjectEditor.color")}
-          </Text>
+        <Section
+          title={t("subjects.subjectEditor.color")}
+          info={t("subjects.subjectEditor.colorFooter")}
+          variant="plain"
+        >
           <View style={[styles.colors, { backgroundColor: colors.card }]}>
             <ColorSwatch
               color={null}
@@ -315,16 +302,7 @@ export const EditSubjectView = ({
               />
             ))}
           </View>
-          <Text
-            style={[
-              Type.footnote,
-              styles.note,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {t("subjects.subjectEditor.colorFooter")}
-          </Text>
-        </View>
+        </Section>
 
         <Section>
           <FormRow

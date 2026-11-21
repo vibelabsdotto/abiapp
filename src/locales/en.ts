@@ -68,6 +68,10 @@ export const en: Translations = {
       warning: "Note",
       info: "Info",
     },
+    info: {
+      show: "Show explanation",
+      hide: "Hide explanation",
+    },
     halfYear: "Half-year {{name}}",
     progress: "{{value}} of {{max}}",
     gallery: {

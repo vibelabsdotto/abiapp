@@ -13,6 +13,13 @@ export {
   type HalfYearValue,
 } from "./HalfYearStrip";
 export { Icon, iconStroke, type IconProps, type IconSize } from "./Icon";
+export {
+  InfoButton,
+  InfoNote,
+  InfoText,
+  type InfoButtonProps,
+  type InfoNoteProps,
+} from "./InfoNote";
 export { IssueBanner, type IssueBannerProps } from "./IssueBanner";
 export { ListRow, type ListRowMenu, type ListRowProps } from "./ListRow";
 export {

@@ -1,7 +1,7 @@
 // Block II on the Abitur tab: total, exam variant (native menu) and one row
 // per component P1..P5. Tap a row: exam editor.
 
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ChevronsUpDown, ListOrdered } from "lucide-react-native";
@@ -61,6 +61,10 @@ export const BlockIISection = ({
     }
   };
 
+  // Assumptions explain the number; they open on the info icon.
+  const assumptions = blockII.assumptions ?? [];
+  const [explained, setExplained] = useState(false);
+
   return (
     <View style={styles.section}>
       <BlockTitle
@@ -69,6 +73,14 @@ export const BlockIISection = ({
           ruleset.examVariants.length > 1 || !variant
             ? t("abitur.blockII.subtitle")
             : variant.label
+        }
+        info={
+          assumptions.length > 0
+            ? {
+                open: explained,
+                onToggle: () => setExplained((value) => !value),
+              }
+            : undefined
         }
       />
       <BlockHead
@@ -79,14 +91,14 @@ export const BlockIISection = ({
         predicted={blockII.predicted}
         failed={blockII.passed === false}
       >
-        {blockII.assumptions && blockII.assumptions.length > 0 ? (
+        {explained && assumptions.length > 0 ? (
           <View style={styles.assumptions}>
             <Text
               style={[Type.footnote, styles.strong, { color: colors.text }]}
             >
               {t("abitur.blockII.assumptions")}
             </Text>
-            <Bullets items={blockII.assumptions} />
+            <Bullets items={assumptions} />
           </View>
         ) : null}
       </BlockHead>
@@ -128,7 +140,7 @@ export const BlockIISection = ({
         />
       ) : null}
 
-      <Section footer={t("abitur.blockII.footer")} separatorInset={64}>
+      <Section info={t("abitur.blockII.footer")} separatorInset={64}>
         {blockII.components.map((component) => (
           <ExamRow
             key={component.slot}

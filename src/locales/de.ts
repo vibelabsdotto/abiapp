@@ -71,6 +71,10 @@ export const de = {
       warning: "Hinweis",
       info: "Info",
     },
+    info: {
+      show: "Erklärung anzeigen",
+      hide: "Erklärung ausblenden",
+    },
     halfYear: "Halbjahr {{name}}",
     progress: "{{value}} von {{max}}",
     gallery: {

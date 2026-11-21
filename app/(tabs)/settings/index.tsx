@@ -395,7 +395,7 @@ export default function SettingsScreen() {
       {profile ? (
         <Section
           title={t("settings.goal")}
-          footer={t("settings.goalFooter")}
+          info={t("settings.goalFooter")}
           separatorInset={48}
         >
           <ListRow
@@ -450,7 +450,7 @@ export default function SettingsScreen() {
 
       <Section
         title={t("settings.data")}
-        footer={t("settings.dataFooter")}
+        info={t("settings.dataFooter")}
         separatorInset={48}
       >
         <ListRow
@@ -526,7 +526,7 @@ export default function SettingsScreen() {
       {__DEV__ ? (
         <Section
           title={t("settings.developer")}
-          footer={t("settings.developerFooter")}
+          info={t("settings.developerFooter")}
           separatorInset={48}
         >
           <NativeMenu

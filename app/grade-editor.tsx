@@ -332,7 +332,7 @@ export default function GradeEditorScreen() {
         />
 
         <Section
-          footer={
+          info={
             draft.kind === "exam"
               ? t("subjects.gradeEditor.weightFooterExam")
               : t("subjects.gradeEditor.weightFooterOther")

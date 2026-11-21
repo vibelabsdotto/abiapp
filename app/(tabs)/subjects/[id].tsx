@@ -231,7 +231,7 @@ export default function SubjectDetailScreen() {
             <Section
               title={t("subjects.detail.others")}
               separatorInset={70}
-              footer={t("subjects.detail.examShare", {
+              info={t("subjects.detail.examShare", {
                 percent: subject.examWeightPercent,
                 rest: 100 - subject.examWeightPercent,
               })}

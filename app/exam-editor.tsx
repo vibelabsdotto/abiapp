@@ -363,9 +363,12 @@ export default function ExamEditorScreen() {
             footer={
               predictedMain !== null
                 ? t("examEditor.predictedHint", { points: predictedMain })
-                : extraInfo && slot
-                  ? extraInfo.description
-                  : undefined
+                : undefined
+            }
+            info={
+              predictedMain === null && extraInfo && slot
+                ? extraInfo.description
+                : undefined
             }
             variant="plain"
           >

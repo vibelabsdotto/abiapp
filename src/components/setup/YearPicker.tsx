@@ -24,7 +24,7 @@ export const YearPicker = ({
   const selectedYear =
     value !== null && value > LATEST_ABITUR_YEAR ? LATEST_ABITUR_YEAR : value;
   return (
-    <Section title={title} footer={footer}>
+    <Section title={title} info={footer}>
       {ABITUR_YEARS.map((year) => {
         const label =
           year === LATEST_ABITUR_YEAR
