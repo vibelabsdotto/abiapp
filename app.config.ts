@@ -92,10 +92,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: "com.max.mannstein.abisax",
     versionCode: 20,
     // No ads: keep Firebase Analytics from reading the advertising ID.
+    // SYSTEM_ALERT_WINDOW comes from the prebuild template; the app draws no
+    // overlays over other apps.
     blockedPermissions: [
       "com.google.android.gms.permission.AD_ID",
       "android.permission.ACCESS_ADSERVICES_AD_ID",
       "android.permission.ACCESS_ADSERVICES_ATTRIBUTION",
+      "android.permission.SYSTEM_ALERT_WINDOW",
     ],
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
