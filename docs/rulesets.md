@@ -47,7 +47,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
 - **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation (amtlich nicht geregelt).
-- **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
+- **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer, die Engine wählt sie günstigst (Annahme), aber nie Deutsch, Mathematik, Englisch, Geschichte, Sport oder das einzige Fach aus Naturwissenschaft, Kunst/Musik/DG bzw. Religion/Ethik (§ 76 Abs. 1). Klausuranteil der Prognose 33 % für das amtliche Drittel (§ 74 Abs. 11); exakt auf ,5 kann die Prognose daher um einen Punkt abweichen.
 - **BE:** Präsentationsprüfung wird als Gesamtnote eingegeben.
 - **HE:** Die Pflicht aus § 14 Abs. 3 OAVO (zweite, in der Oberstufe neu begonnene Fremdsprache: Q3 und Q4 immer einbringen) ist nicht eigens modelliert; die App kann nicht unterscheiden, ob die neu begonnene Sprache Pflicht (§ 14 Abs. 3) oder freiwillig (§ 14 Abs. 2, 4) ist. Geographie zählt für die 2 GW-Kurse ohne Prüfung der durchgängigen Belegung seit E1. Mit Besonderer Lernleistung gilt ein fehlendes Aufgabenfeld unter den vier Prüfungsfächern nur als Hinweis (§ 24 Abs. 3 Satz 4).
 - **HE/SL/HH/HB/NI ab 2030:** Entwürfe bzw. KMK-Rahmen, als `draft` markiert.
