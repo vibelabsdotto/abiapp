@@ -1,5 +1,5 @@
-// German strings of the first-run flow: motion intro, story (question and
-// mirror pages), setup steps, colour and result. Source of truth; en
+// German strings of the first-run flow: motion intro, story (goal, four
+// questions and their scenes), setup steps, colour and result. Source of truth; en
 // mirrors the shape.
 //
 // Every statement must hold in all 16 states. Before the state is chosen
@@ -14,14 +14,14 @@ export const onboardingDE = {
     step: "Schritt {{step}} von {{total}}",
     fixIssue: "Weiter geht es, sobald der Hinweis in der Liste erledigt ist.",
     welcome: {
-      claim: "Erreiche die Abinote,\ndie du willst.",
+      claim: "Schaff den Schnitt,\nden du willst.",
       beats: {
         standing: "Sieh, wo du stehst.",
-        counts: "Sieh, was zählt.",
+        counts: "Sieh, was wirklich zählt.",
         needs: "Sieh, was du noch brauchst.",
-        states: "Nach den Regeln deines Bundeslandes.",
+        states: "Gerechnet nach den Regeln deines Bundeslandes.",
       },
-      promise: "Kostenlos · Ohne Konto · Deine Noten gehören dir",
+      promise: "Kostenlos · Ohne Konto · Deine Noten bleiben bei dir",
       a11y: "Vorschau der App: dein Schnitt als Bogen, die Kurse, die zählen, was du für dein Ziel brauchst, und die Regeln aller 16 Bundesländer.",
       start: "Los geht's",
       restore: "Backup wiederherstellen",
@@ -49,53 +49,96 @@ export const onboardingDE = {
       },
       states: "16 Bundesländer",
     },
-    worries: {
-      title: "Was stresst dich?",
-      intro: "Wähle alles, was am Abi auf dich zutrifft.",
-      options: {
-        rules: "Ich blick bei den Regeln nicht durch",
-        inclusion: "Ich weiß nicht, welche Kurse am Ende zählen",
-        focus: "Ich weiß nicht, wo sich Lernen wirklich lohnt",
-        exams: "Ich versteh nicht, wie die Prüfungen zählen",
-        standing: "Ich weiß nicht, wo ich gerade stehe",
-        trust: "Ich trau Rechnern nicht, ob sie für mein Bundesland stimmen",
-      },
+    goal: {
+      title: "Welchen Schnitt willst du schaffen?",
+      intro: "Du kannst ihn jederzeit ändern.",
+      need: "Für {{grade}} brauchst du {{points}} von 900 Punkten.",
+      a11y: "Ziel {{grade}}. Dafür brauchst du {{points}} von 900 Punkten.",
     },
-    mirror: {
-      you: "Du hast gesagt",
-      quote: "„{{text}}“",
-      rules: {
-        text: "Musst du auch nicht. AbiApp kennt die Regeln deines Bundeslandes und rechnet genau danach.",
-        blockI: "Block I",
-        blockIText: "deine Kurse",
-        blockII: "Block II",
-        blockIIText: "deine Prüfungen",
-        upTo: "bis {{points}}",
-        total: "Gesamt",
-      },
-      inclusion: {
-        text: "Nicht jeder Kurs muss zählen. AbiApp findet die beste gültige Einbringung und zeigt dir, welche Halbjahre drin sind.",
-      },
-      focus: {
-        text: "Du siehst, in welchen Kursen jeder Punkt zählt und wo du Druck rausnehmen kannst.",
-        full: "jeder Punkt zählt",
-        relaxed: "Druck raus",
-      },
-      exams: {
-        text: "Deine Prüfungen bringen ein Drittel deiner Punkte. AbiApp zeigt dir, welche Fächer als Prüfungsfach gehen und was jede Prüfung für deinen Schnitt bringt.",
+    story: {
+      you: "Du: {{answer}}",
+      replay: "Tippen, um es noch mal zu sehen",
+      example: "Beispiel",
+      explain: {
+        question:
+          "Mal ehrlich: Könntest du erklären, wie aus deinen Noten dein Abischnitt wird?",
+        answers: {
+          yes: "Klar, kann ich",
+          roughly: "So ungefähr",
+          no: "Keine Ahnung",
+        },
+        headline: {
+          yes: "Dann weißt du: Es ist viel Rechnerei.",
+          roughly: "Ungefähr reicht ab jetzt.",
+          no: "Musst du auch nicht.",
+        },
+        text: "Deine Kurse bringen bis zu 600 Punkte, deine Prüfungen bis zu 300. AbiApp rechnet das nach den Regeln deines Bundeslandes zusammen.",
         courses: "Kurse",
         exams: "Prüfungen",
-        share: "{{points}} von 900",
+        upTo: "von {{points}}",
+        a11y: "Animation: Noten fallen in zwei Bereiche, Kurse bis 600 und Prüfungen bis 300 Punkte. Zusammen ergeben sie {{points}} von 900 Punkten, dein Ziel {{grade}}.",
       },
-      standing: {
-        text: "Trag deine Noten ein und du siehst sofort deinen Schnitt, mit Prognose für alles, was noch kommt.",
+      focus: {
+        question: "Zwei Klausuren in einer Woche. Für welche lernst du mehr?",
+        answers: {
+          harder: "Für die schwerere",
+          counts: "Für die, die mehr zählt",
+          both: "Für beide gleich",
+          first: "Für die, die zuerst kommt",
+        },
+        headline: {
+          counts: "Genau. Nur: Welche ist das?",
+          other: "Kommt drauf an, welche zählt.",
+        },
+        text: "Nicht jeder Kurs muss ins Abi. AbiApp sucht die beste erlaubte Kombination und zeigt dir, wo jeder Punkt zählt und wo du Druck rausnehmen kannst.",
+        counted: "zählt",
+        notCounted: "zählt nicht",
+        inclusion: "{{count}} von {{total}} Kursen zählen",
+        total: "Abi-Punkte",
+        plus: "+1",
+        a11y: "Animation, Beispiel: In einem Raster aus Fächern und Halbjahren zählen {{count}} von {{total}} Kursen. Ein Punkt mehr in einem Kurs, der nicht zählt, lässt die Abi-Punkte bei {{before}}. Ein Punkt mehr in einem Kurs, der zählt, hebt sie auf {{after}}.",
       },
-      trust: {
-        text: "AbiApp rechnet für jedes der 16 Bundesländer nach der Verordnung deines Jahrgangs. Quellen und Annahmen stehen offen in der App, der Code ist Open Source.",
-        states: "Alle 16 Bundesländer",
-        sources: "Verordnung und Paragrafen als Quelle",
-        tests: "Durchgerechnete Beispiele für jedes Land",
-        openSource: "Open Source",
+      examShare: {
+        question:
+          "Was schätzt du: Wie viel von deinem Abi entscheidet sich in den Prüfungen?",
+        answers: {
+          tenth: "Ein Zehntel",
+          quarter: "Ein Viertel",
+          third: "Ein Drittel",
+          half: "Die Hälfte",
+        },
+        headline: {
+          right: "Richtig, ein Drittel.",
+          other: "Es ist ein Drittel.",
+        },
+        text: "300 von 900 Punkten kommen aus wenigen Prüfungen. Eine einzige kann 60 Punkte oder mehr bringen, ein Kurshalbjahr höchstens 30. AbiApp zeigt dir, welche Fächer als Prüfungsfach gehen und was jede Prüfung für deinen Schnitt bringt.",
+        courses: "Kurse",
+        exams: "Prüfungen",
+        course: "1 Kurshalbjahr",
+        courseMax: "bis 30",
+        exam: "1 Prüfung",
+        examMax: "bis 60 oder 75",
+        examSubject: "geht als Prüfungsfach",
+        a11y: "Animation: Ein Balken mit 900 Punkten, davon ein Drittel, 300 Punkte, aus den Prüfungen. Eine Prüfung ist mindestens doppelt so viel wert wie ein Kurshalbjahr. Darunter Fächer mit Haken für „geht als Prüfungsfach“.",
+      },
+      calculatedBefore: {
+        question: "Hast du deinen Schnitt schon mal ausgerechnet?",
+        answers: {
+          app: "Ja, mit einer App",
+          web: "Ja, mit einem Rechner im Netz",
+          self: "Ja, selbst oder mit Excel",
+          never: "Noch nie",
+        },
+        headline: {
+          tool: "Und stimmte er für dein Bundesland?",
+          self: "Respekt. Ab jetzt rechnet AbiApp.",
+          never: "Dann gleich richtig.",
+        },
+        text: "16 Bundesländer, 16 Verordnungen. AbiApp rechnet nach deiner, nennt dir Verordnung und Paragrafen als Quelle, und der Code ist offen einsehbar.",
+        rule: "Block I",
+        source: "Quelle: {{source}}",
+        choose: "Mein Bundesland wählen",
+        a11y: "Animation: Die 16 Bundesländer bekommen nacheinander einen Haken. Eine Regel klappt auf und zeigt ihre Quelle, {{source}}. Dann ordnen sich die Länder zu einer Liste.",
       },
     },
     state: {
@@ -122,12 +165,6 @@ export const onboardingDE = {
       basis: "Grundlage",
       basisFooter:
         "Tippe auf eine Quelle, um sie zu öffnen. Die Annahmen dahinter findest du später unter „Regeln anzeigen“.",
-    },
-    goal: {
-      title: "Dein Ziel",
-      intro: "Welchen Schnitt willst du schaffen?",
-      need: "Dafür brauchst du {{points}} von 900 Punkten.",
-      a11y: "Ziel {{grade}}. Dafür brauchst du {{points}} von 900 Punkten.",
     },
     subjects: {
       title: "Deine Fächer",

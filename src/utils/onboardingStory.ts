@@ -1,68 +1,89 @@
-// Story part of the onboarding: what stresses a student about the Abitur
-// (multiple choice) and the mirror pages that answer it, plus the step
-// numbers of the whole flow, whose length depends on the mirror pages.
-// Pure functions.
+// Story part of the onboarding: the goal, four questions and the scene
+// that answers each, plus the step numbers of the whole flow. Pure
+// functions.
+//
+// Question and answer keys are analytics enum values
+// (`onboarding_answer.question` / `.answer`): never rename them.
 
-/**
- * Answers of "Was stresst dich am Abi am meisten?" in display order. Enum
- * values (analytics `onboarding_worry.worry`): never rename.
- */
-export const WORRIES = [
-  "rules",
-  "inclusion",
+export const QUESTIONS = {
+  explain: ["yes", "roughly", "no"],
+  focus: ["harder", "counts", "both", "first"],
+  examShare: ["tenth", "quarter", "third", "half"],
+  calculatedBefore: ["app", "web", "self", "never"],
+} as const;
+
+export type Question = keyof typeof QUESTIONS;
+export type Answer<Q extends Question = Question> =
+  (typeof QUESTIONS)[Q][number];
+
+/** Questions in flow order, each followed by its scene. */
+export const QUESTION_ORDER: readonly Question[] = [
+  "explain",
   "focus",
-  "exams",
-  "standing",
-  "trust",
-] as const;
-export type Worry = (typeof WORRIES)[number];
-
-export const isWorry = (value: unknown): value is Worry =>
-  typeof value === "string" && (WORRIES as readonly string[]).includes(value);
-
-/** At most this many mirror pages, so the story never drags. */
-export const MAX_MIRRORS = 3;
-
-/**
- * Which answers win when more than three are chosen. Where to put the
- * effort is the core question (focus); "trust" is also answered by the
- * rules page after the state, so it gives way first.
- */
-const PRIORITY: readonly Worry[] = [
-  "focus",
-  "rules",
-  "exams",
-  "inclusion",
-  "standing",
-  "trust",
+  "examShare",
+  "calculatedBefore",
 ];
 
-/** Without an answer: the three that matter to most students. */
-export const DEFAULT_MIRRORS: readonly Worry[] = ["rules", "focus", "exams"];
+export const isQuestion = (value: unknown): value is Question =>
+  typeof value === "string" &&
+  (QUESTION_ORDER as readonly string[]).includes(value);
+
+export const isAnswer = <Q extends Question>(
+  question: Q,
+  value: unknown,
+): value is Answer<Q> =>
+  typeof value === "string" &&
+  (QUESTIONS[question] as readonly string[]).includes(value);
+
+/** The question after `question`, null after the last one. */
+export const nextQuestion = (question: Question): Question | null =>
+  QUESTION_ORDER[QUESTION_ORDER.indexOf(question) + 1] ?? null;
 
 /**
- * Mirror pages for the chosen answers: at most three by priority, shown in
- * display order (rules before inclusion before focus ...). No answer shows
- * the defaults.
+ * Which headline the scene opens with, as a key below
+ * `onboarding.story.<question>.headline`. The scene answers the answer:
+ * several answers can share one headline.
  */
-export function mirrorsFor(chosen: readonly Worry[]): Worry[] {
-  const unique = WORRIES.filter((worry) => chosen.includes(worry));
-  const picked =
-    unique.length === 0
-      ? DEFAULT_MIRRORS
-      : PRIORITY.filter((worry) => unique.includes(worry)).slice(
-          0,
-          MAX_MIRRORS,
-        );
-  return WORRIES.filter((worry) => picked.includes(worry));
+export function sceneHeadline(question: Question, answer: Answer): string {
+  switch (question) {
+    case "explain":
+      return answer;
+    case "focus":
+      return answer === "counts" ? "counts" : "other";
+    case "examShare":
+      return answer === "third" ? "right" : "other";
+    case "calculatedBefore":
+      return answer === "app" || answer === "web" ? "tool" : answer;
+  }
 }
+
+/** Story pages in flow order: the goal, then question and scene in turns. */
+export type StoryPage =
+  | { kind: "goal" }
+  | { kind: "question"; question: Question }
+  | { kind: "scene"; question: Question };
+
+export const STORY_PAGES: readonly StoryPage[] = [
+  { kind: "goal" },
+  ...QUESTION_ORDER.flatMap((question): StoryPage[] => [
+    { kind: "question", question },
+    { kind: "scene", question },
+  ]),
+];
+
+/** Index of a page in STORY_PAGES. */
+export const storyIndex = (page: StoryPage): number =>
+  page.kind === "goal"
+    ? 0
+    : 1 +
+      QUESTION_ORDER.indexOf(page.question) * 2 +
+      (page.kind === "scene" ? 1 : 0);
 
 /** Counted steps after the story, in flow order. */
 export const SETUP_STEPS = [
   "state",
   "year",
   "rules",
-  "goal",
   "subjects",
   "levels",
   "exams",
@@ -71,31 +92,26 @@ export const SETUP_STEPS = [
 ] as const;
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
-export type OnboardingStepId =
-  | { kind: "worries" }
-  | { kind: "mirror"; index: number }
-  | { kind: "setup"; step: SetupStep };
+export type OnboardingStepId = StoryPage | { kind: "setup"; step: SetupStep };
 
 /**
- * 1-based step number and total of the counted flow: the question, the
- * mirror pages, the setup steps. Welcome and the result are not counted.
- * Skipped mirror pages (`mirrorCount` 0) shorten the flow.
+ * 1-based step number and total of the counted flow: the story pages and
+ * the setup steps (welcome and the result are not counted). After
+ * "Überspringen" on story page `skippedAt` (index in STORY_PAGES) the rest
+ * of the story is gone: the page skipped from still counts, the ones after
+ * it do not.
  */
 export function stepProgress(
   id: OnboardingStepId,
-  mirrorCount: number,
+  skippedAt: number | null,
 ): { step: number; total: number } {
-  const mirrors = Math.max(0, Math.min(MAX_MIRRORS, Math.floor(mirrorCount)));
-  const total = 1 + mirrors + SETUP_STEPS.length;
-  switch (id.kind) {
-    case "worries":
-      return { step: 1, total };
-    case "mirror":
-      return {
-        step: 2 + Math.max(0, Math.min(mirrors - 1, id.index)),
-        total,
-      };
-    case "setup":
-      return { step: 2 + mirrors + SETUP_STEPS.indexOf(id.step), total };
+  const story =
+    skippedAt === null
+      ? STORY_PAGES.length
+      : Math.max(1, Math.min(STORY_PAGES.length, Math.floor(skippedAt) + 1));
+  const total = story + SETUP_STEPS.length;
+  if (id.kind === "setup") {
+    return { step: story + 1 + SETUP_STEPS.indexOf(id.step), total };
   }
+  return { step: Math.min(story, storyIndex(id) + 1), total };
 }

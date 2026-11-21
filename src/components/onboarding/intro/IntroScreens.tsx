@@ -11,7 +11,6 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import Animated, {
   Easing,
-  FadeIn,
   FadeInDown,
   ZoomIn,
   useAnimatedStyle,
@@ -435,27 +434,6 @@ const InclusionMatrix = ({ animate }: { animate: boolean }) => {
   );
 };
 
-/** The matrix plus its caption, for the mirror page of the story. */
-export const DemoInclusion = ({ animate }: { animate: boolean }) => {
-  const colors = useThemeStore((state) => state.colors);
-  const { t } = useTranslation();
-  return (
-    <View style={styles.inclusion}>
-      <InclusionMatrix animate={animate} />
-      <Animated.View
-        entering={animate ? FadeIn.delay(1900).duration(400) : undefined}
-      >
-        <Text
-          allowFontScaling={false}
-          style={[Type.headline, styles.center, { color: colors.accent }]}
-        >
-          {t("onboarding.demo.inclusion", INCLUSION)}
-        </Text>
-      </Animated.View>
-    </View>
-  );
-};
-
 const CountsScreen = ({ animate, onAnchor }: ScreenProps) => {
   const colors = useThemeStore((state) => state.colors);
   const { t } = useTranslation();
@@ -822,9 +800,6 @@ const styles = StyleSheet.create({
   cell: {
     width: 36,
     alignItems: "center",
-  },
-  inclusion: {
-    gap: 16,
   },
   captionBlock: {
     alignItems: "center",

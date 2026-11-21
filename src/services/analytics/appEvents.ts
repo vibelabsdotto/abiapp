@@ -4,7 +4,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { ExamSlot, GradeKind, StateCode } from "@domain/model";
-import type { Worry } from "@utils/onboardingStory";
+import type { Answer, Question } from "@utils/onboardingStory";
 
 import {
   initializeAnalytics,
@@ -30,7 +30,7 @@ export const ANALYTICS_EVENTS = {
   cloudBackupApplied: "cloud_backup_applied",
   cloudBackupToggled: "cloud_backup_toggled",
   onboardingSource: "onboarding_source",
-  onboardingWorry: "onboarding_worry",
+  onboardingAnswer: "onboarding_answer",
   clippingShown: "clipping_shown",
   clippingOpened: "clipping_opened",
   clippingDismissed: "clipping_dismissed",
@@ -90,10 +90,10 @@ interface EventParams {
   cloud_backup_toggled: { enabled: boolean };
   onboarding_source: { source: AcquisitionSource | "skipped" };
   /**
-   * One event per answer of "Was stresst dich am Abi am meisten?" (enum
-   * keys of WORRIES); "none" = continued without an answer.
+   * One event per answer of a story question (enum keys of QUESTIONS);
+   * "skipped" = "Überspringen" on that question.
    */
-  onboarding_worry: { worry: Worry | "none" | "skipped" };
+  onboarding_answer: { question: Question; answer: Answer | "skipped" };
   clipping_shown: { placement: ClippingPlacement };
   clipping_opened: { placement: ClippingPlacement };
   clipping_dismissed: { placement: ClippingPlacement };
@@ -124,6 +124,14 @@ export function trackProfile(profile: {
     setUserProperty("ruleset_id", profile.rulesetId),
     setUserProperty("abitur_year", String(profile.abiturYear)),
   ]).catch(() => undefined);
+}
+
+/** Answer of a story question of the onboarding. */
+export function trackOnboardingAnswer(
+  question: Question,
+  answer: Answer | "skipped",
+): void {
+  track(ANALYTICS_EVENTS.onboardingAnswer, { question, answer });
 }
 
 /** Answer of the onboarding question "Woher kennst du AbiApp?". */

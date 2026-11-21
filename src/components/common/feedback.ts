@@ -1,5 +1,6 @@
-// Error toast, the discard prompt and the one editor close guard shared by
-// every screen. Store actions throw DataValidationError (German,
+// Error toast, the discard prompt, the one editor close guard and the
+// in-place back of a page that changes inside itself, shared by every
+// screen. Store actions throw DataValidationError (German,
 // user-facing message) or Error.
 
 import { useCallback, useState } from "react";
@@ -75,4 +76,15 @@ export function useEditorClose(dirty: boolean): EditorClose {
   }, [allowClose, router]);
 
   return { cancel, closeAfterSave, allowClose, closing };
+}
+
+/**
+ * A page that changes in place (an onboarding question becomes its scene):
+ * while `active`, back (header button, Android back) runs `onBack` on the
+ * page instead of leaving it. The blocked action is never re-dispatched;
+ * once the page is back in its first state, `active` is false and the next
+ * back leaves as usual.
+ */
+export function useInPlaceBack(active: boolean, onBack: () => void): void {
+  usePreventRemove(active, onBack);
 }

@@ -6,6 +6,7 @@ import React from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { AndroidKeyboardAvoider } from "@components/common/AndroidKeyboardAvoider";
 import { Button } from "@components/common/Button";
@@ -99,6 +100,11 @@ interface OnboardingStepProps {
    * title when the screen is pushed.
    */
   keyboardAware?: boolean;
+  /**
+   * Story pages that change in place (question, then its scene): the bar
+   * slides to the new step and a footer button that appears fades in.
+   */
+  inPlace?: boolean;
   children: React.ReactNode;
 }
 
@@ -117,6 +123,7 @@ export const OnboardingStep = ({
   secondary,
   footerNote,
   keyboardAware = false,
+  inPlace = false,
   children,
 }: OnboardingStepProps) => {
   const colors = useThemeStore((state) => state.colors);
@@ -155,6 +162,7 @@ export const OnboardingStep = ({
                     value={step}
                     max={totalSteps}
                     height={4}
+                    animated={inPlace}
                     accessibilityLabel={t("onboarding.step", {
                       step,
                       total: totalSteps,
@@ -220,14 +228,18 @@ export const OnboardingStep = ({
               }
             />
           ) : primary ? (
-            <Button
-              title={primary.title}
-              onPress={primary.onPress}
-              disabled={primary.disabled}
-              loading={primary.loading}
-              size="large"
-              fullWidth
-            />
+            <Animated.View
+              entering={inPlace ? FadeIn.duration(280) : undefined}
+            >
+              <Button
+                title={primary.title}
+                onPress={primary.onPress}
+                disabled={primary.disabled}
+                loading={primary.loading}
+                size="large"
+                fullWidth
+              />
+            </Animated.View>
           ) : null}
           {secondary ? (
             <Button

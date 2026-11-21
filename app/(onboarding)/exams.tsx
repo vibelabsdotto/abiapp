@@ -1,4 +1,4 @@
-// Onboarding step 6: exam variant and exam subjects; may be skipped.
+// Onboarding: exam variant and exam subjects; may be skipped.
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
