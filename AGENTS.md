@@ -11,9 +11,9 @@ AbiApp ist ein kostenloser Abiturrechner für alle 16 Bundesländer (Expo SDK 58
 ```bash
 npm install                 # führt patch-package aus
 npx expo prebuild --clean   # erzeugt ios/ und android/ (nicht eingecheckt)
-npm run ios                 # Dev-Client bauen + starten, Metro auf Port 8090
+npm start                   # Metro (Dev-Client), Port 8090, signiert das Dev-Manifest
+npm run ios                 # Dev-Client bauen + starten (ohne eigenen Bundler)
 npm run android
-npm start                   # nur Metro (Dev-Client), Port 8090
 npm run type-check
 npm test                    # Vitest, nur src/domain
 npm run lint
@@ -21,6 +21,12 @@ npm run format:check
 ```
 
 Metro läuft immer auf **8090** (8081–8083 gehören anderen Projekten). Laufzeit-Eval in der laufenden Dev-App: `node scripts/app-eval.mjs <ausdruck.js> '<Simulatorname>'`; Dev-Helfer unter `globalThis.__abiapp` (`seedDemoData({ state, abiturYear })`, `backup`, `setup`, `stores`).
+
+## Release und OTA
+
+- Store-Builds: `vibe-release both` im App-Root (liest `release.json`, baut einen Commit in eigenem Worktree, lädt nach TestFlight und Play Internal). Ablauf und Belege: [docs/release.md](docs/release.md).
+- OTA: `expo-updates` gegen VibeUpdate (App „AbiApp“), `runtimeVersion` per Fingerprint, Manifeste signiert (`certs/certificate.pem`, Schlüssel `~/.config/vibeupdate/keys/abiapp/private-key.pem`, Key-ID `main`). Nur JS/Assets per OTA, alles Native per Store-Build. Onboarding-Änderungen erreichen neue Nutzer erst mit dem nächsten Store-Build.
+- `.env.local` braucht für Release-Builds zusätzlich `GOOGLE_SERVICE_INFO_PLIST` und `GOOGLE_SERVICES_JSON` (absolute Pfade, Vault `secrets/abiapp/`); `release.json` `requiredEnv` bricht sonst ab. Der Fingerprint hasht die aufgelöste Config inkl. `extra.firebaseConfigured`: OTA mit demselben `.env.local` veröffentlichen wie den Store-Build.
 
 ## Harte Regeln
 

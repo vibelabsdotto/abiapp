@@ -1,0 +1,11 @@
+{
+  "name": "abiapp",
+  "ios": { "ascAppId": "6450996587" },
+  "android": { "track": "internal" },
+  "requiredEnv": [
+    "EXPO_PUBLIC_VIBEUPDATE_APP_ID",
+    "EXPO_PUBLIC_FEATURAMA_API_KEY",
+    "GOOGLE_SERVICE_INFO_PLIST",
+    "GOOGLE_SERVICES_JSON"
+  ]
+}

@@ -50,10 +50,12 @@ Expo SDK 58, React Native 0.88, Expo Router (native tabs), Zustand, expo-sqlite,
 npm install
 cp .env.example .env.local   # optional: VibeUpdate app ID, Featurama key
 npx expo prebuild --clean    # generates ios/ and android/ (not committed)
-npm run ios                  # dev client on the iOS simulator, Metro on port 8090
+npm start                    # Metro (dev client), port 8090; keep it running
+npm run ios                  # build + launch the dev client on the iOS simulator
 npm run android              # same for Android
-npm start                    # Metro only (dev client), port 8090
 ```
+
+OTA updates are code-signed (`certs/certificate.pem`), so Metro signs the development manifest with the matching private key (`ABIAPP_OTA_PRIVATE_KEY`, default `~/.config/vibeupdate/keys/abiapp/private-key.pem`). Without that key, generate your own pair locally and do not commit the new certificate: `npx expo-updates codesigning:generate --key-output-directory ~/.config/vibeupdate/keys/abiapp --certificate-output-directory certs --certificate-validity-duration-years 10 --certificate-common-name dev`.
 
 Checks:
 
@@ -66,7 +68,7 @@ npx expo-doctor
 
 `ios/` and `android/` are generated (Continuous Native Generation). Make native changes through `app.config.ts` and the config plugins in `plugins/`.
 
-Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist in the repo root at prebuild time. Without them the app builds normally and analytics calls are no-ops.
+Firebase Analytics is enabled only when `GoogleService-Info.plist` and/or `google-services.json` exist at prebuild time (repo root, or the absolute paths in `GOOGLE_SERVICE_INFO_PLIST` / `GOOGLE_SERVICES_JSON`). Without them the app builds normally and analytics calls are no-ops.
 
 ## Privacy
 
