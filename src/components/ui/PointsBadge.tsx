@@ -26,6 +26,7 @@ import {
   pointsTier,
   type PointsScale,
 } from "./points";
+import { spokenPoints } from "./spokenPoints";
 
 export type PointsBadgeSize = "mini" | "small" | "medium" | "large";
 
@@ -148,7 +149,7 @@ export const PointsBadge = ({
     accessibilityLabel ??
     (isEmpty
       ? t("ui.noValue")
-      : `${t("ui.pointsValue", { points: label })}, ${t(`ui.source.${resolvedSource}`)}`);
+      : `${spokenPoints(label)}, ${t(`ui.source.${resolvedSource}`)}`);
 
   return (
     <View

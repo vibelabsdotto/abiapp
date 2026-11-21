@@ -34,6 +34,8 @@ export const en: Translations = {
     points: "Points",
     pointsValue: "{{points}} points",
     pointsWithGrade: "{{points}} points, grade {{grade}}",
+    pointValue: "{{points}} point",
+    pointWithGrade: "{{points}} point, grade {{grade}}",
     noValue: "No value yet",
     source: {
       official: "official",

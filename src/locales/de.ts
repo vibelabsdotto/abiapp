@@ -36,6 +36,8 @@ export const de = {
     points: "Punkte",
     pointsValue: "{{points}} Punkte",
     pointsWithGrade: "{{points}} Punkte, Note {{grade}}",
+    pointValue: "{{points}} Punkt",
+    pointWithGrade: "{{points}} Punkt, Note {{grade}}",
     noValue: "Noch kein Wert",
     source: {
       official: "amtlich",
