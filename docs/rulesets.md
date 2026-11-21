@@ -44,7 +44,7 @@ src/domain/rulesets/registry.ts Registry und defaultRulesetFor(state, year)
 - **NW:** Das „neunte Pflichtfach“ wählt die Engine günstigst (Annahme); festlegbar per „Immer einbringen“.
 - **SN:** Informatik ersetzt eine Naturwissenschaft nur bei einer NW oder bei zwei NW mit nur einer Fremdsprache.
 - **BY:** Seminararbeit unter 9 Punkten zählt als zwei Defizite; fehlt sie, wird sie aus dem W-Seminar geschätzt.
-- **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5.
+- **BW:** Seminarkurs unter 5 Punkten in Block I zählt als zwei Defizite; wählbar Block I oder statt P5. Informatik ersetzt die zweite Naturwissenschaft nur im Schulversuch (Leitfaden, nicht in der AGVO). Welche Geographie-/Gemeinschaftskunde-Kurse belegpflichtig sind, legt die Schule fest; die 0-Punkte-Prüfung zählt nur, ob genug Kurse ohne 0 Punkte da sind.
 - **ST:** Doppelt gewichtetes Defizit zählt zweimal.
 - **BB:** 2:1-Bewertung mit Zusatzprüfung kaufmännisch nach der Multiplikation (amtlich nicht geregelt).
 - **TH:** Seminarfachleistung aus drei Teilleistungen (20/30/50 %); Fächer über den regulären 10 sind Wahlfächer.
