@@ -32,6 +32,14 @@ python3 <skill>/scripts/store_readback.py ios --app 6450996587 --version 2.0.0 -
 python3 <skill>/scripts/store_readback.py android --package com.max.mannstein.abisax --version-code <M> --track internal
 ```
 
+## Android-Upload-Key (Reset vom 21.11.2026)
+
+Der Upload-Key der alten MAUI-App ist nicht auffindbar. Am 21.11.2026 gegen 01:05 wurde in der Play Console ein Reset auf den neuen Key beantragt (Grund „Upload-Key verloren“). Neues Zertifikat: SHA-1 `34:8C:B7:F8:55:5B:C1:27:29:9E:7C:8E:ED:2C:DB:DE:B6:D6:C3:58`. Der alte Key hatte SHA-1 `8C:D8:D5:62:CB:AB:52:82:33:4D:23:F0:8D:9E:91:0C:44:2F:F1:10`.
+
+- **Aktiv?** Play Console → Protected with Play → Play-App-Signatur verwalten → „Upload key“ zeigt den neuen SHA-1, und der Hinweis „pending request“ ist weg. Google schickt außerdem eine Mail mit dem Datum, ab dem der neue Key gilt. Uploads davor lehnt Play mit falscher Signatur ab.
+- **Zurückziehen** (falls der alte Keystore doch auftaucht): gleiche Seite → Upload key → „Cancel request“. Danach den alten Keystore als `keystores/abiapp.keystore` in den Vault legen und `secrets/abiapp-release.env` anpassen.
+- **Upload nach der Freigabe:** `vibe-release android --ref origin/release/2.0` (frischer Build). Ein schon gebautes AAB lädt `gpc bundles upload -p com.max.mannstein.abisax --track internal --file <aab>` hoch, danach `store_readback.py android … --track internal`.
+
 ## OTA
 
 Nur JS und Assets. Native Änderungen (Dependencies, `app.config.ts`, `plugins/`) brauchen einen Store-Build; die Runtime-Version ist der Fingerprint, ein OTA mit anderem Fingerprint kommt still nie an. Erstes OTA erst, wenn ein Store-Build mit `expo-updates` live ist. Onboarding-Änderungen erreichen neue Nutzer nur per Store-Build (Update greift ab dem zweiten Kaltstart).
