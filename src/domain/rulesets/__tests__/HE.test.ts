@@ -332,3 +332,35 @@ describe("Hessen (HE-2027)", () => {
     expect(e.blockI.admitted).toBe(false);
   });
 });
+
+describe("Hessen ab Abitur 2030 (HE-2030, draft on the KMK framework)", () => {
+  // KMK-Vereinbarung i. d. F. vom 06.06.2024, Ziff. 9.5.3 (36 HJL), 9.5.4
+  // (two eA subjects doubled), 9.5.7 (höchstens 20 % unter 5, keine 0),
+  // 9.5.8, Anlage 3 (E_I = P · 40 / S, PF · 4 ab 0,5 aufgerundet), 13.4
+  // (spätestens für Eintritt in die Einführungsphase ab 2027 = Abitur 2030).
+  // Hessen has not implemented it yet: the values pin the documented
+  // assumptions, not an official Hessian rule.
+  it("typical case on the KMK framework", () => {
+    // LK En 48 + Bio 36 doubled = 168 (S 16); exam GK De 43, Ma 36, Ge 48
+    // = 127. No further Hessian duties assumed: 16 free GK, the best are
+    // 15, 15, 15, 14, 14, 14, 13 × 4, 12, 12, 11, 10, 10, 9 = 203.
+    // P = 498, S = 44 → 498 · 40 / 44 = 452,73 → 453.
+    // Block II: P2 Bio 9 + 11 → 38,67 → 39 (KMK rounds half up, OAVO
+    // Anlage 10a would give 38): 48 + 39 + 40 + 32 + 52 = 211.
+    // Total 664 → 1,9.
+    const input = { ...build(typical(), EXAMS), rulesetId: "HE-2030" };
+    const e = evaluate(input);
+    expect(summary(e)).toEqual({
+      blockI: 453,
+      blockII: 211,
+      total: 664,
+      grade: 19,
+      deficits: 0,
+      admitted: true,
+      passed: true,
+    });
+    expect(e.blockI.deficits.maxTotal).toBe(7);
+    expect(getRulesetSummary("HE-2030").draft).toBe(true);
+    expect(e.issues.some((i) => i.code === "assumption")).toBe(true);
+  });
+});
