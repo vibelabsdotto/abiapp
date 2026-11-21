@@ -15,10 +15,10 @@ export const setupEN = {
     languageGerman: "Deutsch",
     languageEnglish: "English",
     feedback: "Feedback",
-    featureRequests: "Feature requests",
+    featureRequests: "Suggest a feature",
     featureRequestsUnavailable:
-      "Feature requests are not available in this version.",
-    about: "About",
+      "Suggestions are not available in this version.",
+    about: "About AbiApp",
     version: "Version",
     privacy: "All data stays on your device. No account, no cloud.",
     profile: "Profile",
@@ -26,7 +26,7 @@ export const setupEN = {
     abiturYear: "Abitur year",
     ruleset: "Rules version",
     examVariant: "Exam variant",
-    subjects: "Subjects and courses",
+    subjects: "Subjects",
     subjectsCount: "{{count}} subjects",
     exams: "Exam subjects",
     examsCount: "{{count}} of {{total}}",
@@ -41,14 +41,14 @@ export const setupEN = {
     importBackup: "Import backup",
     deleteAll: "Delete all data",
     dataFooter:
-      "The backup is a file with all subjects, grades and exams. Keep it somewhere safe.",
+      "The backup is a file with all subjects, grades and exams. Save it outside the app, then you can restore everything on a new phone.",
     exportFailed: "Export failed",
     importTitle: "Replace your data?",
     importMessage:
       "Backup from {{date}}\n{{profile}}\n{{subjects}} subjects, {{grades}} grades, {{official}} half-year results, {{exams}} exam results\n\nYour current data will be replaced completely.",
     importConfirm: "Replace",
     importDone: "Backup imported",
-    importInvalid: "Invalid backup",
+    importInvalid: "Not a valid backup",
     importFailed: "Import failed",
     importNoProfile: "No profile",
     deleteTitle: "Delete all data?",
@@ -65,6 +65,9 @@ export const setupEN = {
     privacyPolicy: "Privacy",
     imprint: "Legal notice",
     disclaimer: "No guarantee. Your school's decision is what counts.",
+    join: "Join in",
+    clipping: "Earn money with TikTok",
+    clippingSubtitle: "€30 per account per month",
     linkFailed: "Could not open the link",
     developer: "Developer",
     seedDemo: "Load demo data",
@@ -78,33 +81,43 @@ export const setupEN = {
   onboarding: {
     next: "Continue",
     later: "Decide later",
-    finish: "Go to overview",
+    skip: "Skip",
+    finish: "Open overview",
     step: "Step {{step}} of {{total}}",
+    fixIssue: "You can continue once the note above is resolved.",
     welcome: {
-      claim: "Your Abitur average, always in view.",
-      text: "Enter your grades. AbiApp calculates with the rules of your state.",
+      claim: "Your Abitur. Calculated.",
+      text: "AbiApp calculates your average with the rules of your state.",
       freeTitle: "Free",
-      freeText: "Every feature, no subscription, no in-app purchases.",
+      freeText: "No subscription, no in-app purchases.",
       accountTitle: "No account",
       accountText: "No sign-up, no email address.",
       deviceTitle: "Stays on your device",
       deviceText: "Your grades are never uploaded.",
       start: "Get started",
+      restore: "Restore backup",
     },
     state: {
       title: "State",
       intro:
-        "Where do you take your Abitur? Course counting, exams and the calculation depend on it.",
+        "Where do you take your Abitur? The whole calculation depends on it.",
     },
     year: {
       title: "Abitur year",
       intro: "In which year do you take your Abitur exams?",
-      footer: "You can change the rules version later in Settings.",
+      footer:
+        "AbiApp picks the rules that match your year. You can change them in Settings.",
+    },
+    goal: {
+      title: "Your goal",
+      intro: "Which average do you want to reach?",
+      need: "You need {{points}} of 900 points for it.",
+      a11y: "Goal {{grade}}. You need {{points}} of 900 points for it.",
     },
     subjects: {
       title: "Your subjects",
       intro:
-        "Pick every subject you take in the qualification phase. Add your own subjects below.",
+        "Pick every subject you take in the qualification phase. If one is missing, add it below.",
     },
     levels: {
       intro: "Which subjects do you take as {{name}}? {{need}}",
@@ -112,15 +125,37 @@ export const setupEN = {
     exams: {
       title: "Exam subjects",
       intro:
-        "In which subjects do you take your Abitur exams? You can also decide this later.",
+        "In which subjects do you take your Abitur exams? You can also do this later.",
+      open: {
+        one: "1 exam subject still open.",
+        other: "{{count}} exam subjects still open.",
+      },
+    },
+    source: {
+      title: "Last question",
+      intro: "How did you hear about AbiApp?",
+      tiktok: "TikTok",
+      instagram: "Instagram",
+      friends: "Friends or classmates",
+      school: "School or a teacher",
+      appStore: "App Store",
+      playStore: "Play Store",
+      google: "Google",
+      other: "Other",
     },
     done: {
       title: "Done",
       heading: "All set",
-      text: "Enter your first grades now. The overview shows your average right away.",
+      text: "Enter your first grade. The overview shows your average right away.",
+      goalHeading: "Your goal: {{grade}}",
+      goalText:
+        "You need {{points}} points for it. Enter your first grade to see where you stand.",
+      firstGrade: "Enter first grade",
       examsLater:
-        "Your exam subjects are still open. You find them in Settings.",
-      summary: "Summary",
+        "Your exam subjects are still open. You can set them in Settings.",
+      summary: "Your setup",
+      subjects: "Subjects",
+      elevated: "{{name}}: {{subjects}}",
       addSubject: "Add subject",
     },
   },
@@ -130,7 +165,7 @@ export const setupEN = {
     save: "Save",
     saveFailed: "Saving failed",
     discardTitle: "Discard changes?",
-    discardMessage: "Your changes will not be saved.",
+    discardMessage: "Your changes will be lost.",
     discard: "Discard",
     keepEditing: "Keep editing",
     profileTitle: "Profile",
@@ -151,10 +186,11 @@ export const setupEN = {
         "This version is based on a draft regulation. Some rules may still change.",
       lowText:
         "These rules are not fully confirmed yet. Check important results with your school.",
-      unavailable: "There are no rules for this choice.",
+      unavailable:
+        "There are no rules for this year in your state yet. Pick another year.",
     },
     rulesChange: {
-      confirmTitle: "Entries would be deleted",
+      confirmTitle: "Entries will be lost",
       confirmMessage: "{{issues}}\n\nChange anyway?",
       confirm: "Change and delete",
       lossMessage:
@@ -165,10 +201,10 @@ export const setupEN = {
     subjects: {
       title: "Subjects",
       selected: "{{count}} selected",
-      minHint: "Pick at least {{count}} subjects.",
+      minHint: "{{count}} of at least {{min}} selected",
       custom: "Your own subjects",
       customFooter:
-        "Your own subjects count like a subject of the chosen field, without special rules.",
+        "Your own subjects count like a subject of their field, without special rules.",
       orphan: "Not in the {{state}} catalog",
       orphanFooter:
         "These subjects do not exist in {{state}}. If you keep them, they count as your own subjects.",
@@ -201,6 +237,14 @@ export const setupEN = {
       emptyText: "Pick your subjects first.",
       openSubjects: "Pick subjects",
       plural: "{{short}} subjects",
+      missing: {
+        one: "Pick 1 more subject.",
+        other: "Pick {{count}} more subjects.",
+      },
+      tooMany: {
+        one: "1 subject too many.",
+        other: "{{count}} subjects too many.",
+      },
     },
     exams: {
       variant: "Exam variant",
@@ -213,7 +257,7 @@ export const setupEN = {
       wrongLevel: "Not a {{short}} subject",
       notExam: "Not an exam subject",
       usedIn: "Currently {{slot}}",
-      assigned: "{{count}} of {{total}} set",
+      assigned: "{{count}} of {{total}} selected",
       kinds: {
         written: "written",
         oral: "oral",

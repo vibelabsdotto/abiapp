@@ -1,4 +1,4 @@
-// Onboarding step 5: exam variant and exam subjects; may be skipped.
+// Onboarding step 6: exam variant and exam subjects; may be skipped.
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
@@ -22,7 +22,7 @@ export default function OnboardingExamsScreen() {
     try {
       // "Später" keeps whatever is valid so far.
       if (draft.canSave) await draft.save();
-      router.push("/(onboarding)/done");
+      router.push("/(onboarding)/source");
     } catch (error) {
       showError(t("setup.saveFailed"), error);
     } finally {
@@ -30,12 +30,20 @@ export default function OnboardingExamsScreen() {
     }
   };
 
+  const open = draft.requiredCount - draft.assignedCount;
+  const blocked = draft.canContinue
+    ? undefined
+    : draft.canSave
+      ? t("onboarding.exams.open", { count: open })
+      : t("onboarding.fixIssue");
+
   return (
     <OnboardingStep
       title={t("onboarding.exams.title")}
       step={ONBOARDING_STEPS.exams}
       totalSteps={ONBOARDING_TOTAL_STEPS}
       intro={t("onboarding.exams.intro")}
+      footerNote={blocked}
       primary={{
         title: t("onboarding.next"),
         disabled: !draft.canContinue || saving !== null,

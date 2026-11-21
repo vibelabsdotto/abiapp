@@ -1,4 +1,4 @@
-// Onboarding step 4: subjects on the elevated level (LK/eA/Leistungsfach),
+// Onboarding step 5: subjects on the elevated level (LK/eA/Leistungsfach),
 // validated live against the ruleset.
 
 import React, { useState } from "react";
@@ -28,6 +28,15 @@ export default function OnboardingLevelsScreen() {
       ? t("setup.levels.need", { count: draft.min })
       : t("setup.levels.needRange", { min: draft.min, max: draft.max });
 
+  // Say why "Weiter" is grey instead of leaving it unexplained.
+  const blocked = draft.canSave
+    ? undefined
+    : draft.count < draft.min
+      ? t("setup.levels.missing", { count: draft.min - draft.count })
+      : draft.count > draft.max
+        ? t("setup.levels.tooMany", { count: draft.count - draft.max })
+        : t("onboarding.fixIssue");
+
   const next = async () => {
     setSaving(true);
     try {
@@ -48,6 +57,7 @@ export default function OnboardingLevelsScreen() {
         step={ONBOARDING_STEPS.levels}
         totalSteps={ONBOARDING_TOTAL_STEPS}
         intro={t("onboarding.levels.intro", { name: title, need })}
+        footerNote={blocked}
         primary={{
           title: t("onboarding.next"),
           disabled: !draft.canSave,

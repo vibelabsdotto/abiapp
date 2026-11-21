@@ -3,9 +3,11 @@
 export const ONBOARDING_STEPS = {
   state: 1,
   year: 2,
-  subjects: 3,
-  levels: 4,
-  exams: 5,
+  goal: 3,
+  subjects: 4,
+  levels: 5,
+  exams: 6,
+  source: 7,
 } as const;
 
-export const ONBOARDING_TOTAL_STEPS = 5;
+export const ONBOARDING_TOTAL_STEPS = 7;

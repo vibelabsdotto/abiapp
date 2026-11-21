@@ -1,5 +1,6 @@
 // Welcome: app icon, name, claim and the three promises (free, no
-// account, data stays on the device). One button starts the flow.
+// account, data stays on the device). One button starts the flow; a text
+// link restores a backup (new phone).
 
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -42,7 +43,17 @@ const PROMISES: {
   },
 ];
 
-export const WelcomeView = ({ onStart }: { onStart: () => void }) => {
+interface WelcomeViewProps {
+  onStart: () => void;
+  onRestore: () => void;
+  restoring?: boolean;
+}
+
+export const WelcomeView = ({
+  onStart,
+  onRestore,
+  restoring = false,
+}: WelcomeViewProps) => {
   const colors = useThemeStore((state) => state.colors);
   const isDark = useThemeStore((state) => state.isDark);
   const { t } = useTranslation();
@@ -107,7 +118,15 @@ export const WelcomeView = ({ onStart }: { onStart: () => void }) => {
         <Button
           title={t("onboarding.welcome.start")}
           onPress={onStart}
+          disabled={restoring}
           size="large"
+          fullWidth
+        />
+        <Button
+          title={t("onboarding.welcome.restore")}
+          onPress={onRestore}
+          loading={restoring}
+          variant="ghost"
           fullWidth
         />
       </View>
@@ -163,5 +182,6 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 12,
+    gap: 4,
   },
 });

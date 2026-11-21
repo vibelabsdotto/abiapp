@@ -1,4 +1,4 @@
-// Onboarding step 3: subjects from the state's catalog plus own subjects.
+// Onboarding step 4: subjects from the state's catalog plus own subjects.
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
@@ -48,7 +48,10 @@ export default function OnboardingSubjectsScreen() {
       footerNote={
         draft.canSave
           ? t("setup.subjects.selected", { count: draft.selectedCount })
-          : t("setup.subjects.minHint", { count: draft.minimum })
+          : t("setup.subjects.minHint", {
+              count: draft.selectedCount,
+              min: draft.minimum,
+            })
       }
       primary={{
         title: t("onboarding.next"),

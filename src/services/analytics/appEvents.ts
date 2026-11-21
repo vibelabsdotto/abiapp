@@ -18,6 +18,10 @@ export const ANALYTICS_EVENTS = {
   backupExported: "backup_exported",
   backupRestored: "backup_restored",
   dataDeleted: "data_deleted",
+  onboardingSource: "onboarding_source",
+  clippingShown: "clipping_shown",
+  clippingOpened: "clipping_opened",
+  clippingDismissed: "clipping_dismissed",
 } as const;
 
 const FIRST_GRADE_KEY = "abiapp.analytics.firstGradeTracked";
@@ -43,6 +47,24 @@ export function trackProfile(profile: {
     setUserProperty("ruleset_id", profile.rulesetId),
     setUserProperty("abitur_year", String(profile.abiturYear)),
   ]).catch(() => undefined);
+}
+
+/** Answer of the onboarding question "Woher kennst du AbiApp?". */
+export function trackAcquisitionSource(source: string): void {
+  track(ANALYTICS_EVENTS.onboardingSource, { source });
+  void setUserProperty("acquisition_source", source).catch(() => undefined);
+}
+
+/** Where the clipping hint sits. */
+export type ClippingPlacement = "overview" | "settings";
+
+const clippingShownThisSession = new Set<ClippingPlacement>();
+
+/** clipping_shown at most once per app session and placement. */
+export function trackClippingShown(placement: ClippingPlacement): void {
+  if (clippingShownThisSession.has(placement)) return;
+  clippingShownThisSession.add(placement);
+  track(ANALYTICS_EVENTS.clippingShown, { placement });
 }
 
 /** grade_added on every grade, first_grade_added once per installation. */

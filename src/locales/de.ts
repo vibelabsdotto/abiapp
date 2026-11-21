@@ -25,12 +25,14 @@ export const de = {
   },
   errors: {
     title: "Etwas ist schiefgelaufen",
-    message: "Die App ist auf einen unerwarteten Fehler gestoßen.",
-    initFailed: "Die Datenbank konnte nicht geöffnet werden.",
+    message:
+      "AbiApp ist auf einen unerwarteten Fehler gestoßen. Deine Daten sind sicher. Versuche es noch einmal.",
+    initFailed:
+      "AbiApp konnte deine Daten nicht öffnen. Versuche es noch einmal.",
   },
   notFound: {
     title: "Seite nicht gefunden",
-    back: "Zur Übersicht",
+    back: "Übersicht öffnen",
   },
   ui: {
     points: "Punkte",
@@ -47,13 +49,13 @@ export const de = {
       prognosis: "Prognose",
       result: "Ergebnis",
       notPassed: "Nicht bestanden",
-      noGrade: "Noch keine Note",
+      noGrade: "Noch kein Schnitt",
       totalOf: "{{points}} von {{max}} Punkten",
       passMarker: "Bestanden ab {{points}}",
       topMarker: "1,0 ab {{points}}",
       goal: "Ziel {{grade}}",
       goalMarker: "Dein Ziel",
-      gradeLabel: "Abiturschnitt {{grade}}",
+      gradeLabel: "Abischnitt {{grade}}",
     },
     check: {
       passed: "Erfüllt",

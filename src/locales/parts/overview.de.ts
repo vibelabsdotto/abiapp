@@ -12,26 +12,26 @@ export const overviewDE = {
       title: "Regeln vorläufig",
       draft:
         "{{label}} beruht auf einem Entwurf. Die Zahlen können sich noch ändern.",
-      low: "Die Regeln für {{label}} sind noch nicht sicher belegt. Prüf wichtige Zahlen mit deiner Schule.",
+      low: "Die Regeln für {{label}} sind noch nicht sicher belegt. Prüfe wichtige Zahlen mit deiner Schule.",
     },
     goal: {
-      setTitle: "Wunschschnitt festlegen",
+      setTitle: "Ziel festlegen",
       setMessage: "Dann siehst du, wie viele Punkte dir noch fehlen.",
       title: "Ziel {{grade}}",
       titleMissing: "Ziel {{grade}} · noch {{points}} Punkte",
       titleReached: "Ziel {{grade}} erreicht",
       titleUnreachable: "Ziel {{grade}} nicht mehr erreichbar",
       needAverage:
-        "Dafür brauchst du im Schnitt {{points}} Punkte in allen offenen Kursen und Prüfungen.",
+        "Dafür brauchst du in allen offenen Kursen und Prüfungen durchschnittlich {{points}} Punkte.",
       reached: "{{points}} Punkte Puffer.",
       reachedExact: "Du liegst genau auf deinem Ziel.",
       keepAverage:
-        "Es reicht, wenn du in den offenen Kursen und Prüfungen im Schnitt {{points}} Punkte holst.",
+        "Es reicht, wenn du in den offenen Kursen und Prüfungen durchschnittlich {{points}} Punkte holst.",
       unreachable:
         "Selbst mit 15 Punkten in allen offenen Kursen und Prüfungen reicht es nicht mehr.",
       noOpen: "Es ist nichts mehr offen. Dein Ergebnis steht fest.",
       failed:
-        "Eine Note gibt es erst, wenn alle Bedingungen erfüllt sind. Sieh dir die offenen Punkte an.",
+        "Einen Schnitt gibt es erst, wenn alle Bedingungen erfüllt sind. Sieh dir die Bedingungen unten an.",
     },
     blockI: {
       label: "Block I",
@@ -48,7 +48,7 @@ export const overviewDE = {
       title: "Zulassung und Bestehen",
       all: "Alle anzeigen",
       allPassed: "Alle Bedingungen erfüllt",
-      allPassedPredicted: "Nach Prognose alle Bedingungen erfüllt",
+      allPassedPredicted: "Laut Prognose alle Bedingungen erfüllt",
       count: "{{passed}} von {{total}} Bedingungen erfüllt",
       addSubject: "Fach hinzufügen",
     },
@@ -60,17 +60,24 @@ export const overviewDE = {
     empty: {
       title: "Noch keine Noten",
       message:
-        "Trag deine erste Note ein. AbiApp rechnet daraus deinen Abiturschnitt nach den Regeln von {{state}}.",
+        "Trage deine erste Note ein. AbiApp rechnet daraus deinen Schnitt nach den Regeln von {{state}}.",
       action: "Erste Note eintragen",
       pickSubject: "In welchem Fach?",
       noSubjectsTitle: "Noch keine Fächer",
       noSubjectsMessage:
-        "Leg zuerst deine Fächer an. Danach kannst du Noten eintragen.",
+        "Lege zuerst deine Fächer an. Danach kannst du Noten eintragen.",
       noSubjectsAction: "Fächer einrichten",
     },
     error: {
       title: "Berechnung nicht möglich",
-      message: "AbiApp konnte deinen Schnitt gerade nicht berechnen.",
+      message:
+        "AbiApp konnte deinen Schnitt nicht berechnen. Prüfe deine Fächer in den Einstellungen.",
+    },
+    clipping: {
+      title: "Nebenbei Geld verdienen?",
+      text: "Poste fertige TikToks für unsere Apps. 30 € pro Account im Monat, bis zu 90 €.",
+      action: "So funktioniert es",
+      dismiss: "Hinweis schließen",
     },
   },
   abitur: {
@@ -82,9 +89,9 @@ export const overviewDE = {
       reset: "Anpassungen zurücksetzen",
     },
     total: {
-      grade: "Abiturnote",
+      grade: "Dein Schnitt",
       notPassed: "Nicht bestanden",
-      noGrade: "Noch keine Note",
+      noGrade: "Noch kein Schnitt",
       points: "{{points}} von {{max}} Punkten",
       blockI: "Block I",
       blockII: "Block II",
@@ -101,8 +108,8 @@ export const overviewDE = {
       includedValue: "{{count}} von {{label}}",
       placeholderDetail:
         "Dazu {{slots}} geschätzte Plätze mit je {{points}} Punkten, bis alle Fächer angelegt sind.",
-      deficits: "Unterkurse",
-      deficitsValue: "{{count}} von max. {{max}}",
+      deficits: "Unterkurse (unter 5 Punkten)",
+      deficitsValue: "{{count}} von höchstens {{max}}",
       deficitsNoMax: "{{count}}",
       deficitsElevated: "davon {{count}} im {{level}}",
       formula: "Rechnung",
@@ -112,7 +119,7 @@ export const overviewDE = {
         "{{weightedSum}} Punkte aus {{weightSum}} gewerteten Kursen, auf 40 Kurse umgerechnet: {{weightedSum}} × 40 / {{weightSum}} = {{points}}.",
       matrixTitle: "Einbringung",
       matrixHint:
-        "Tipp auf einen Kurs, um ihn immer oder nie einzubringen. Sonst wählt AbiApp die beste gültige Einbringung.",
+        "Tippe auf einen Kurs, um ihn immer oder nie einzubringen. Sonst wählt AbiApp die beste gültige Einbringung.",
       subject: "Fach",
       legend: {
         included: "eingebracht",
@@ -132,7 +139,7 @@ export const overviewDE = {
       resetMessage: "AbiApp wählt die Einbringung dann für alle Kurse selbst.",
       resetConfirm: "Zurücksetzen",
       resetDone: "Einbringung wieder automatisch",
-      extras: "Weitere Leistungen",
+      extras: "Sonderleistungen",
       extraSlots: "zählt wie {{count}} Kurse",
       assumptions: "Annahmen",
       changed: "Block I jetzt {{points}} Punkte ({{delta}})",
@@ -173,7 +180,7 @@ export const overviewDE = {
     },
     extras: {
       title: "Sonderleistungen",
-      footer: "Tipp auf eine Leistung, um die Punkte einzutragen.",
+      footer: "Tippe auf eine Leistung, um die Punkte einzutragen.",
     },
     checks: {
       title: "Zulassung und Bestehen",
@@ -182,14 +189,14 @@ export const overviewDE = {
       total: "Gesamt",
     },
     rulesLink: "Regeln für {{state}}",
-    rulesLinkHint: "Zusammenfassung, Quellen und Annahmen",
+    rulesLinkHint: "Quellen und Annahmen",
   },
   editor: {
     cancel: "Abbrechen",
     save: "Sichern",
     done: "Fertig",
     discardTitle: "Änderungen verwerfen?",
-    discardMessage: "Deine Eingabe geht verloren.",
+    discardMessage: "Deine Änderungen gehen verloren.",
     discard: "Verwerfen",
     keepEditing: "Weiter bearbeiten",
     saveFailed: "Speichern fehlgeschlagen",
@@ -199,11 +206,11 @@ export const overviewDE = {
     main: "Ergebnis",
     oral: "Zusätzliche mündliche Prüfung",
     oralHint:
-      "Sie wird nach der Formel deines Landes mit dem Ergebnis verrechnet.",
+      "Sie wird nach der Formel deines Bundeslandes mit dem Ergebnis verrechnet.",
     factor: "zählt {{factor}}-fach",
     noValue: "Noch kein Ergebnis",
     predictedHint:
-      "Ohne Eingabe rechnet AbiApp mit {{points}} Punkten aus deinen Kursen.",
+      "Ohne Eintrag rechnet AbiApp mit {{points}} Punkten aus deinen Kursen (Prognose).",
     preview: "So zählt es",
     combined: "Kombiniert",
     weighted: "Für Block II",
@@ -211,8 +218,8 @@ export const overviewDE = {
     blockII: "Block II",
     blockIIValue: "Block II {{points}}",
     total: "Gesamt",
-    grade: "Note",
-    gradeValue: "Note {{grade}}",
+    grade: "Schnitt",
+    gradeValue: "Schnitt {{grade}}",
     remove: "Ergebnis entfernen",
     removeTitle: "Ergebnis entfernen?",
     removeMessage: "Die Punkte für {{label}} werden gelöscht.",
@@ -225,18 +232,18 @@ export const overviewDE = {
     extraTitle: "Sonderleistung",
   },
   goalEditor: {
-    title: "Wunschschnitt",
+    title: "Ziel",
     intro:
-      "Wähl die Note, die du erreichen willst. AbiApp rechnet aus, was dafür noch nötig ist.",
+      "Wähle den Schnitt, den du erreichen willst. AbiApp rechnet aus, was dafür noch nötig ist.",
     range: "{{from}} bis {{to}}",
-    pick: "Tipp auf eine Note.",
+    pick: "Tippe auf einen Schnitt.",
     current: "jetzt",
     needed: "Benötigt",
     neededValue: "{{points}} von 900",
     missing: "Fehlt noch",
     missingValue: "{{points}} Punkte",
     missingNone: "nichts",
-    average: "Schnitt in offenen Kursen",
+    average: "Nötig je offenem Kurs",
     averageValue: "{{points}} Punkte",
     averageNone: "nichts mehr offen",
     averageTooHigh: "über 15 Punkte",
@@ -247,9 +254,9 @@ export const overviewDE = {
     summary: "Für {{grade}} brauchst du {{points}} Punkte.",
     currentTotal: "Du stehst bei {{points}} Punkten.",
     failed:
-      "Solange eine Bedingung zur Zulassung oder zum Bestehen verletzt ist, gibt es keine Note.",
+      "Solange eine Bedingung für Zulassung oder Bestehen nicht erfüllt ist, gibt es keinen Schnitt.",
     explain:
-      "Offen sind alle Kurse ohne amtliches Ergebnis und alle Prüfungen ohne Eintrag. Der Schnitt gilt für jeden davon.",
+      "Offen sind alle Kurse ohne amtliches Ergebnis und alle Prüfungen ohne Eintrag. Der Wert gilt für jeden davon.",
     remove: "Ziel entfernen",
     removeTitle: "Ziel entfernen?",
     removeMessage: "Die Übersicht zeigt dann kein Ziel mehr.",
@@ -266,11 +273,11 @@ export const overviewDE = {
     draftMessage:
       "Diese Version beruht auf einem Entwurf. Sobald die Verordnung gilt, passt AbiApp die Regeln an.",
     lowMessage:
-      "Für diese Version gibt es nur wenige gesicherte Quellen. Prüf wichtige Zahlen mit deiner Schule.",
+      "Für diese Version gibt es nur wenige gesicherte Quellen. Prüfe wichtige Zahlen mit deiner Schule.",
     halfYears: "Halbjahre",
-    levels: "Niveaus",
+    levels: "Kursniveaus",
     summary: "Das Wichtigste",
-    assumptions: "Annahmen deiner Auswertung",
+    assumptions: "Annahmen für deine Rechnung",
     assumptionsNone: "Für deine Daten musste AbiApp nichts annehmen.",
     assumptionsFooter:
       "Wo die Verordnung offen ist, wählt AbiApp die für dich günstigste Lesart.",

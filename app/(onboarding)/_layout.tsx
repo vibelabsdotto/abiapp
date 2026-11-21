@@ -1,6 +1,7 @@
-// First-run flow: native Stack with large titles and native back. Each
-// step saves through setupActions when the user taps "Weiter"; going back
-// keeps the choices (draft store + saved data).
+// First-run flow: welcome, state, year, goal, subjects, level, exams,
+// source, done. Native Stack with large titles and native back. Each step
+// saves through setupActions when it advances; going back keeps the
+// choices (draft store + saved data).
 
 import React from "react";
 import { Stack } from "expo-router";
@@ -31,6 +32,10 @@ export default function OnboardingLayout() {
         options={{ title: t("onboarding.year.title") }}
       />
       <Stack.Screen
+        name="goal"
+        options={{ title: t("onboarding.goal.title") }}
+      />
+      <Stack.Screen
         name="subjects"
         options={{ title: t("onboarding.subjects.title") }}
       />
@@ -38,6 +43,10 @@ export default function OnboardingLayout() {
       <Stack.Screen
         name="exams"
         options={{ title: t("onboarding.exams.title") }}
+      />
+      <Stack.Screen
+        name="source"
+        options={{ title: t("onboarding.source.title") }}
       />
       <Stack.Screen
         name="done"

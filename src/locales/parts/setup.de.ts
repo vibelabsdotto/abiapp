@@ -15,10 +15,10 @@ export const setupDE = {
     languageGerman: "Deutsch",
     languageEnglish: "English",
     feedback: "Feedback",
-    featureRequests: "Feature-Wünsche",
+    featureRequests: "Funktion vorschlagen",
     featureRequestsUnavailable:
-      "Feature-Wünsche sind in dieser Version nicht verfügbar.",
-    about: "Über",
+      "Vorschläge sind in dieser Version nicht verfügbar.",
+    about: "Über AbiApp",
     version: "Version",
     privacy: "Alle Daten bleiben auf deinem Gerät. Kein Konto, keine Cloud.",
     profile: "Profil",
@@ -26,29 +26,29 @@ export const setupDE = {
     abiturYear: "Abiturjahrgang",
     ruleset: "Regelversion",
     examVariant: "Prüfungsvariante",
-    subjects: "Fächer und Kurswahl",
+    subjects: "Fächer",
     subjectsCount: "{{count}} Fächer",
     exams: "Prüfungsfächer",
     examsCount: "{{count}} von {{total}}",
     notSet: "Offen",
     draft: "vorläufig",
     goal: "Ziel",
-    goalRow: "Wunschschnitt",
+    goalRow: "Zielschnitt",
     goalFooter:
-      "Mit Ziel zeigt dir die Übersicht, wie viele Punkte dir noch fehlen.",
+      "Mit Ziel zeigt die Übersicht, wie viele Punkte dir noch fehlen.",
     data: "Daten",
     exportBackup: "Backup exportieren",
     importBackup: "Backup importieren",
     deleteAll: "Alle Daten löschen",
     dataFooter:
-      "Das Backup ist eine Datei mit allen Fächern, Noten und Prüfungen. Bewahre es an einem sicheren Ort auf.",
+      "Das Backup ist eine Datei mit allen Fächern, Noten und Prüfungen. Speichere sie außerhalb der App, dann kannst du alles auf einem neuen Handy wiederherstellen.",
     exportFailed: "Export fehlgeschlagen",
     importTitle: "Daten ersetzen?",
     importMessage:
       "Backup vom {{date}}\n{{profile}}\n{{subjects}} Fächer, {{grades}} Noten, {{official}} Halbjahresergebnisse, {{exams}} Prüfungsergebnisse\n\nDeine aktuellen Daten werden vollständig ersetzt.",
     importConfirm: "Ersetzen",
     importDone: "Backup importiert",
-    importInvalid: "Backup ungültig",
+    importInvalid: "Kein gültiges Backup",
     importFailed: "Import fehlgeschlagen",
     importNoProfile: "Ohne Profil",
     deleteTitle: "Alle Daten löschen?",
@@ -64,7 +64,10 @@ export const setupDE = {
     openSource: "Quellcode auf GitHub",
     privacyPolicy: "Datenschutz",
     imprint: "Impressum",
-    disclaimer: "Ohne Gewähr, maßgeblich ist deine Schule.",
+    disclaimer: "Ohne Gewähr. Maßgeblich ist deine Schule.",
+    join: "Mitmachen",
+    clipping: "Mit TikTok Geld verdienen",
+    clippingSubtitle: "30 € pro Account im Monat",
     linkFailed: "Link konnte nicht geöffnet werden",
     developer: "Entwickler",
     seedDemo: "Demo-Daten laden",
@@ -78,33 +81,42 @@ export const setupDE = {
   onboarding: {
     next: "Weiter",
     later: "Später festlegen",
-    finish: "Zur Übersicht",
+    skip: "Überspringen",
+    finish: "Übersicht öffnen",
     step: "Schritt {{step}} von {{total}}",
+    fixIssue: "Weiter geht es, sobald der Hinweis oben erledigt ist.",
     welcome: {
-      claim: "Dein Abiturschnitt, jederzeit im Blick.",
-      text: "Trag deine Noten ein. AbiApp rechnet nach den Regeln deines Bundeslandes.",
+      claim: "Dein Abi. Ausgerechnet.",
+      text: "AbiApp rechnet deinen Schnitt nach den Regeln deines Bundeslandes.",
       freeTitle: "Kostenlos",
-      freeText: "Alle Funktionen, ohne Abo und ohne In-App-Käufe.",
+      freeText: "Ohne Abo, ohne In-App-Käufe.",
       accountTitle: "Ohne Konto",
       accountText: "Keine Anmeldung, keine E-Mail-Adresse.",
       deviceTitle: "Bleibt auf deinem Gerät",
       deviceText: "Deine Noten werden nirgendwo hochgeladen.",
       start: "Los geht's",
+      restore: "Backup wiederherstellen",
     },
     state: {
       title: "Bundesland",
-      intro:
-        "Wo machst du Abitur? Danach richten sich Einbringung, Prüfungen und Berechnung.",
+      intro: "Wo machst du Abitur? Danach richtet sich die ganze Rechnung.",
     },
     year: {
       title: "Abiturjahrgang",
       intro: "In welchem Jahr schreibst du deine Abiturprüfungen?",
-      footer: "Die Regelversion kannst du später in den Einstellungen ändern.",
+      footer:
+        "AbiApp wählt die Regeln passend zum Jahrgang. Ändern kannst du sie in den Einstellungen.",
+    },
+    goal: {
+      title: "Dein Ziel",
+      intro: "Welchen Schnitt willst du schaffen?",
+      need: "Dafür brauchst du {{points}} von 900 Punkten.",
+      a11y: "Ziel {{grade}}. Dafür brauchst du {{points}} von 900 Punkten.",
     },
     subjects: {
       title: "Deine Fächer",
       intro:
-        "Wähle alle Fächer, die du in der Qualifikationsphase belegst. Eigene Fächer kannst du unten ergänzen.",
+        "Wähle alle Fächer, die du in der Qualifikationsphase belegst. Fehlt eins, lege es unten selbst an.",
     },
     levels: {
       intro: "Welche Fächer belegst du als {{name}}? {{need}}",
@@ -112,15 +124,37 @@ export const setupDE = {
     exams: {
       title: "Prüfungsfächer",
       intro:
-        "In welchen Fächern legst du deine Abiturprüfungen ab? Du kannst das auch später festlegen.",
+        "In welchen Fächern legst du deine Abiturprüfungen ab? Das geht auch später.",
+      open: {
+        one: "Noch 1 Prüfungsfach offen.",
+        other: "Noch {{count}} Prüfungsfächer offen.",
+      },
+    },
+    source: {
+      title: "Letzte Frage",
+      intro: "Woher kennst du AbiApp?",
+      tiktok: "TikTok",
+      instagram: "Instagram",
+      friends: "Freunde oder Mitschüler",
+      school: "Schule oder Lehrkraft",
+      appStore: "App Store",
+      playStore: "Play Store",
+      google: "Google",
+      other: "Sonstiges",
     },
     done: {
       title: "Fertig",
       heading: "Alles bereit",
-      text: "Trag jetzt deine ersten Noten ein. Die Übersicht zeigt dir sofort deinen Schnitt.",
+      text: "Trage deine erste Note ein. Die Übersicht zeigt dir sofort deinen Schnitt.",
+      goalHeading: "Dein Ziel: {{grade}}",
+      goalText:
+        "Dafür brauchst du {{points}} Punkte. Trage deine erste Note ein, dann siehst du, wo du stehst.",
+      firstGrade: "Erste Note eintragen",
       examsLater:
-        "Die Prüfungsfächer fehlen noch. Du findest sie in den Einstellungen.",
-      summary: "Zusammenfassung",
+        "Die Prüfungsfächer fehlen noch. Du kannst sie in den Einstellungen festlegen.",
+      summary: "Deine Angaben",
+      subjects: "Fächer",
+      elevated: "{{name}}: {{subjects}}",
       addSubject: "Fach hinzufügen",
     },
   },
@@ -130,7 +164,7 @@ export const setupDE = {
     save: "Sichern",
     saveFailed: "Speichern fehlgeschlagen",
     discardTitle: "Änderungen verwerfen?",
-    discardMessage: "Deine Änderungen werden nicht gespeichert.",
+    discardMessage: "Deine Änderungen gehen verloren.",
     discard: "Verwerfen",
     keepEditing: "Weiter bearbeiten",
     profileTitle: "Profil",
@@ -150,11 +184,12 @@ export const setupDE = {
       draftText:
         "Diese Version beruht auf einem Entwurf. Einzelne Regeln können sich noch ändern.",
       lowText:
-        "Diese Regeln sind noch nicht vollständig gesichert. Prüfe wichtige Ergebnisse mit deiner Schule.",
-      unavailable: "Für diese Auswahl gibt es keine Regeln.",
+        "Diese Regeln sind noch nicht vollständig belegt. Prüfe wichtige Ergebnisse mit deiner Schule.",
+      unavailable:
+        "Für diesen Jahrgang gibt es in deinem Bundesland noch keine Regeln. Wähle einen anderen Jahrgang.",
     },
     rulesChange: {
-      confirmTitle: "Einträge würden gelöscht",
+      confirmTitle: "Einträge gehen verloren",
       confirmMessage: "{{issues}}\n\nTrotzdem ändern?",
       confirm: "Ändern und löschen",
       lossMessage:
@@ -164,11 +199,11 @@ export const setupDE = {
     },
     subjects: {
       title: "Fächer",
-      selected: "{{count}} ausgewählt",
-      minHint: "Wähle mindestens {{count}} Fächer.",
+      selected: "{{count}} gewählt",
+      minHint: "{{count}} von mindestens {{min}} gewählt",
       custom: "Eigene Fächer",
       customFooter:
-        "Eigene Fächer zählen wie ein Fach des gewählten Aufgabenfelds, ohne Sonderregeln.",
+        "Eigene Fächer zählen wie ein Fach ihres Aufgabenfelds, ohne Sonderregeln.",
       orphan: "Nicht im Katalog von {{state}}",
       orphanFooter:
         "Diese Fächer gibt es in {{state}} nicht. Behältst du sie, zählen sie als eigene Fächer.",
@@ -201,6 +236,14 @@ export const setupDE = {
       emptyText: "Wähle zuerst deine Fächer aus.",
       openSubjects: "Fächer wählen",
       plural: "{{short}}-Fächer",
+      missing: {
+        one: "Wähle noch 1 Fach.",
+        other: "Wähle noch {{count}} Fächer.",
+      },
+      tooMany: {
+        one: "1 Fach zu viel gewählt.",
+        other: "{{count}} Fächer zu viel gewählt.",
+      },
     },
     exams: {
       variant: "Prüfungsvariante",
@@ -213,7 +256,7 @@ export const setupDE = {
       wrongLevel: "Kein {{short}}-Fach",
       notExam: "Kein Prüfungsfach",
       usedIn: "Bisher {{slot}}",
-      assigned: "{{count}} von {{total}} festgelegt",
+      assigned: "{{count}} von {{total}} gewählt",
       kinds: {
         written: "schriftlich",
         oral: "mündlich",
